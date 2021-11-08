@@ -1,0 +1,17 @@
+{
+  "stb": {
+    "site": "github",
+    "repository": "nothings/stb",
+    "branch": "master",
+    "files": {
+      "include": [
+        "stb_image.h",
+        "stb_image_resize.h",
+        "stb_image_write.h"
+      ],
+      ".": [
+        "LICENSE"
+      ]
+    }
+  }
+}
