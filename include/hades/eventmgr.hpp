@@ -25,7 +25,6 @@ public:
         bool raw_motion {false};
     } mouse;
 
-    EventMgr() = default;
     EventMgr(GLFWwindow *parent);
 
     void set_mouse_locked(bool locked);

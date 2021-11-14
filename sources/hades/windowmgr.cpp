@@ -29,7 +29,6 @@ WindowMgr::~WindowMgr() {
 
 void WindowMgr::event_loop() {
     auto render_thread = std::thread([&]{
-        auto t = Ticker();
         do {
             while (!initialize_queue_.empty()) {
                 auto w = std::move(initialize_queue_.front());
@@ -42,13 +41,14 @@ void WindowMgr::event_loop() {
                 windows_[handle] = std::move(w);
             }
 
-            t.tick();
             for (auto it = windows_.begin(); it != windows_.end();) {
                 auto &w = it->second;
                 w->make_current_();
 
-                w->update(t.dt_sec());
-                w->events->update_(t.dt_sec());
+                w->dt_timer_.tick();
+                w->update(w->dt_timer_.dt_sec());
+                w->events->update_(w->dt_timer_.dt_sec());
+                w->timers->update(w->dt_timer_.dt_sec());
 
                 w->draw();
 
@@ -57,6 +57,7 @@ void WindowMgr::event_loop() {
                 if (glfwWindowShouldClose(w->glfw_window_)) {
                     destroy_queue_.push(w->glfw_window_);
                     it = windows_.erase(it);
+                    glfwPostEmptyEvent();
                 } else
                     it++;
             }
@@ -81,7 +82,7 @@ void WindowMgr::event_loop() {
             initialize_queue_.push(std::move(w));
         }
 
-        glfwWaitEventsTimeout(1.0);
+        glfwWaitEvents();
 
         while (!destroy_queue_.empty()) {
             glfwDestroyWindow(destroy_queue_.front());

@@ -27,8 +27,19 @@ add_library(
     "thirdparty/stb/include/stb_image_resize.h"
     "thirdparty/stb/include/stb_image_write.h"
 
+    "include/hades/gl/buffer_base.hpp"
     "include/hades/gl/context.hpp"
+    "include/hades/gl/context_enums.hpp"
+    "include/hades/gl/framebuffer.hpp"
+    "include/hades/gl/shader.hpp"
+    "include/hades/gl/static_buffer.hpp"
+    "include/hades/gl/vec_buffer.hpp"
+    "include/hades/gl/vertex_array.hpp"
+    "sources/hades/gl/buffer_base.cpp"
     "sources/hades/gl/context.cpp"
+    "sources/hades/gl/framebuffer.cpp"
+    "sources/hades/gl/shader.cpp"
+    "sources/hades/gl/vertex_array.cpp"
 
     "include/hades/internal/bitmask_enum.hpp"
 
@@ -36,9 +47,11 @@ add_library(
     "include/hades/util/random.hpp"
     "include/hades/util/ticker.hpp"
     "include/hades/util/time.hpp"
+    "include/hades/util/timermgr.hpp"
     "sources/hades/util/averagers.cpp"
     "sources/hades/util/random.cpp"
     "sources/hades/util/ticker.cpp"
+    "sources/hades/util/timermgr.cpp"
 
     "include/hades/color.hpp"
     "include/hades/windowmgr.hpp"

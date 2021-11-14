@@ -6,9 +6,7 @@
 
 namespace gl {
 
-Context::Context(const std::string &tag, glm::ivec2 glversion) {
-    this->tag = tag;
-
+Context::Context(const std::string &tag, glm::ivec2 glversion) : tag(tag) {
     ctx_ = new GladGLContext();
     int version = gladLoadGLContext(ctx_, glfwGetProcAddress);
     if (version == 0) {
@@ -34,6 +32,44 @@ Context::~Context() {
     delete ctx_;
 }
 
+Context::Context(Context &&other) noexcept {
+    ctx_ = other.ctx_;
+    other.ctx_ = nullptr;
+}
+
+Context &Context::operator=(Context &&other) noexcept {
+    if (this != &other) {
+        delete ctx_;
+        ctx_ = other.ctx_;
+        other.ctx_ = nullptr;
+    }
+    return *this;
+}
+
+void Context::enable(Capability cap) {
+    ctx_->Enable(unwrap(cap));
+}
+
+void Context::disable(Capability cap) {
+    ctx_->Disable(unwrap(cap));
+}
+
+void Context::depth_func(DepthFunc func) {
+    ctx_->DepthFunc(unwrap(func));
+}
+
+void Context::blend_func(BlendFunc src, BlendFunc dst) {
+    ctx_->BlendFunc(unwrap(src), unwrap(dst));
+}
+
+void Context::viewport(int x, int y, int w, int h) {
+    ctx_->Viewport(x, y, w, h);
+}
+
+void Context::clip_control(ClipOrigin origin, ClipDepth depth) {
+    ctx_->ClipControl(unwrap(origin), unwrap(depth));
+}
+
 void Context::clear_color(const hades::RGB &color) {
     ctx_->ClearColor(
         static_cast<float>(color.r) / 255.0f,
@@ -43,8 +79,28 @@ void Context::clear_color(const hades::RGB &color) {
     );
 }
 
-void Context::clear(ClearBit mask) {
+void Context::flush() {
+    ctx_->Flush();
+}
+
+void Context::clear(ClearMask mask) {
     ctx_->Clear(unwrap(mask));
+}
+
+ShaderBuilder Context::shader() {
+    return {ctx_};
+}
+
+ShaderBuilder Context::shader(const std::string &tag) {
+    return {ctx_, tag};
+}
+
+FramebufferBuilder Context::framebuffer(GLsizei width, GLsizei height) {
+    return {ctx_, width, height};
+}
+
+std::unique_ptr<VertexArray> Context::vertex_array() {
+    return std::make_unique<VertexArray>(ctx_);
 }
 
 } // namespace gl

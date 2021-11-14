@@ -114,6 +114,13 @@ void EventMgr::glfw_cursor_enter_event_(int entered) {
 }
 
 void EventMgr::glfw_mouse_button_event_(int button, int action, int mods) {
+    auto button_str = glfw_button_to_str_(button);
+    if (action == GLFW_PRESS)
+        state_[button_str] = true;
+    else if (action == GLFW_RELEASE) {
+        state_[button_str] = false;
+        repeat_state_.erase(button_str);
+    }
 }
 
 void EventMgr::glfw_scroll_event_(double xoffset, double yoffset) {

@@ -1,5 +1,6 @@
 #include "hades/window.hpp"
 
+#include "glm/gtc/matrix_transform.hpp"
 #include "spdlog/spdlog.h"
 
 namespace hades {
@@ -14,6 +15,14 @@ Window::~Window() {
 void Window::initialize() {}
 void Window::update(double dt) {}
 void Window::draw() {}
+
+glm::mat4 Window::create_ortho_projection(float z_near, float z_far) {
+    return glm::ortho(
+        0.0f, static_cast<float>(size_.x),
+        static_cast<float>(size_.y), 0.0f,
+        z_near, z_far
+    );
+}
 
 void Window::make_current_() {
     glfwMakeContextCurrent(glfw_window_);
@@ -65,7 +74,8 @@ void Window::open_() {
     }
     glfwSetWindowPos(glfw_window_, pos_.x, pos_.y);
 
-    events = std::make_unique<EventMgr>();
+    events = std::make_unique<EventMgr>(glfw_window_);
+    timers = std::make_unique<TimerMgr>();
 
     if (!set(open_cfg_.flags, WFlags::hidden))
         glfwShowWindow(glfw_window_);
