@@ -36,30 +36,33 @@ public:
     }
 
     void print(int buckets, int max_bar_length) {
-        double min = *std::min_element(data_.begin(), data_.end());
-        double max = *std::max_element(data_.begin(), data_.end());
+        double min = std::log2(*std::min_element(data_.begin(), data_.end()));
+        double max = std::log2(*std::max_element(data_.begin(), data_.end()));
 
         std::vector<int> bucket_counts(buckets, 0);
         for (double v : data_) {
-            int b = (int)(normalize(v, min, max, 0.0, (double)buckets - 1));
+            int b = (int)(normalize(std::log2(v), min, max, 0.0, (double)buckets - 1));
             bucket_counts[b]++;
         }
 
         double max_bucket_count = *std::max_element(bucket_counts.begin(), bucket_counts.end());
 
+        fmt::print("log2 scaling\n");
+        fmt::print("------------\n");
         for (int i = 0; i < bucket_counts.size(); ++i) {
             double b_min = min + ((double)i / (double)buckets) * (max - min);
             double b_max = min + ((double)(i + 1) / (double)buckets) * (max - min);
             double b_count = (double)bucket_counts[i];
             int b_length = (int)((b_count / max_bucket_count) * max_bar_length);
 
-            fmt::print("({:.5f} - {:.5f}) | ", b_min, b_max);
+            fmt::print("({:10.5f} - {:10.5f}) | ", b_min, b_max);
             for (int i = 0; i < b_length; ++i)
                 fmt::print("#");
             for (int i = 0; i < (max_bar_length - b_length); ++i)
                 fmt::print(" ");
             fmt::print(" {}\n", b_count);
         }
+        fmt::print("------------\n");
         fmt::print("Total frames: {}\n", data_.size());
     }
 

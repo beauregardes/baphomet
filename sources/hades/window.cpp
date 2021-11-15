@@ -7,9 +7,6 @@ namespace hades {
 
 Window::~Window() {
     mgr = nullptr;
-
-    ctx.reset(nullptr);
-    events.reset(nullptr);
 }
 
 void Window::initialize() {}
