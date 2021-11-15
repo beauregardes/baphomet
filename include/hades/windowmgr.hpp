@@ -38,6 +38,8 @@ public:
         w->tag = tag;
         w->open_cfg_ = cfg;
         create_queue_.push(std::move(w));
+
+        spdlog::debug("({}) Open requested, pushed to create_queue_", tag);
     }
 
     template<DerivesHadesWindow T>
@@ -53,7 +55,7 @@ private:
     std::queue<std::unique_ptr<Window>> create_queue_{};
     std::queue<std::unique_ptr<Window>> initialize_queue_{};
     std::unordered_map<GLFWwindow *, std::unique_ptr<Window>> windows_{};
-    std::queue<GLFWwindow *> destroy_queue_{};
+    std::queue<std::pair<std::string, GLFWwindow *>> destroy_queue_{};
 
     static void glfw_key_callback_(GLFWwindow *window, int key, int scancode, int action, int mods);
     static void glfw_cursor_position_callback_(GLFWwindow *window, double xpos, double ypos);

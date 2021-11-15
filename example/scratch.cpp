@@ -1,4 +1,5 @@
 #include "hades/hades.hpp"
+#include "hades/util/framecounter.hpp"
 
 const auto vsh_src = R"glsl(
 #version 330 core
@@ -39,6 +40,8 @@ public:
 
     float z_level = 1.0f;
 
+    hades::FrameCounter fps{};
+
     void initialize() override {
         ctx->enable(gl::Capability::blend);
         ctx->blend_func(gl::BlendFunc::src_alpha, gl::BlendFunc::one_minus_src_alpha);
@@ -64,24 +67,32 @@ public:
             {0, 3, gl::AttrType::float_t, false, sizeof(float) * 7, 0},
             {1, 4, gl::AttrType::float_t, false, sizeof(float) * 7, sizeof(float) * 3}
         });
+
+        timers->every(0.25, [&]{ fmt::print("FPS: {:.2f}\n", fps.fps()); });
     }
 
     void update(double dt) override {
-        auto r = hades::rand::get<float>(0.5f, 1.0f);
-        auto g = hades::rand::get<float>(0.5f, 1.0f);
-        auto b = hades::rand::get<float>(0.5f, 1.0f);
-        float x = (float)hades::rand::get<int>(0, window_width()) + 0.5f;
-        float y = (float)hades::rand::get<int>(0, window_height()) + 0.5f;
-        vertices->add({x, y, z_level, r, g, b, 1.0f});
-        z_level++;
+        fps.update();
+
+        vertices->clear();
+        z_level = 1.0f;
+        auto p = hades::rand::get<int>(200, 1000);
+        for (int i = 0; i < p; i++) {
+            auto r = hades::rand::get<float>(0.0f, 1.0f);
+            auto g = hades::rand::get<float>(0.0f, 1.0f);
+            auto b = hades::rand::get<float>(0.0f, 1.0f);
+            float x = (float) hades::rand::get<int>(200, window_width()) + 0.5f;
+            float y = (float) hades::rand::get<int>(200, window_height()) + 0.5f;
+            vertices->add({x, y, z_level, r, g, b, 1.0f});
+//            z_level++;
+        }
+        vertices->sync();
     }
 
     void draw() override {
         fbo->push([&]{
-            ctx->clear_color(hades::rgb(0x000000));
-            ctx->clear(gl::ClearMask::color | gl::ClearMask::depth);
-
-            vertices->sync();
+//            ctx->clear_color(hades::rgb(0x000000));
+            ctx->clear(gl::ClearMask::depth);
 
             shader->use();
             shader->uniform_1f("zMax", z_level);
@@ -100,7 +111,7 @@ int main(int, char *[]) {
        .title = "Scratch",
        .size = {1280, 720},
        .glversion = {4, 5},
-       .monitor = 1,
+       .monitor = 0,
        .flags = hades::WFlags::centered
     });
 

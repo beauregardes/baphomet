@@ -29,6 +29,8 @@ WindowMgr::~WindowMgr() {
 
 void WindowMgr::event_loop() {
     auto render_thread = std::thread([&]{
+        spdlog::debug("Started render thread");
+
         do {
             while (!initialize_queue_.empty()) {
                 auto w = std::move(initialize_queue_.front());
@@ -36,8 +38,10 @@ void WindowMgr::event_loop() {
                 w->initialize_gl_();
                 w->initialize();
 
+                std::string tag = w->tag;
                 GLFWwindow *handle = w->glfw_window_;
                 windows_[handle] = std::move(w);
+                spdlog::debug("({}) Initialized, added to windows_", tag);
 
                 initialize_queue_.pop();
             }
@@ -56,8 +60,14 @@ void WindowMgr::event_loop() {
                 glfwSwapBuffers(w->glfw_window_);
 
                 if (glfwWindowShouldClose(w->glfw_window_)) {
-                    destroy_queue_.push(w->glfw_window_);
+                    std::string tag = w->tag;
+                    GLFWwindow *glfw_window = w->glfw_window_;
+
                     it = windows_.erase(it);
+
+                    destroy_queue_.emplace(tag, glfw_window);
+                    spdlog::debug("({}) Closed, pushed to destroy_queue_", tag);
+                    glfwPostEmptyEvent();
                 } else
                     it++;
             }
@@ -65,15 +75,24 @@ void WindowMgr::event_loop() {
             if (create_queue_.empty() && initialize_queue_.empty() && windows_.empty()) {
                 spdlog::debug("Shutting down WindowMgr");
                 shutdown();
+                glfwPostEmptyEvent();
             }
         } while (!shutdown_);
 
         for (auto it = windows_.begin(); it != windows_.end();) {
             auto &w = it->second;
-            glfwSetWindowShouldClose(w->glfw_window_, true);
-            destroy_queue_.push(w->glfw_window_);
+            std::string tag = w->tag;
+            GLFWwindow *glfw_window = w->glfw_window_;
+
+            glfwSetWindowShouldClose(glfw_window, GLFW_TRUE);
             it = windows_.erase(it);
+
+            destroy_queue_.emplace(tag, glfw_window);
+            spdlog::debug("({}) Force closing, pushed to destroy_queue_", tag);
         }
+        glfwPostEmptyEvent();
+
+        spdlog::debug("Render thread finished");
     });
 
     do {
@@ -89,7 +108,10 @@ void WindowMgr::event_loop() {
             glfwSetScrollCallback(w->glfw_window_, glfw_scroll_callback_);
             glfwSetWindowSizeCallback(w->glfw_window_, glfw_window_size_callback_);
             glfwSetWindowPosCallback(w->glfw_window_, glfw_window_pos_callback_);
+
+            std::string tag = w->tag;
             initialize_queue_.push(std::move(w));
+            spdlog::debug("({}) Opened, pushed to initialize_queue_", tag);
 
             create_queue_.pop();
         }
@@ -97,7 +119,11 @@ void WindowMgr::event_loop() {
         glfwWaitEvents();
 
         while (!destroy_queue_.empty()) {
-            glfwDestroyWindow(destroy_queue_.front());
+            auto p = destroy_queue_.front();
+
+            glfwDestroyWindow(p.second);
+            spdlog::debug("({}) Destroyed GLFW window", p.first);
+
             destroy_queue_.pop();
         }
     } while (!shutdown_ || !windows_.empty() || !destroy_queue_.empty());

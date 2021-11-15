@@ -44,11 +44,13 @@ add_library(
     "include/hades/internal/bitmask_enum.hpp"
 
     "include/hades/util/averagers.hpp"
+    "include/hades/util/framecounter.hpp"
     "include/hades/util/random.hpp"
     "include/hades/util/ticker.hpp"
     "include/hades/util/time.hpp"
     "include/hades/util/timermgr.hpp"
     "sources/hades/util/averagers.cpp"
+    "sources/hades/util/framecounter.cpp"
     "sources/hades/util/random.cpp"
     "sources/hades/util/ticker.cpp"
     "sources/hades/util/timermgr.cpp"
