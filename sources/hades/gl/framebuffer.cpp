@@ -98,6 +98,7 @@ void Framebuffer::del_id_() {
                 ctx_->DeleteRenderbuffers(1, &p.second);
         }
         ctx_->DeleteFramebuffers(1, &id);
+        spdlog::debug("Deleted framebuffer ({})", id);
     }
 }
 

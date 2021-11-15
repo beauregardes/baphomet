@@ -51,25 +51,54 @@ public:
     FramebufferBuilder framebuffer(GLsizei width, GLsizei height);
 
     template<typename T>
-    std::unique_ptr<StaticBuffer<T>> static_buffer(GLsizeiptr size, BufTarget target, BufUsage usage) {
-        return std::make_unique<StaticBuffer<T>>(ctx_, size, target, usage);
-    }
+    std::unique_ptr<StaticBuffer<T>> static_buffer(
+        GLsizeiptr size,
+        BufTarget target, BufUsage usage
+    );
 
     template<typename T>
-    std::unique_ptr<StaticBuffer<T>> static_buffer(const std::vector<T> &data, BufTarget target, BufUsage usage) {
-        return std::make_unique<StaticBuffer<T>>(ctx_, data, target, usage);
-    }
+    std::unique_ptr<StaticBuffer<T>> static_buffer(
+        const std::vector<T> &data,
+        BufTarget target, BufUsage usage
+    );
 
     template<typename T>
-    std::unique_ptr<VecBuffer<T>> vec_buffer(BufTarget target, BufUsage usage, std::size_t initial_size, bool front_to_back = true) {
-        return std::make_unique<VecBuffer<T>>(ctx_, target, usage, initial_size, front_to_back);
-    }
+    std::unique_ptr<VecBuffer<T>> vec_buffer(
+        BufTarget target, BufUsage usage,
+        std::size_t initial_size,
+        bool front_to_back = true
+    );
 
     std::unique_ptr<VertexArray> vertex_array();
 
 private:
     GladGLContext *ctx_{nullptr};
 };
+
+template<typename T>
+std::unique_ptr<StaticBuffer<T>> Context::static_buffer(
+    GLsizeiptr size,
+    BufTarget target, BufUsage usage
+) {
+    return std::make_unique<StaticBuffer<T>>(ctx_, size, target, usage);
+}
+
+template<typename T>
+std::unique_ptr<StaticBuffer<T>> Context::static_buffer(
+    const std::vector<T> &data,
+    BufTarget target, BufUsage usage
+) {
+    return std::make_unique<StaticBuffer<T>>(ctx_, data, target, usage);
+}
+
+template<typename T>
+std::unique_ptr<VecBuffer<T>> Context::vec_buffer(
+    BufTarget target, BufUsage usage,
+    std::size_t initial_size,
+    bool front_to_back
+) {
+    return std::make_unique<VecBuffer<T>>(ctx_, target, usage, initial_size, front_to_back);
+}
 
 } // namespace hades::gl
 

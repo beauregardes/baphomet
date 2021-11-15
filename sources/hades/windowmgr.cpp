@@ -32,13 +32,14 @@ void WindowMgr::event_loop() {
         do {
             while (!initialize_queue_.empty()) {
                 auto w = std::move(initialize_queue_.front());
-                initialize_queue_.pop();
 
                 w->initialize_gl_();
                 w->initialize();
 
                 GLFWwindow *handle = w->glfw_window_;
                 windows_[handle] = std::move(w);
+
+                initialize_queue_.pop();
             }
 
             for (auto it = windows_.begin(); it != windows_.end();) {
@@ -57,17 +58,27 @@ void WindowMgr::event_loop() {
                 if (glfwWindowShouldClose(w->glfw_window_)) {
                     destroy_queue_.push(w->glfw_window_);
                     it = windows_.erase(it);
-                    glfwPostEmptyEvent();
                 } else
                     it++;
             }
+
+            if (create_queue_.empty() && initialize_queue_.empty() && windows_.empty()) {
+                spdlog::debug("Shutting down WindowMgr");
+                shutdown();
+            }
         } while (!shutdown_);
+
+        for (auto it = windows_.begin(); it != windows_.end();) {
+            auto &w = it->second;
+            glfwSetWindowShouldClose(w->glfw_window_, true);
+            destroy_queue_.push(w->glfw_window_);
+            it = windows_.erase(it);
+        }
     });
 
     do {
         while (!create_queue_.empty()) {
             auto w = std::move(create_queue_.front());
-            create_queue_.pop();
 
             w->open_();
             glfwSetWindowUserPointer(w->glfw_window_, this);
@@ -78,8 +89,9 @@ void WindowMgr::event_loop() {
             glfwSetScrollCallback(w->glfw_window_, glfw_scroll_callback_);
             glfwSetWindowSizeCallback(w->glfw_window_, glfw_window_size_callback_);
             glfwSetWindowPosCallback(w->glfw_window_, glfw_window_pos_callback_);
-
             initialize_queue_.push(std::move(w));
+
+            create_queue_.pop();
         }
 
         glfwWaitEvents();
@@ -88,7 +100,7 @@ void WindowMgr::event_loop() {
             glfwDestroyWindow(destroy_queue_.front());
             destroy_queue_.pop();
         }
-    } while (!shutdown_);
+    } while (!shutdown_ || !windows_.empty() || !destroy_queue_.empty());
 
     render_thread.join();
 }

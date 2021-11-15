@@ -29,6 +29,7 @@ Context::Context(const std::string &tag, glm::ivec2 glversion) : tag(tag) {
 }
 
 Context::~Context() {
+    spdlog::debug("({}) Deleted OpenGL context", tag);
     delete ctx_;
 }
 
