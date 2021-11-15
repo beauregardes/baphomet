@@ -64,9 +64,9 @@ public:
 
     template<typename T>
     std::unique_ptr<VecBuffer<T>> vec_buffer(
-        BufTarget target, BufUsage usage,
         std::size_t initial_size,
-        bool front_to_back = true
+        bool front_to_back,
+        BufTarget target, BufUsage usage
     );
 
     std::unique_ptr<VertexArray> vertex_array();
@@ -93,11 +93,11 @@ std::unique_ptr<StaticBuffer<T>> Context::static_buffer(
 
 template<typename T>
 std::unique_ptr<VecBuffer<T>> Context::vec_buffer(
-    BufTarget target, BufUsage usage,
     std::size_t initial_size,
-    bool front_to_back
+    bool front_to_back,
+    BufTarget target, BufUsage usage
 ) {
-    return std::make_unique<VecBuffer<T>>(ctx_, target, usage, initial_size, front_to_back);
+    return std::make_unique<VecBuffer<T>>(ctx_, initial_size, front_to_back, target, usage);
 }
 
 } // namespace hades::gl

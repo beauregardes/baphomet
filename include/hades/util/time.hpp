@@ -20,17 +20,17 @@ T time_nsec() {
 
 template<Numeric T>
 T time_usec() {
-    return static_cast<T>(time_nsec<std::uint64_t>() / 1e3);
+    return static_cast<T>(time_nsec<std::uint64_t>() / std::uint64_t(1e3));
 }
 
 template<Numeric T>
 T time_msec() {
-    return static_cast<T>(time_nsec<std::uint64_t>() / 1e6);
+    return static_cast<T>(time_nsec<std::uint64_t>() / std::uint64_t(1e6));
 }
 
 template<Numeric T>
 T time_sec() {
-    return static_cast<T>(time_nsec<std::uint64_t>() / 1e9);
+    return static_cast<T>(time_nsec<std::uint64_t>() / std::uint64_t(1e9));
 }
 
 }

@@ -57,8 +57,7 @@ public:
 
         projection = create_ortho_projection();
 
-        vertices = ctx->vec_buffer<float>(
-            gl::BufTarget::array, gl::BufUsage::static_draw, 7);
+        vertices = ctx->vec_buffer<float>(7, true, gl::BufTarget::array, gl::BufUsage::static_draw);
 
         vao = ctx->vertex_array();
         vao->attrib_pointer(vertices.get(), {
@@ -97,7 +96,7 @@ public:
 int main(int, char *[]) {
     auto e = hades::WindowMgr();
 
-    e.open<Scratch>("Scratch", {
+    e.open<Scratch>({
        .title = "Scratch",
        .size = {1280, 720},
        .glversion = {4, 5},
