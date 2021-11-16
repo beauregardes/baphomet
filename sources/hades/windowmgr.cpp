@@ -95,6 +95,8 @@ void WindowMgr::event_loop() {
         spdlog::debug("Render thread finished");
     });
 
+    spdlog::debug("Started event loop");
+
     do {
         while (!create_queue_.empty()) {
             auto w = std::move(create_queue_.front());
@@ -116,7 +118,7 @@ void WindowMgr::event_loop() {
             create_queue_.pop();
         }
 
-        glfwWaitEvents();
+        glfwWaitEventsTimeout(1.0);
 
         while (!destroy_queue_.empty()) {
             auto p = destroy_queue_.front();
@@ -127,6 +129,8 @@ void WindowMgr::event_loop() {
             destroy_queue_.pop();
         }
     } while (!shutdown_ || !windows_.empty() || !destroy_queue_.empty());
+
+    spdlog::debug("Event loop finished");
 
     render_thread.join();
 }

@@ -20,6 +20,29 @@ add_library(
     "thirdparty/glad/include/KHR/khrplatform.h"
     "thirdparty/glad/src/gl.c"
 
+    "thirdparty/imgui/include/imconfig.h"
+    "thirdparty/imgui/include/imgui.h"
+    "thirdparty/imgui/include/imgui_internal.h"
+    "thirdparty/imgui/include/imstb_rectpack.h"
+    "thirdparty/imgui/include/imstb_textedit.h"
+    "thirdparty/imgui/include/imstb_truetype.h"
+    "thirdparty/imgui/include/backends/imgui_impl_glfw.h"
+    "thirdparty/imgui/include/backends/imgui_impl_opengl3.h"
+    "thirdparty/imgui/include/backends/imgui_impl_opengl3_loader.h"
+    "thirdparty/imgui/sources/imgui.cpp"
+    "thirdparty/imgui/sources/imgui_demo.cpp"
+    "thirdparty/imgui/sources/imgui_draw.cpp"
+    "thirdparty/imgui/sources/imgui_tables.cpp"
+    "thirdparty/imgui/sources/imgui_widgets.cpp"
+    "thirdparty/imgui/sources/backends/imgui_impl_glfw.cpp"
+    "thirdparty/imgui/sources/backends/imgui_impl_opengl3.cpp"
+
+    "thirdparty/implot/include/implot.h"
+    "thirdparty/implot/include/implot_internal.h"
+    "thirdparty/implot/sources/implot.cpp"
+    "thirdparty/implot/sources/implot_demo.cpp"
+    "thirdparty/implot/sources/implot_items.cpp"
+
     "thirdparty/pcg-cpp/include/pcg_extras.hpp"
     "thirdparty/pcg-cpp/include/pcg_random.hpp"
 
@@ -94,6 +117,9 @@ target_include_directories(
     PUBLIC
 
     "include"
+    "thirdparty/imgui/include"
+    "thirdparty/imgui/include/backends"
+    "thirdparty/implot/include"
     "thirdparty/glad/include"
     "thirdparty/pcg-cpp/include"
     "thirdparty/stb/include"

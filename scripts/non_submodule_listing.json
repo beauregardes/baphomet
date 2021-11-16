@@ -1,4 +1,53 @@
 {
+  "imgui": {
+    "site": "github",
+    "repository": "ocornut/imgui",
+    "branch": "docking",
+    "files": {
+      "include": [
+        "imconfig.h",
+        "imgui.h",
+        "imgui_internal.h",
+        "imstb_rectpack.h",
+        "imstb_textedit.h",
+        "imstb_truetype.h",
+        "backends/imgui_impl_glfw.h",
+        "backends/imgui_impl_opengl3.h",
+        "backends/imgui_impl_opengl3_loader.h"
+      ],
+      "sources": [
+        "imgui.cpp",
+        "imgui_demo.cpp",
+        "imgui_draw.cpp",
+        "imgui_tables.cpp",
+        "imgui_widgets.cpp",
+        "backends/imgui_impl_glfw.cpp",
+        "backends/imgui_impl_opengl3.cpp"
+      ],
+      ".": [
+        "LICENSE.txt"
+      ]
+    }
+  },
+  "implot": {
+    "site": "github",
+    "repository": "epezent/implot",
+    "branch": "master",
+    "files": {
+      "include": [
+        "implot.h",
+        "implot_internal.h"
+      ],
+      "sources": [
+        "implot.cpp",
+        "implot_demo.cpp",
+        "implot_items.cpp"
+      ],
+      ".": [
+        "LICENSE"
+      ]
+    }
+  },
   "stb": {
     "site": "github",
     "repository": "nothings/stb",

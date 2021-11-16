@@ -84,14 +84,12 @@ public:
             float x = (float) hades::rand::get<int>(200, window_width()) + 0.5f;
             float y = (float) hades::rand::get<int>(200, window_height()) + 0.5f;
             vertices->add({x, y, z_level, r, g, b, 1.0f});
-//            z_level++;
         }
         vertices->sync();
     }
 
     void draw() override {
         fbo->push([&]{
-//            ctx->clear_color(hades::rgb(0x000000));
             ctx->clear(gl::ClearMask::depth);
 
             shader->use();
@@ -111,7 +109,7 @@ int main(int, char *[]) {
        .title = "Scratch",
        .size = {1280, 720},
        .glversion = {4, 5},
-       .monitor = 0,
+       .monitor = 1,
        .flags = hades::WFlags::centered
     });
 
