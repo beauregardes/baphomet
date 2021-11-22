@@ -15,7 +15,10 @@
 #include "gl/batching/pixel_batch.hpp"
 #include "gl/batching/tri_batch.hpp"
 #include "gl/batching/rect_batch.hpp"
+
 #include "hades/color.hpp"
+#include "hades/texture.hpp"
+#include "hades/resource_loader.hpp"
 
 #include <memory>
 #include <string>
@@ -55,11 +58,16 @@ public:
 
     void flush();
 
-    /*************
-     * PRIMITIVES
+    /***********
+     * BATCHING
      */
 
     void clear_batches();
+    void draw_batches(glm::mat4 projection);
+
+    /*************
+     * PRIMITIVES
+     */
 
     void pixel(float x, float y, const hades::RGB &color);
 
@@ -86,10 +94,16 @@ public:
     void circle(float x, float y, float radius, const hades::RGB &color, float angle);
     void circle(float x, float y, float radius, const hades::RGB &color);
 
-    void draw_batches(glm::mat4 projection);
+    /***********
+     * TEXTURES
+     */
+
+    std::unique_ptr<hades::Texture> load_texture(const std::string &path, bool retro = false);
 
 private:
     GladGLContext *ctx_{nullptr};
+
+    std::unique_ptr<hades::ResourceLoader> resource_loader{nullptr};
 
     float z_level_{1.0f};
     std::unique_ptr<PixelBatch> pixels_{nullptr};
@@ -97,6 +111,7 @@ private:
     std::unique_ptr<TriBatch> tris_{nullptr};
     std::unique_ptr<RectBatch> rects_{nullptr};
     std::unique_ptr<OvalBatch> ovals_{nullptr};
+    std::unordered_map<std::string, std::unique_ptr<TextureBatch>> textures_{};
 
     bool auto_clear_batches_{true};
 };

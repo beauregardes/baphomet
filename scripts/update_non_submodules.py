@@ -48,7 +48,8 @@ def get_raw_url(site, repository, branch, filename):
 
 def main():
     with open(f"{HERE}/non_submodule_listing.json", 'r') as f:
-        listing = json.loads(f.read())
+        fixed_json = ''.join(line for line in f if not line.startswith('//'))
+        listing = json.loads(fixed_json)
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         count = 0

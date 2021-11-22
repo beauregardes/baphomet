@@ -48,6 +48,10 @@ private:
     std::unordered_map<GLFWwindow *, std::unique_ptr<Window>> windows_{};
     std::queue<std::pair<std::string, GLFWwindow *>> destroy_queue_{};
 
+    std::mutex create_mut_;
+    std::mutex initialize_mut_;
+    std::mutex destroy_mut_;
+
     void push_destroy_window_(const std::string &tag, GLFWwindow *handle, GladGLContext *ctx);
 
     static void glfw_key_callback_(GLFWwindow *window, int key, int scancode, int action, int mods);
@@ -66,7 +70,9 @@ void WindowMgr::open(const std::string &tag, const WCfg &cfg) {
     w->mgr = this;
     w->tag = tag;
     w->open_cfg_ = cfg;
+    create_mut_.lock();
     create_queue_.push(std::move(w));
+    create_mut_.unlock();
 
     spdlog::debug("Open requested, pushed to create_queue_ ({})", tag);
 }

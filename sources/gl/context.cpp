@@ -1,9 +1,13 @@
 #include "gl/context.hpp"
 
+#include "hades/util/random.hpp"
+
 namespace gl {
 
 Context::Context(GladGLContext *ctx, const std::string &tag)
     : tag(tag), ctx_(ctx) {
+
+    resource_loader = std::make_unique<hades::ResourceLoader>(ctx_);
 
     pixels_ = std::make_unique<PixelBatch>(ctx_);
     lines_ = std::make_unique<LineBatch>(ctx_);
@@ -90,8 +94,8 @@ void Context::flush() {
     ctx_->Flush();
 }
 
-/*************
- * PRIMITIVES
+/***********
+ * BATCHING
  */
 
 void Context::clear_batches() {
@@ -101,8 +105,26 @@ void Context::clear_batches() {
     rects_->clear();
     ovals_->clear();
 
+    for (auto &p : textures_)
+        p.second->clear();
+
     z_level_ = 1.0f;
 }
+
+void Context::draw_batches(glm::mat4 projection) {
+    for (auto &p : textures_)
+        p.second->draw(z_level_, projection);
+
+    ovals_->draw(z_level_, projection);
+    rects_->draw(z_level_, projection);
+    tris_->draw(z_level_, projection);
+    lines_->draw(z_level_, projection);
+    pixels_->draw(z_level_, projection);
+}
+
+/*************
+ * PRIMITIVES
+ */
 
 void Context::pixel(float x, float y, const hades::RGB &color) {
     auto cv = color.vec4();
@@ -223,12 +245,18 @@ void Context::circle(float x, float y, float radius, const hades::RGB &color) {
     oval(x, y, radius, radius, color, 0.0f, 0.0f, 0.0f);
 }
 
-void Context::draw_batches(glm::mat4 projection) {
-    ovals_->draw(z_level_, projection);
-    rects_->draw(z_level_, projection);
-    tris_->draw(z_level_, projection);
-    lines_->draw(z_level_, projection);
-    pixels_->draw(z_level_, projection);
+/***********
+ * TEXTURES
+ */
+
+std::unique_ptr<hades::Texture> Context::load_texture(const std::string &path, bool retro) {
+    auto name = hades::rand::base58(11);
+    resource_loader->load_texture_unit(name, path, retro);
+
+    auto &tex = resource_loader->get_texture_unit(name);
+    textures_[name] = std::make_unique<TextureBatch>(ctx_, tex);
+
+    return std::make_unique<hades::Texture>(textures_[name], tex->width(), tex->height(), z_level_);
 }
 
 } // namespace gl

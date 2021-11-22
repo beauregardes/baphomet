@@ -32,6 +32,7 @@ void WindowMgr::event_loop() {
         spdlog::debug("Started render thread");
 
         do {
+            initialize_mut_.lock();
             while (!initialize_queue_.empty()) {
                 auto w = std::move(initialize_queue_.front());
 
@@ -44,6 +45,7 @@ void WindowMgr::event_loop() {
 
                 initialize_queue_.pop();
             }
+            initialize_mut_.unlock();
 
             for (auto it = windows_.begin(); it != windows_.end();) {
                 auto &w = it->second;
@@ -67,7 +69,6 @@ void WindowMgr::event_loop() {
                     it = windows_.erase(it);
 
                     push_destroy_window_(tag, handle, ctx);
-                    glfwPostEmptyEvent();
                 } else
                     it++;
             }
@@ -99,6 +100,7 @@ void WindowMgr::event_loop() {
     spdlog::debug("Started event loop");
 
     do {
+        create_mut_.lock();
         while (!create_queue_.empty()) {
             auto w = std::move(create_queue_.front());
 
@@ -118,9 +120,11 @@ void WindowMgr::event_loop() {
 
             create_queue_.pop();
         }
+        create_mut_.unlock();
 
         glfwWaitEventsTimeout(1.0);
 
+        destroy_mut_.lock();
         while (!destroy_queue_.empty()) {
             auto p = destroy_queue_.front();
 
@@ -129,6 +133,7 @@ void WindowMgr::event_loop() {
 
             destroy_queue_.pop();
         }
+        destroy_mut_.unlock();
     } while (!shutdown_ || !windows_.empty() || !destroy_queue_.empty());
 
     spdlog::debug("Event loop finished");
@@ -144,8 +149,10 @@ void WindowMgr::push_destroy_window_(const std::string &tag, GLFWwindow *handle,
     delete ctx;
     spdlog::debug("Deleted OpenGL context ({})", tag);
 
+    destroy_mut_.lock();
     destroy_queue_.emplace(tag, handle);
     spdlog::debug("Closing, pushed to destroy_queue_ ({})", tag);
+    destroy_mut_.unlock();
 }
 
 void WindowMgr::glfw_key_callback_(GLFWwindow *window, int key, int scancode, int action, int mods) {
