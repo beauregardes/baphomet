@@ -1,4 +1,4 @@
-#include "hades/gl/shader.hpp"
+#include "gl/shader.hpp"
 
 #include "glm/gtc/type_ptr.hpp"
 #include "spdlog/spdlog.h"
@@ -307,7 +307,7 @@ GLint Shader::get_attrib_loc_(const std::string &name) {
         if (loc == -1)
             spdlog::error("Failed to get location of attrib: '{}'", name);
         else
-            spdlog::debug("Located attrib '{}' in shader ({} / {}) at loc {}", name, id, tag, loc);
+            spdlog::debug("Located attrib '{}' in shader_ ({} / {}) at loc {}", name, id, tag, loc);
         attrib_locs_[name] = loc;
     }
     return attrib_locs_[name];
@@ -319,7 +319,7 @@ GLint Shader::get_uniform_loc_(const std::string &name) {
         if (loc == -1)
             spdlog::error("Failed to get location of uniform: '{}'", name);
         else
-            spdlog::debug("Located uniform '{}' in shader ({} / {}) at loc {}", name, id, tag, loc);
+            spdlog::debug("Located uniform '{}' in shader_ ({} / {}) at loc {}", name, id, tag, loc);
         uniform_locs_[name] = loc;
     }
     return uniform_locs_[name];
@@ -328,7 +328,7 @@ GLint Shader::get_uniform_loc_(const std::string &name) {
 void Shader::del_id_() {
     if (ctx_ && id != 0) {
         ctx_->DeleteProgram(id);
-        spdlog::debug("Deleted shader ({} / {})", id, tag);
+        spdlog::debug("Deleted shader_ ({} / {})", id, tag);
     }
 }
 
@@ -339,7 +339,7 @@ ShaderBuilder::ShaderBuilder(GladGLContext *gl_ctx, const std::string &tag)
     : tag_(tag), ctx_(gl_ctx) {
     program_id_ = ctx_->CreateProgram();
 
-    spdlog::debug("Generated shader ({} / {})", program_id_, tag_);
+    spdlog::debug("Generated shader_ ({} / {})", program_id_, tag_);
 }
 
 ShaderBuilder &ShaderBuilder::vert_from_src(const std::string &src) {
@@ -351,7 +351,7 @@ ShaderBuilder &ShaderBuilder::vert_from_src(const std::string &src) {
 
     if (check_compile_(vert_id_, GL_VERTEX_SHADER)) {
         ctx_->AttachShader(program_id_, vert_id_);
-        spdlog::debug("Attached vertex shader ({})", tag_);
+        spdlog::debug("Attached vertex shader_ ({})", tag_);
     }
 
     return *this;
@@ -370,7 +370,7 @@ ShaderBuilder &ShaderBuilder::frag_from_src(const std::string &src) {
 
     if (check_compile_(frag_id_, GL_FRAGMENT_SHADER)) {
         ctx_->AttachShader(program_id_, frag_id_);
-        spdlog::debug("Attached fragment shader ({})", tag_);
+        spdlog::debug("Attached fragment shader_ ({})", tag_);
     }
 
     return *this;
@@ -405,7 +405,7 @@ ShaderBuilder &ShaderBuilder::varyings(const std::vector<std::string> &vs) {
 std::unique_ptr<Shader> ShaderBuilder::link() {
     ctx_->LinkProgram(program_id_);
     if (check_link_())
-        spdlog::debug("Linked shader program ({})", tag_);
+        spdlog::debug("Linked shader_ program ({})", tag_);
 
     if (vert_id_ != 0)
         ctx_->DeleteShader(vert_id_);
@@ -437,9 +437,9 @@ bool ShaderBuilder::check_compile_(GLuint shader_id, GLenum type) {
 
         std::string type_str;
         if (type == GL_VERTEX_SHADER)
-            type_str = "vertex shader";
+            type_str = "vertex shader_";
         else
-            type_str = "fragment shader";
+            type_str = "fragment shader_";
 
         spdlog::error("Failed to compile {} ({})! Info log:\n{}", type_str, tag_, &info_log[0]);
         return false;
@@ -463,7 +463,7 @@ bool ShaderBuilder::check_link_() {
             &info_log[0]
         );
 
-        spdlog::error("Failed to link shader program ({})! Info log:\n{}", tag_, &info_log[0]);
+        spdlog::error("Failed to link shader_ program ({})! Info log:\n{}", tag_, &info_log[0]);
         return false;
     }
 

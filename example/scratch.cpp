@@ -1,104 +1,33 @@
 #include "hades/hades.hpp"
-#include "hades/util/framecounter.hpp"
-
-const auto vsh_src = R"glsl(
-#version 330 core
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec4 aColor;
-
-out vec4 fColor;
-
-uniform float zMax;
-uniform mat4 projection;
-
-void main() {
-    fColor = aColor;
-    gl_Position = projection * vec4(aPos.xy, -(zMax - aPos.z) / (zMax + 1.0), 1.0);
-}
-)glsl";
-
-const auto fsh_src = R"glsl(
-#version 330 core
-in vec4 fColor;
-
-out vec4 FragColor;
-
-void main() {
-    FragColor = fColor;
-}
-)glsl";
 
 class Scratch : public hades::Window {
 public:
-    std::unique_ptr<gl::Framebuffer> fbo;
-
-    std::unique_ptr<gl::Shader> shader;
-    glm::mat4 projection;
-
-    std::unique_ptr<gl::VecBuffer<float>> vertices;
-    std::unique_ptr<gl::VertexArray> vao;
-
-    float z_level = 1.0f;
-
-    hades::FrameCounter fps{};
+    hades::FrameCounter frame_counter{};
 
     void initialize() override {
-        ctx->enable(gl::Capability::blend);
-        ctx->blend_func(gl::BlendFunc::src_alpha, gl::BlendFunc::one_minus_src_alpha);
-
-        ctx->enable(gl::Capability::depth_test);
-
-        fbo = ctx->framebuffer(window_width(), window_height())
-            .renderbuffer(gl::RBufFormat::rgba8)
-            .renderbuffer(gl::RBufFormat::d32f)
-            .check_complete();
-
-        shader = ctx->shader()
-            .vert_from_src(vsh_src)
-            .frag_from_src(fsh_src)
-            .link();
-
-        projection = create_ortho_projection();
-
-        vertices = ctx->vec_buffer<float>(7, true, gl::BufTarget::array, gl::BufUsage::static_draw);
-
-        vao = ctx->vertex_array();
-        vao->attrib_pointer(vertices.get(), {
-            {0, 3, gl::AttrType::float_t, false, sizeof(float) * 7, 0},
-            {1, 4, gl::AttrType::float_t, false, sizeof(float) * 7, sizeof(float) * 3}
+        timers->every(0.25, [&]{
+            fmt::print("FPS: {:.2f}\n", frame_counter.fps());
         });
-
-        timers->every(0.25, [&]{ fmt::print("FPS: {:.2f}\n", fps.fps()); });
     }
 
     void update(double dt) override {
-        fps.update();
+        frame_counter.update();
 
-        vertices->clear();
-        z_level = 1.0f;
-        auto p = hades::rand::get<int>(200, 1000);
-        for (int i = 0; i < p; i++) {
-            auto r = hades::rand::get<float>(0.0f, 1.0f);
-            auto g = hades::rand::get<float>(0.0f, 1.0f);
-            auto b = hades::rand::get<float>(0.0f, 1.0f);
-            float x = (float) hades::rand::get<int>(200, window_width()) + 0.5f;
-            float y = (float) hades::rand::get<int>(200, window_height()) + 0.5f;
-            vertices->add({x, y, z_level, r, g, b, 1.0f});
-        }
-        vertices->sync();
+        if (events->pressed("escape"))
+            window_close();
     }
 
     void draw() override {
-        fbo->push([&]{
-            ctx->clear(gl::ClearMask::depth);
+        ctx->clear(gl::ClearMask::color | gl::ClearMask::depth);
 
-            shader->use();
-            shader->uniform_1f("zMax", z_level);
-            shader->uniform_mat4f("projection", projection);
-
-            vao->draw_arrays(gl::DrawMode::points, vertices->front() / 7, vertices->size() / 7);
-        });
-        fbo->copy_to_default_framebuffer();
+        for (int i = 0; i < 1000; i++)
+            ctx->line(
+                hades::rand::get<int>(0, window_width() - 1),
+                hades::rand::get<int>(0, window_height() - 1),
+                hades::rand::get<int>(0, window_width() - 1),
+                hades::rand::get<int>(0, window_height() - 1),
+                hades::rand::rgb()
+            );
     }
 };
 
@@ -106,11 +35,21 @@ int main(int, char *[]) {
     auto e = hades::WindowMgr();
 
     e.open<Scratch>({
-       .title = "Scratch",
-       .size = {1280, 720},
-       .glversion = {4, 5},
-       .monitor = 1,
-       .flags = hades::WFlags::centered
+        .title = "Scratch 1",
+        .size = {500, 500},
+        .glversion = {4, 5},
+        .monitor = 1,
+        .position = {100, 100},
+//        .flags = hades::WFlags::centered
+    });
+
+    e.open<Scratch>({
+        .title = "Scratch 2",
+        .size = {500, 500},
+        .glversion = {4, 5},
+        .monitor = 1,
+        .position = {700, 100},
+//        .flags = hades::WFlags::centered
     });
 
     e.event_loop();

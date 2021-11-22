@@ -1,9 +1,9 @@
-#ifndef HADES_GL_VERTEX_ARRAY_HPP
-#define HADES_GL_VERTEX_ARRAY_HPP
+#ifndef GL_VERTEX_ARRAY_HPP
+#define GL_VERTEX_ARRAY_HPP
 
 #include "glad/gl.h"
 
-#include "hades/gl/buffer_base.hpp"
+#include "buffer_base.hpp"
 #include "hades/internal/bitmask_enum.hpp"
 
 #include <vector>
@@ -84,4 +84,4 @@ private:
 
 }  // namespace gl
 
-#endif //HADES_GL_VERTEX_ARRAY_HPP
+#endif //GL_VERTEX_ARRAY_HPP

@@ -1,4 +1,4 @@
-#include "hades/gl/buffer_base.hpp"
+#include "gl/buffer_base.hpp"
 
 #include "spdlog/spdlog.h"
 

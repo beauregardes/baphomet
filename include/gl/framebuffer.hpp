@@ -1,5 +1,5 @@
-#ifndef HADES_GL_FRAMEBUFFER_HPP
-#define HADES_GL_FRAMEBUFFER_HPP
+#ifndef GL_FRAMEBUFFER_HPP
+#define GL_FRAMEBUFFER_HPP
 
 #pragma once
 
@@ -228,4 +228,4 @@ private:
 
 } // namespace gl
 
-#endif //HADES_GL_FRAMEBUFFER_HPP
+#endif //GL_FRAMEBUFFER_HPP

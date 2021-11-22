@@ -1,4 +1,4 @@
-#include "hades/gl/vertex_array.hpp"
+#include "gl/vertex_array.hpp"
 #include "spdlog/spdlog.h"
 
 namespace gl {

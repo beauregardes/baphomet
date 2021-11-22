@@ -1,7 +1,7 @@
-#ifndef HADES_GL_VEC_BUFFER_HPP
-#define HADES_GL_VEC_BUFFER_HPP
+#ifndef GL_VEC_BUFFER_HPP
+#define GL_VEC_BUFFER_HPP
 
-#include "hades/gl/buffer_base.hpp"
+#include "buffer_base.hpp"
 #include "spdlog/spdlog.h"
 
 #include <algorithm>
@@ -216,4 +216,4 @@ void VecBuffer<T>::add_(InputIt begin, InputIt end) {
 
 } // namespace gl
 
-#endif //HADES_GL_VEC_BUFFER_HPP
+#endif //GL_VEC_BUFFER_HPP

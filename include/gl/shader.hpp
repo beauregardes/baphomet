@@ -1,5 +1,5 @@
-#ifndef HADES_GL_SHADER_HPP
-#define HADES_GL_SHADER_HPP
+#ifndef GL_SHADER_HPP
+#define GL_SHADER_HPP
 
 #include "glad/gl.h"
 #include "glm/glm.hpp"
@@ -129,4 +129,4 @@ private:
 
 } // namespace gl
 
-#endif //HADES_GL_SHADER_HPP
+#endif //GL_SHADER_HPP

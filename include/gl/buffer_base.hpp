@@ -1,5 +1,5 @@
-#ifndef HADES_GL_BUFFERBASE_HPP
-#define HADES_GL_BUFFERBASE_HPP
+#ifndef GL_BUFFERBASE_HPP
+#define GL_BUFFERBASE_HPP
 
 #include "glad/gl.h"
 
@@ -64,4 +64,4 @@ public:
 
 } // namespace gl
 
-#endif //HADES_GL_BUFFERBASE_HPP
+#endif //GL_BUFFERBASE_HPP

@@ -50,21 +50,34 @@ add_library(
     "thirdparty/stb/include/stb_image_resize.h"
     "thirdparty/stb/include/stb_image_write.h"
 
-    "include/hades/gl/buffer_base.hpp"
-    "include/hades/gl/context.hpp"
-    "include/hades/gl/context_enums.hpp"
-    "include/hades/gl/framebuffer.hpp"
-    "include/hades/gl/shader.hpp"
-    "include/hades/gl/static_buffer.hpp"
-    "include/hades/gl/vec_buffer.hpp"
-    "include/hades/gl/vertex_array.hpp"
-    "sources/hades/gl/buffer_base.cpp"
-    "sources/hades/gl/context.cpp"
-    "sources/hades/gl/framebuffer.cpp"
-    "sources/hades/gl/shader.cpp"
-    "sources/hades/gl/vertex_array.cpp"
+    "include/gl/buffer_base.hpp"
+    "include/gl/context.hpp"
+    "include/gl/context_enums.hpp"
+    "include/gl/framebuffer.hpp"
+    "include/gl/shader.hpp"
+    "include/gl/static_buffer.hpp"
+    "include/gl/vec_buffer.hpp"
+    "include/gl/vertex_array.hpp"
+    "include/gl/batching/batch.hpp"
+    "include/gl/batching/line_batch.hpp"
+    "include/gl/batching/oval_batch.hpp"
+    "include/gl/batching/pixel_batch.hpp"
+    "include/gl/batching/rect_batch.hpp"
+    "include/gl/batching/tri_batch.hpp"
+    "sources/gl/buffer_base.cpp"
+    "sources/gl/context.cpp"
+    "sources/gl/framebuffer.cpp"
+    "sources/gl/shader.cpp"
+    "sources/gl/vertex_array.cpp"
+    "sources/gl/batching/batch.cpp"
+    "sources/gl/batching/line_batch.cpp"
+    "sources/gl/batching/oval_batch.cpp"
+    "sources/gl/batching/pixel_batch.cpp"
+    "sources/gl/batching/rect_batch.cpp"
+    "sources/gl/batching/tri_batch.cpp"
 
     "include/hades/internal/bitmask_enum.hpp"
+    "include/hades/internal/ts_queue.hpp"
 
     "include/hades/util/averagers.hpp"
     "include/hades/util/framecounter.hpp"
@@ -116,13 +129,14 @@ target_include_directories(
     ${PROJECT_NAME}
     PUBLIC
 
-    "include"
     "thirdparty/imgui/include"
     "thirdparty/imgui/include/backends"
     "thirdparty/implot/include"
     "thirdparty/glad/include"
     "thirdparty/pcg-cpp/include"
     "thirdparty/stb/include"
+
+    "include"
 )
 
 if (HADES_BUILD_EXAMPLES)

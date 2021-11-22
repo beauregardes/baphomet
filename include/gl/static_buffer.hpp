@@ -1,7 +1,7 @@
-#ifndef HADES_GL_STATICBUFFER_HPP
-#define HADES_GL_STATICBUFFER_HPP
+#ifndef GL_STATICBUFFER_HPP
+#define GL_STATICBUFFER_HPP
 
-#include "hades/gl/buffer_base.hpp"
+#include "buffer_base.hpp"
 #include "spdlog/spdlog.h"
 
 namespace gl {
@@ -267,4 +267,4 @@ void StaticBuffer<T>::unmap() {
 
 } // namespace gl
 
-#endif //HADES_GL_STATICBUFFER_HPP
+#endif //GL_STATICBUFFER_HPP

@@ -38,10 +38,9 @@ void WindowMgr::event_loop() {
                 w->initialize_gl_();
                 w->initialize();
 
-                std::string tag = w->tag;
                 GLFWwindow *handle = w->glfw_window_;
                 windows_[handle] = std::move(w);
-                spdlog::debug("({}) Initialized, added to windows_", tag);
+                spdlog::debug("Initialized, added to windows_ ({})", windows_[handle]->tag);
 
                 initialize_queue_.pop();
             }
@@ -52,21 +51,22 @@ void WindowMgr::event_loop() {
 
                 w->dt_timer_.tick();
                 w->update(w->dt_timer_.dt_sec());
+
+                w->start_frame_();
+                w->draw();
+                w->end_frame_();
+
                 w->events->update_(w->dt_timer_.dt_sec());
                 w->timers->update(w->dt_timer_.dt_sec());
 
-                w->draw();
-
-                glfwSwapBuffers(w->glfw_window_);
-
                 if (glfwWindowShouldClose(w->glfw_window_)) {
                     std::string tag = w->tag;
-                    GLFWwindow *glfw_window = w->glfw_window_;
+                    GLFWwindow *handle = w->glfw_window_;
+                    GladGLContext *ctx = w->ctx_;
 
                     it = windows_.erase(it);
 
-                    destroy_queue_.emplace(tag, glfw_window);
-                    spdlog::debug("({}) Closed, pushed to destroy_queue_", tag);
+                    push_destroy_window_(tag, handle, ctx);
                     glfwPostEmptyEvent();
                 } else
                     it++;
@@ -81,14 +81,15 @@ void WindowMgr::event_loop() {
 
         for (auto it = windows_.begin(); it != windows_.end();) {
             auto &w = it->second;
-            std::string tag = w->tag;
-            GLFWwindow *glfw_window = w->glfw_window_;
 
-            glfwSetWindowShouldClose(glfw_window, GLFW_TRUE);
+            std::string tag = w->tag;
+            GLFWwindow *handle = w->glfw_window_;
+            GladGLContext *ctx = w->ctx_;
+
+            glfwSetWindowShouldClose(handle, GLFW_TRUE);
             it = windows_.erase(it);
 
-            destroy_queue_.emplace(tag, glfw_window);
-            spdlog::debug("({}) Force closing, pushed to destroy_queue_", tag);
+            push_destroy_window_(tag, handle, ctx);
         }
         glfwPostEmptyEvent();
 
@@ -113,7 +114,7 @@ void WindowMgr::event_loop() {
 
             std::string tag = w->tag;
             initialize_queue_.push(std::move(w));
-            spdlog::debug("({}) Opened, pushed to initialize_queue_", tag);
+            spdlog::debug("Opened, pushed to initialize_queue_ ({})", tag);
 
             create_queue_.pop();
         }
@@ -124,7 +125,7 @@ void WindowMgr::event_loop() {
             auto p = destroy_queue_.front();
 
             glfwDestroyWindow(p.second);
-            spdlog::debug("({}) Destroyed GLFW window", p.first);
+            spdlog::debug("Destroyed GLFW window ({})", p.first);
 
             destroy_queue_.pop();
         }
@@ -139,52 +140,53 @@ void WindowMgr::shutdown() {
     shutdown_ = true;
 }
 
+void WindowMgr::push_destroy_window_(const std::string &tag, GLFWwindow *handle, GladGLContext *ctx) {
+    delete ctx;
+    spdlog::debug("Deleted OpenGL context ({})", tag);
+
+    destroy_queue_.emplace(tag, handle);
+    spdlog::debug("Closing, pushed to destroy_queue_ ({})", tag);
+}
+
 void WindowMgr::glfw_key_callback_(GLFWwindow *window, int key, int scancode, int action, int mods) {
     auto e = reinterpret_cast<WindowMgr *>(glfwGetWindowUserPointer(window));
-    auto it = e->windows_.find(window);
-    if (it != e->windows_.end())
+    if (auto it = e->windows_.find(window); it != e->windows_.end())
         it->second->events->glfw_key_event_(key, scancode, action, mods);
 }
 
 void WindowMgr::glfw_cursor_position_callback_(GLFWwindow *window, double xpos, double ypos) {
     auto e = reinterpret_cast<WindowMgr *>(glfwGetWindowUserPointer(window));
-    auto it = e->windows_.find(window);
-    if (it != e->windows_.end())
+    if (auto it = e->windows_.find(window); it != e->windows_.end())
         it->second->events->glfw_cursor_position_event_(xpos, ypos);
 }
 
 void WindowMgr::glfw_cursor_enter_callback_(GLFWwindow *window, int entered) {
     auto e = reinterpret_cast<WindowMgr *>(glfwGetWindowUserPointer(window));
-    auto it = e->windows_.find(window);
-    if (it != e->windows_.end())
+    if (auto it = e->windows_.find(window); it != e->windows_.end())
         it->second->events->glfw_cursor_enter_event_(entered);
 }
 
 void WindowMgr::glfw_mouse_button_callback_(GLFWwindow *window, int button, int action, int mods) {
     auto e = reinterpret_cast<WindowMgr *>(glfwGetWindowUserPointer(window));
-    auto it = e->windows_.find(window);
-    if (it != e->windows_.end())
+    if (auto it = e->windows_.find(window); it != e->windows_.end())
         it->second->events->glfw_mouse_button_event_(button, action, mods);
 }
 
 void WindowMgr::glfw_scroll_callback_(GLFWwindow *window, double xoffset, double yoffset) {
     auto e = reinterpret_cast<WindowMgr *>(glfwGetWindowUserPointer(window));
-    auto it = e->windows_.find(window);
-    if (it != e->windows_.end())
+    if (auto it = e->windows_.find(window); it != e->windows_.end())
         it->second->events->glfw_scroll_event_(xoffset, yoffset);
 }
 
 void WindowMgr::glfw_window_size_callback_(GLFWwindow *window, int width, int height) {
     auto e = reinterpret_cast<WindowMgr *>(glfwGetWindowUserPointer(window));
-    auto it = e->windows_.find(window);
-    if (it != e->windows_.end())
+    if (auto it = e->windows_.find(window); it != e->windows_.end())
         it->second->size_ = glm::ivec2(width, height);
 }
 
 void WindowMgr::glfw_window_pos_callback_(GLFWwindow *window, int xpos, int ypos) {
     auto e = reinterpret_cast<WindowMgr *>(glfwGetWindowUserPointer(window));
-    auto it = e->windows_.find(window);
-    if (it != e->windows_.end())
+    if (auto it = e->windows_.find(window); it != e->windows_.end())
         it->second->pos_ = glm::ivec2(xpos, ypos);
 }
 

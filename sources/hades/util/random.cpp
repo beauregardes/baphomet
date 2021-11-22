@@ -75,6 +75,15 @@ void debug_show_seed() {
     }
 }
 
+RGB rgb(bool randomize_alpha) {
+    return hades::rgba(
+        get<int>(0, 255),
+        get<int>(0, 255),
+        get<int>(0, 255),
+        randomize_alpha ? get<int>(0, 255) : 255
+    );
+}
+
 std::string base58(std::size_t length) {
     const static char B58_ALPHABET[] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 

@@ -1,4 +1,4 @@
-#include "hades/gl/framebuffer.hpp"
+#include "gl/framebuffer.hpp"
 
 #include "hades/internal/bitmask_enum.hpp"
 #include "hades/util/random.hpp"

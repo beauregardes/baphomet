@@ -4,6 +4,8 @@
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 
+#include "hades/internal/ts_queue.hpp"
+
 #include <string>
 #include <unordered_map>
 
@@ -39,6 +41,8 @@ public:
 
 private:
     GLFWwindow *parent_ {nullptr};
+
+    TSQueue<std::pair<std::string, bool>> state_updates_{};
 
     struct RepeatState {
         double time;

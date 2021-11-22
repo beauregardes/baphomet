@@ -59,8 +59,20 @@ bool EventMgr::down(const std::string &action, double interval, double delay) {
 }
 
 void EventMgr::update_(double dt) {
+    state_updates_.lock();
     for (auto &p : state_)
         prev_state_[p.first] = p.second;
+
+    while (!state_updates_.empty()) {
+        auto p = state_updates_.pop();
+        if (p.second)
+            state_[p.first] = true;
+        else {
+            state_[p.first] = false;
+            repeat_state_.erase(p.first);
+        }
+    }
+    state_updates_.unlock();
 
     mouse.dx = 0;
     mouse.dy = 0;
@@ -90,11 +102,9 @@ void EventMgr::update_(double dt) {
 void EventMgr::glfw_key_event_(int key, int scancode, int action, int mods) {
     auto key_str = glfw_key_to_str_(key);
     if (action == GLFW_PRESS)
-        state_[key_str] = true;
-    else if (action == GLFW_RELEASE) {
-        state_[key_str] = false;
-        repeat_state_.erase(key_str);
-    }
+        state_updates_.ts_push({key_str, true});
+    else if (action == GLFW_RELEASE)
+        state_updates_.ts_push({key_str, false});
 }
 
 void EventMgr::glfw_cursor_position_event_(double xpos, double ypos) {
@@ -116,11 +126,9 @@ void EventMgr::glfw_cursor_enter_event_(int entered) {
 void EventMgr::glfw_mouse_button_event_(int button, int action, int mods) {
     auto button_str = glfw_button_to_str_(button);
     if (action == GLFW_PRESS)
-        state_[button_str] = true;
-    else if (action == GLFW_RELEASE) {
-        state_[button_str] = false;
-        repeat_state_.erase(button_str);
-    }
+        state_updates_.ts_push({button_str, true});
+    else if (action == GLFW_RELEASE)
+        state_updates_.ts_push({button_str, false});
 }
 
 void EventMgr::glfw_scroll_event_(double xoffset, double yoffset) {

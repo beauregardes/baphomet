@@ -2,6 +2,7 @@
 #define HADES_HADES_HPP
 
 #include "hades/util/averagers.hpp"
+#include "hades/util/framecounter.hpp"
 #include "hades/util/random.hpp"
 #include "hades/util/ticker.hpp"
 #include "hades/util/time.hpp"

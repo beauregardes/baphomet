@@ -5,7 +5,7 @@
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
 
-#include "hades/gl/context.hpp"
+#include "gl/context.hpp"
 #include "hades/internal/bitmask_enum.hpp"
 #include "hades/util/ticker.hpp"
 #include "hades/util/timermgr.hpp"
@@ -35,7 +35,7 @@ struct WCfg {
     WFlags flags{WFlags::none};
 };
 
-class WindowMgr;  // forward declare
+class WindowMgr;
 
 class Window {
     friend class WindowMgr;
@@ -48,23 +48,29 @@ public:
 protected:
     WindowMgr *mgr{nullptr};
 
-    std::unique_ptr<gl::Context> ctx;
-    std::unique_ptr<EventMgr> events;
-    std::unique_ptr<TimerMgr> timers;
+    std::unique_ptr<gl::Context> ctx{nullptr};
+    std::unique_ptr<EventMgr> events{nullptr};
+    std::unique_ptr<TimerMgr> timers{nullptr};
 
     virtual void initialize();
     virtual void update(double dt);
     virtual void draw();
 
-    int window_x() const { return pos_.x; }
-    int window_y() const { return pos_.y; }
+    void window_close();
 
-    int window_width() const { return size_.x; }
-    int window_height() const { return size_.y; }
+    int window_x() const;
+    int window_y() const;
 
-    glm::mat4 create_ortho_projection(float z_near = 0.0f, float z_far = 1.0f);
+    int window_width() const;
+    int window_height() const;
+
+    glm::mat4 window_projection() const;
 
 private:
+    GladGLContext *ctx_{nullptr};
+
+    std::unique_ptr<gl::Framebuffer> fbo_{nullptr};
+
     Ticker dt_timer_{};
 
     GLFWwindow *glfw_window_{nullptr};
@@ -72,6 +78,9 @@ private:
 
     glm::ivec2 pos_{0, 0};
     glm::ivec2 size_{0, 0};
+
+    void start_frame_();
+    void end_frame_();
 
     void make_current_();
 

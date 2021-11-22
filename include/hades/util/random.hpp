@@ -4,6 +4,8 @@
 #include "glm/glm.hpp"
 #include "pcg_random.hpp"
 
+#include "hades/color.hpp"
+
 #include <concepts>
 #include <iterator>
 #include <limits>
@@ -231,6 +233,12 @@ T get() {
         s += get<CharT>();
     return s;
 }
+
+/*********
+ * COLORS
+ */
+
+RGB rgb(bool randomize_alpha = false);
 
 /*******
  * MISC
