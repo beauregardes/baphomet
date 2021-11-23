@@ -32,11 +32,8 @@ int main(int, char *[]) {
     auto e = hades::WindowMgr();
 
     e.open<Scratch>({
-        .title = "Scratch 1",
-        .size = {500, 500},
-        .glversion = {4, 5},
-        .monitor = 1,
-        .flags = hades::WFlags::centered
+        .title = "Scratch",
+        .flags = hades::WFlags::borderless
     });
 
     e.event_loop();

@@ -73,26 +73,12 @@ void Window::make_current_() {
 }
 
 void Window::open_() {
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    glfwWindowHint(GLFW_RESIZABLE, set(open_cfg_.flags, WFlags::resizable) ? GLFW_TRUE : GLFW_FALSE);
-
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, open_cfg_.glversion.x);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, open_cfg_.glversion.y);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    glfw_window_ = glfwCreateWindow(open_cfg_.size.x, open_cfg_.size.y, open_cfg_.title.c_str(), nullptr, nullptr);
-    if (!glfw_window_) {
-        const char *description;
-        int code = glfwGetError(&description);
-        spdlog::critical("Failed to create GLFW window: ({})\n* ({}) {}", tag, code, description);
-        glfwTerminate();
-        std::exit(EXIT_FAILURE);
-    } else
-        spdlog::debug("Created GLFW window ({})", tag);
-    size_ = open_cfg_.size;
-
-    int monitor_count;
+    int monitor_count = 0;
     auto monitors = glfwGetMonitors(&monitor_count);
 
     GLFWmonitor *monitor;
@@ -106,23 +92,68 @@ void Window::open_() {
         monitor = monitors[0];
     } else
         monitor = monitors[open_cfg_.monitor];
+    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
-    if (set(open_cfg_.flags, WFlags::centered)) {
-        int base_x, base_y, mon_w, mon_h;
-        glfwGetMonitorWorkarea(monitor, &base_x, &base_y, &mon_w, &mon_h);
-        pos_ = {base_x + (mon_w - size_.x) / 2, base_y + (mon_h - size_.y) / 2};
+    if (set(open_cfg_.flags, WFlags::fullscreen)) {
+        glfw_window_ = glfwCreateWindow(mode->width, mode->height, open_cfg_.title.c_str(), monitor, nullptr);
+        if (!glfw_window_) {
+            const char *description;
+            int code = glfwGetError(&description);
+            spdlog::critical("Failed to create GLFW window: ({})\n* ({}) {}", tag, code, description);
+            glfwTerminate();
+            std::exit(EXIT_FAILURE);
+        } else
+            spdlog::debug("Created GLFW window ({})", tag);
+        size_ = {mode->width, mode->height};
+
+    } else if (set(open_cfg_.flags, WFlags::borderless)) {
+        glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+        glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+        glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+        glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+
+        glfw_window_ = glfwCreateWindow(mode->width, mode->height, open_cfg_.title.c_str(), monitor, nullptr);
+        if (!glfw_window_) {
+            const char *description;
+            int code = glfwGetError(&description);
+            spdlog::critical("Failed to create GLFW window: ({})\n* ({}) {}", tag, code, description);
+            glfwTerminate();
+            std::exit(EXIT_FAILURE);
+        } else
+            spdlog::debug("Created GLFW window ({})", tag);
+        size_ = {mode->width, mode->height};
+
     } else {
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, set(open_cfg_.flags, WFlags::resizable) ? GLFW_TRUE : GLFW_FALSE);
+
+        glfw_window_ = glfwCreateWindow(open_cfg_.size.x, open_cfg_.size.y, open_cfg_.title.c_str(), nullptr, nullptr);
+        if (!glfw_window_) {
+            const char *description;
+            int code = glfwGetError(&description);
+            spdlog::critical("Failed to create GLFW window: ({})\n* ({}) {}", tag, code, description);
+            glfwTerminate();
+            std::exit(EXIT_FAILURE);
+        } else
+            spdlog::debug("Created GLFW window ({})", tag);
+        size_ = open_cfg_.size;
+
         int base_x, base_y;
         glfwGetMonitorPos(monitor, &base_x, &base_y);
-        pos_ = {base_x + open_cfg_.position.x, base_y + open_cfg_.position.y};
+        if (set(open_cfg_.flags, WFlags::centered))
+            pos_ = {base_x + (mode->width - size_.x) / 2,
+                    base_y + (mode->height - size_.y) / 2};
+        else
+            pos_ = {base_x + open_cfg_.position.x,
+                    base_y + open_cfg_.position.y};
+        glfwSetWindowPos(glfw_window_, pos_.x, pos_.y);
+
+        if (!set(open_cfg_.flags, WFlags::hidden))
+            glfwShowWindow(glfw_window_);
     }
-    glfwSetWindowPos(glfw_window_, pos_.x, pos_.y);
 
     events = std::make_unique<EventMgr>(glfw_window_);
     timers = std::make_unique<TimerMgr>();
-
-    if (!set(open_cfg_.flags, WFlags::hidden))
-        glfwShowWindow(glfw_window_);
 }
 
 void Window::initialize_gl_() {

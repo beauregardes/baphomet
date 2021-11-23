@@ -22,13 +22,15 @@ enum class WFlags {
     resizable,
     vsync,
     hidden,
-    centered
+    centered,
+    fullscreen,
+    borderless
 };
 
 struct WCfg {
     std::string title;
-    glm::ivec2 size;
-    glm::ivec2 glversion;
+    glm::ivec2 size{0, 0};
+    glm::ivec2 glversion{3, 3};
 
     int monitor{0};
     glm::ivec2 position{0, 0};
