@@ -52,6 +52,7 @@ void WindowMgr::event_loop() {
                 w->make_current_();
 
                 w->dt_timer_.tick();
+                w->overlay_.frame_counter.update();
                 w->update(w->dt_timer_.dt_sec());
 
                 w->start_frame_();

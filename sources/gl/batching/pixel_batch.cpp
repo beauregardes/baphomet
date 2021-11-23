@@ -32,32 +32,82 @@ void main() {
         )glsl")
         .link();
 
-    vertices_ = std::make_unique<VecBuffer<float>>(
+    opaque_vertices_ = std::make_unique<VecBuffer<float>>(
         ctx_, 7, true, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
 
-    vao_ = std::make_unique<VertexArray>(ctx_);
-    vao_->attrib_pointer(vertices_.get(), {
+    opaque_vao_ = std::make_unique<VertexArray>(ctx_);
+    opaque_vao_->attrib_pointer(opaque_vertices_.get(), {
+        {0, 3, gl::AttrType::float_t, false, sizeof(float) * 7, 0},
+        {1, 4, gl::AttrType::float_t, false, sizeof(float) * 7, sizeof(float) * 3}
+    });
+
+    alpha_vertices_ = std::make_unique<VecBuffer<float>>(
+        ctx_, 7, false, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
+
+    alpha_vao_ = std::make_unique<VertexArray>(ctx_);
+    alpha_vao_->attrib_pointer(alpha_vertices_.get(), {
         {0, 3, gl::AttrType::float_t, false, sizeof(float) * 7, 0},
         {1, 4, gl::AttrType::float_t, false, sizeof(float) * 7, sizeof(float) * 3}
     });
 }
 
-void PixelBatch::add(float x, float y, float z, float r, float g, float b, float a) {
-    vertices_->add({x, y, z, r, g, b, a});
+void PixelBatch::add(
+    float x, float y,
+    float z,
+    float r, float g, float b, float a
+) {
+    if (a < 1.0f)
+        add_alpha_(x, y, z, r, g, b, a);
+    else
+        add_opaque_(x, y, z, r, g, b, a);
 }
 
-void PixelBatch::draw(float z_max, glm::mat4 projection) {
-    vertices_->sync();
+void PixelBatch::draw_opaque(float z_max, glm::mat4 projection) {
+    if (!empty_opaque()) {
+        opaque_vertices_->sync();
 
-    shader_->use();
-    shader_->uniform_1f("z_max", z_max);
-    shader_->uniform_mat4f("projection", projection);
+        shader_->use();
+        shader_->uniform_1f("z_max", z_max);
+        shader_->uniform_mat4f("projection", projection);
 
-    vao_->draw_arrays(
-        DrawMode::points,
-        vertices_->front() / 7,
-        vertices_->size() / 7
-    );
+        opaque_vao_->draw_arrays(
+            DrawMode::points,
+            opaque_vertices_->front() / 7,
+            opaque_vertices_->size() / 7
+        );
+    }
+}
+
+void PixelBatch::draw_alpha(float z_max, glm::mat4 projection) {
+    if (!empty_alpha()) {
+        alpha_vertices_->sync();
+
+        shader_->use();
+        shader_->uniform_1f("z_max", z_max);
+        shader_->uniform_mat4f("projection", projection);
+
+        alpha_vao_->draw_arrays(
+            DrawMode::points,
+            alpha_vertices_->front() / 7,
+            alpha_vertices_->size() / 7
+        );
+    }
+}
+
+void PixelBatch::add_opaque_(
+    float x, float y,
+    float z,
+    float r, float g, float b, float a
+) {
+    opaque_vertices_->add({x, y, z, r, g, b, a});
+}
+
+void PixelBatch::add_alpha_(
+    float x, float y,
+    float z,
+    float r, float g, float b, float a
+) {
+    alpha_vertices_->add({x, y, z, r, g, b, a});
 }
 
 } // namespace gl

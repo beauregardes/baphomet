@@ -16,7 +16,21 @@ public:
         float r, float g, float b, float a
     );
 
-    void draw(float z_max, glm::mat4 projection) override;
+    void draw_opaque(float z_max, glm::mat4 projection) override;
+    void draw_alpha(float z_max, glm::mat4 projection) override;
+
+private:
+    void add_opaque_(
+        float x, float y,
+        float z,
+        float r, float g, float b, float a
+    );
+
+    void add_alpha_(
+        float x, float y,
+        float z,
+        float r, float g, float b, float a
+    );
 };
 
 } // namespace gl

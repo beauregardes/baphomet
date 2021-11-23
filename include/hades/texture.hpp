@@ -8,7 +8,11 @@ namespace hades {
 
 class Texture {
 public:
-    Texture(const std::unique_ptr<gl::TextureBatch> &batch, GLuint width, GLuint height, float &z_level);
+    Texture(
+        const std::unique_ptr<gl::TextureBatch> &batch,
+        GLuint width, GLuint height,
+        float &z_level
+    );
 
     GLuint width() const;
     GLuint height() const;

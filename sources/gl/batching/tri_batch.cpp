@@ -46,11 +46,21 @@ void main() {
         )glsl")
         .link();
 
-    vertices_ = std::make_unique<VecBuffer<float>>(
+    opaque_vertices_ = std::make_unique<VecBuffer<float>>(
         ctx_, 30, true, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
 
-    vao_ = std::make_unique<VertexArray>(ctx_);
-    vao_->attrib_pointer(vertices_.get(), {
+    opaque_vao_ = std::make_unique<VertexArray>(ctx_);
+    opaque_vao_->attrib_pointer(opaque_vertices_.get(), {
+        {0, 3, gl::AttrType::float_t, false, sizeof(float) * 10, 0},
+        {1, 4, gl::AttrType::float_t, false, sizeof(float) * 10, sizeof(float) * 3},
+        {2, 3, gl::AttrType::float_t, false, sizeof(float) * 10, sizeof(float) * 7}
+    });
+
+    alpha_vertices_ = std::make_unique<VecBuffer<float>>(
+        ctx_, 30, false, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
+
+    alpha_vao_ = std::make_unique<VertexArray>(ctx_);
+    alpha_vao_->attrib_pointer(alpha_vertices_.get(), {
         {0, 3, gl::AttrType::float_t, false, sizeof(float) * 10, 0},
         {1, 4, gl::AttrType::float_t, false, sizeof(float) * 10, sizeof(float) * 3},
         {2, 3, gl::AttrType::float_t, false, sizeof(float) * 10, sizeof(float) * 7}
@@ -65,25 +75,72 @@ void TriBatch::add(
     float r, float g, float b, float a,
     float cx, float cy, float angle
 ) {
-    vertices_->add({
+    if (a < 1.0f)
+        add_alpha_(x0, y0, x1, y1, x2, y2, z, r, g, b, a, cx, cy, angle);
+    else
+        add_opaque_(x0, y0, x1, y1, x2, y2, z, r, g, b, a, cx, cy, angle);
+}
+
+void TriBatch::draw_opaque(float z_max, glm::mat4 projection) {
+    if (!empty_opaque()) {
+        opaque_vertices_->sync();
+
+        shader_->use();
+        shader_->uniform_1f("z_max", z_max);
+        shader_->uniform_mat4f("projection", projection);
+
+        opaque_vao_->draw_arrays(
+            DrawMode::triangles,
+            opaque_vertices_->front() / 10,
+            opaque_vertices_->size() / 10
+        );
+    }
+}
+
+void TriBatch::draw_alpha(float z_max, glm::mat4 projection) {
+    if (!empty_alpha()) {
+        alpha_vertices_->sync();
+
+        shader_->use();
+        shader_->uniform_1f("z_max", z_max);
+        shader_->uniform_mat4f("projection", projection);
+
+        alpha_vao_->draw_arrays(
+            DrawMode::triangles,
+            alpha_vertices_->front() / 10,
+            alpha_vertices_->size() / 10
+        );
+    }
+}
+
+void TriBatch::add_opaque_(
+    float x0, float y0,
+    float x1, float y1,
+    float x2, float y2,
+    float z,
+    float r, float g, float b, float a,
+    float cx, float cy, float angle
+) {
+    opaque_vertices_->add({
         x0, y0, z, r, g, b, a, cx, cy, angle,
         x1, y1, z, r, g, b, a, cx, cy, angle,
         x2, y2, z, r, g, b, a, cx, cy, angle
     });
 }
 
-void TriBatch::draw(float z_max, glm::mat4 projection) {
-    vertices_->sync();
-
-    shader_->use();
-    shader_->uniform_1f("z_max", z_max);
-    shader_->uniform_mat4f("projection", projection);
-
-    vao_->draw_arrays(
-        DrawMode::triangles,
-        vertices_->front() / 10,
-        vertices_->size() / 10
-    );
+void TriBatch::add_alpha_(
+    float x0, float y0,
+    float x1, float y1,
+    float x2, float y2,
+    float z,
+    float r, float g, float b, float a,
+    float cx, float cy, float angle
+) {
+    alpha_vertices_->add({
+        x0, y0, z, r, g, b, a, cx, cy, angle,
+        x1, y1, z, r, g, b, a, cx, cy, angle,
+        x2, y2, z, r, g, b, a, cx, cy, angle
+    });
 }
 
 } // namespace gl

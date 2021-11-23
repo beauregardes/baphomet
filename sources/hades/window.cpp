@@ -1,3 +1,4 @@
+#include <hades/window.hpp>
 #include "hades/window.hpp"
 
 #include "glm/gtc/matrix_transform.hpp"
@@ -43,14 +44,26 @@ glm::mat4 Window::window_projection() const {
 
 void Window::start_frame_() {
     fbo_->bind();
-    if (ctx->auto_clear_batches())
-        ctx->clear_batches();
+
+    ctx->switch_to_batch_set("default");
+    ctx->clear_batches();
 }
 
 void Window::end_frame_() {
+    ctx->switch_to_batch_set("default");
     ctx->draw_batches(window_projection());
-    fbo_->unbind();
 
+    ctx->flush();
+
+    ctx->switch_to_batch_set("__overlay");
+    ctx->clear_batches();
+
+    overlay_.font->render(1, 2, "{:.2f} fps", overlay_.frame_counter.fps());
+
+    ctx->draw_batches(window_projection());
+    ctx->switch_to_batch_set("default");
+
+    fbo_->unbind();
     fbo_->copy_to_default_framebuffer();
     glfwSwapBuffers(glfw_window_);
 }
@@ -138,11 +151,11 @@ void Window::initialize_gl_() {
     spdlog::debug("=> Vendor: {}", ctx_->GetString(GL_VENDOR));
     spdlog::debug("=> Renderer: {}", ctx_->GetString(GL_RENDERER));
 
-    ctx = std::make_unique<gl::Context>(ctx_, tag);
+    ctx = std::make_unique<Context>(ctx_, tag);
 
     glfwSwapInterval(set(open_cfg_.flags, WFlags::vsync) ? 1 : 0);
 
-    ctx->enable(gl::Capability::blend);
+//    ctx->enable(gl::Capability::blend);
     ctx->blend_func(gl::BlendFunc::src_alpha, gl::BlendFunc::one_minus_src_alpha);
 
     ctx->enable(gl::Capability::depth_test);
@@ -151,6 +164,15 @@ void Window::initialize_gl_() {
         .renderbuffer(gl::RBufFormat::rgba8)
         .renderbuffer(gl::RBufFormat::d32f)
         .check_complete();
+
+    ctx->new_batch_set("__overlay");
+    ctx->switch_to_batch_set("__overlay");
+    overlay_.font = ctx->load_cp437(
+        (hades::RESOURCE_PATH / "font" / "1px_6x8_no_bg.png").string(),
+        6, 8,
+        true
+    );
+    ctx->switch_to_batch_set("default");
 }
 
 } // namespace hades

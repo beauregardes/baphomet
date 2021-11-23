@@ -31,16 +31,25 @@ TextureUnit::TextureUnit(GladGLContext *ctx, const std::string &path, bool retro
         else if (comp == 4)
             format = GL_RGBA;
         else
-            spdlog::error(
-                "Can't handle images with comp '{}', only 3 or 4 channels supported",
-                comp
-            );
+            spdlog::error("Can't handle images with comp '{}', only 3 or 4 channels supported", comp);
 
         if (format != GL_NONE) {
             ctx_->TexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, bytes);
             ctx_->GenerateMipmap(GL_TEXTURE_2D);
 
             spdlog::debug("Loaded texture '{}' ({}x{})", path, width_, height_);
+        }
+
+        if (comp == 4) {
+            for (int y = 0; y < h; ++y) {
+                for (int x = 0; x < w; ++x) {
+                    int alpha_ch = (y * w * 4) + (x * 4) + 3;
+                    if (bytes[alpha_ch] < 255)
+                        fully_opaque_ = false;
+                }
+                if (!fully_opaque_)
+                    break;
+            }
         }
 
     } else
@@ -106,6 +115,10 @@ GLuint TextureUnit::width() const {
 
 GLuint TextureUnit::height() const {
     return height_;
+}
+
+bool TextureUnit::fully_opaque() const {
+    return fully_opaque_;
 }
 
 void TextureUnit::gen_id_() {

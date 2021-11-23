@@ -29,11 +29,15 @@ public:
     GLuint width() const;
     GLuint height() const;
 
+    bool fully_opaque() const;
+
 private:
     GladGLContext *ctx_{nullptr};
 
     GLuint id_{0};
     GLuint width_{0}, height_{0};
+
+    bool fully_opaque_{true};
 
     void gen_id_();
     void del_id_();

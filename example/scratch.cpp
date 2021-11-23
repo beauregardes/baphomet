@@ -2,27 +2,27 @@
 
 class Scratch : public hades::Window {
 public:
-    hades::FrameCounter frame_counter{};
-    std::unique_ptr<hades::Texture> font_tex{nullptr};
-
     void initialize() override {
-        font_tex = ctx->load_texture("resources/font/1px_6x8.png", true);
-
-        timers->every(0.25, [&]{ fmt::print("FPS: {:.2f}\n", frame_counter.fps()); });
     }
 
     void update(double dt) override {
-        frame_counter.update();
-
         if (events->pressed("escape"))
             window_close();
     }
 
     void draw() override {
-        ctx->clear(gl::ClearMask::color | gl::ClearMask::depth);
+        ctx->clear_color(hades::rgb(0x404040));
+        ctx->clear();
 
-        font_tex->draw(0, 0, font_tex->width() * 2, font_tex->height() * 2);
-        font_tex->draw(20, 20, hades::rgb(0xff0000));
+        ctx->oval(150, 75, 100, 50, hades::rgba(0xff808080));
+        ctx->oval(200, 100, 100, 50, hades::rgba(0x80ff8080));
+        ctx->oval(250, 125, 100, 50, hades::rgba(0x8080ff80));
+
+        ctx->oval(
+            events->mouse.x, events->mouse.y,
+            100, 50,
+            hades::rgba(0xff80ff80)
+        );
     }
 };
 

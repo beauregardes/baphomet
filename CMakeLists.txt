@@ -28,7 +28,7 @@ add_library(
     "thirdparty/stb/include/stb_image_write.h"
 
     "include/gl/buffer_base.hpp"
-    "include/gl/context.hpp"
+    "include/hades/context.hpp"
     "include/gl/context_enums.hpp"
     "include/gl/framebuffer.hpp"
     "include/gl/shader.hpp"
@@ -44,7 +44,7 @@ add_library(
     "include/gl/batching/texture_batch.hpp"
     "include/gl/batching/tri_batch.hpp"
     "sources/gl/buffer_base.cpp"
-    "sources/gl/context.cpp"
+    "sources/hades/context.cpp"
     "sources/gl/framebuffer.cpp"
     "sources/gl/shader.cpp"
     "sources/gl/texture_unit.cpp"
@@ -72,6 +72,7 @@ add_library(
     "sources/hades/util/ticker.cpp"
     "sources/hades/util/timermgr.cpp"
 
+    "include/hades/batch_set.hpp"
     "include/hades/color.hpp"
     "include/hades/eventmgr.hpp"
     "include/hades/hades.hpp"
@@ -79,12 +80,15 @@ add_library(
     "include/hades/texture.hpp"
     "include/hades/window.hpp"
     "include/hades/windowmgr.hpp"
+    "include/hades/font/cp437.hpp"
+    "sources/hades/batch_set.cpp"
     "sources/hades/color.cpp"
     "sources/hades/eventmgr.cpp"
     "sources/hades/resource_loader.cpp"
     "sources/hades/texture.cpp"
     "sources/hades/window.cpp"
     "sources/hades/windowmgr.cpp"
+    "sources/hades/font/cp437.cpp"
 )
 
 add_subdirectory("thirdparty/fmt")

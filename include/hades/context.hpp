@@ -10,20 +10,18 @@
 #include "gl/static_buffer.hpp"
 #include "gl/vec_buffer.hpp"
 #include "gl/vertex_array.hpp"
-#include "gl/batching/line_batch.hpp"
-#include "gl/batching/oval_batch.hpp"
-#include "gl/batching/pixel_batch.hpp"
-#include "gl/batching/tri_batch.hpp"
-#include "gl/batching/rect_batch.hpp"
 
+#include "hades/batch_set.hpp"
 #include "hades/color.hpp"
 #include "hades/texture.hpp"
 #include "hades/resource_loader.hpp"
+#include "hades/font/cp437.hpp"
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 
-namespace gl {
+namespace hades {
 
 class Context {
 public:
@@ -39,28 +37,29 @@ public:
     Context(Context &&other) noexcept;
     Context &operator=(Context &&other) noexcept;
 
-    bool auto_clear_batches();
-    void set_auto_clear_batches(bool s);
+    void enable(gl::Capability cap);
+    void disable(gl::Capability cap);
 
-    void enable(Capability cap);
-    void disable(Capability cap);
+    void depth_func(gl::DepthFunc func);
+    void depth_mask(bool flag);
 
-    void depth_func(DepthFunc func);
-
-    void blend_func(BlendFunc src, BlendFunc dst);
+    void blend_func(gl::BlendFunc src, gl::BlendFunc dst);
 
     void viewport(int x, int y, int w, int h);
 
-    void clip_control(ClipOrigin origin, ClipDepth depth);
+    void clip_control(gl::ClipOrigin origin, gl::ClipDepth depth);
 
     void clear_color(const hades::RGB &color);
-    void clear(ClearMask mask);
+    void clear(gl::ClearMask mask = gl::ClearMask::color | gl::ClearMask::depth);
 
     void flush();
 
     /***********
      * BATCHING
      */
+
+    void new_batch_set(const std::string &name);
+    void switch_to_batch_set(const std::string &name);
 
     void clear_batches();
     void draw_batches(glm::mat4 projection);
@@ -100,22 +99,17 @@ public:
 
     std::unique_ptr<hades::Texture> load_texture(const std::string &path, bool retro = false);
 
+    std::unique_ptr<hades::CP437> load_cp437(const std::string &path, int char_w, int char_h, bool retro = false);
+
 private:
     GladGLContext *ctx_{nullptr};
 
     std::unique_ptr<hades::ResourceLoader> resource_loader{nullptr};
 
-    float z_level_{1.0f};
-    std::unique_ptr<PixelBatch> pixels_{nullptr};
-    std::unique_ptr<LineBatch> lines_{nullptr};
-    std::unique_ptr<TriBatch> tris_{nullptr};
-    std::unique_ptr<RectBatch> rects_{nullptr};
-    std::unique_ptr<OvalBatch> ovals_{nullptr};
-    std::unordered_map<std::string, std::unique_ptr<TextureBatch>> textures_{};
-
-    bool auto_clear_batches_{true};
+    std::unordered_map<std::string, std::unique_ptr<BatchSet>> batch_sets_{};
+    std::string active_batch_{"default"};
 };
 
-} // namespace hades::gl
+} // namespace hades
 
 #endif //GL_CONTEXT_H

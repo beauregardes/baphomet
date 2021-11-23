@@ -55,11 +55,22 @@ void main() {
         )glsl")
         .link();
 
-    vertices_ = std::make_unique<VecBuffer<float>>(
+    opaque_vertices_ = std::make_unique<VecBuffer<float>>(
         ctx_, 72, true, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
 
-    vao_ = std::make_unique<VertexArray>(ctx_);
-    vao_->attrib_pointer(vertices_.get(), {
+    opaque_vao_ = std::make_unique<VertexArray>(ctx_);
+    opaque_vao_->attrib_pointer(opaque_vertices_.get(), {
+        {0, 3, gl::AttrType::float_t, false, sizeof(float) * 12, 0},
+        {1, 4, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 3},
+        {2, 2, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 7},
+        {3, 3, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 9}
+    });
+
+    alpha_vertices_ = std::make_unique<VecBuffer<float>>(
+        ctx_, 72, false, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
+
+    alpha_vao_ = std::make_unique<VertexArray>(ctx_);
+    alpha_vao_->attrib_pointer(alpha_vertices_.get(), {
         {0, 3, gl::AttrType::float_t, false, sizeof(float) * 12, 0},
         {1, 4, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 3},
         {2, 2, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 7},
@@ -79,7 +90,56 @@ void TextureBatch::add(
     float r, float g, float b, float a,
     float cx, float cy, float angle
 ) {
-    vertices_->add({
+    if (a < 1.0f || !texture_unit_->fully_opaque())
+        add_alpha_(x, y, w, h, tx, ty, tw, th, z, r, g, b, a, cx, cy, angle);
+    else
+        add_opaque_(x, y, w, h, tx, ty, tw, th, z, r, g, b, a, cx, cy, angle);
+}
+
+void TextureBatch::draw_opaque(float z_max, glm::mat4 projection) {
+    if (!empty_opaque()) {
+        opaque_vertices_->sync();
+
+        shader_->use();
+        shader_->uniform_1f("z_max", z_max);
+        shader_->uniform_mat4f("projection", projection);
+        texture_unit_->bind();
+
+        opaque_vao_->draw_arrays(
+            DrawMode::triangles,
+            opaque_vertices_->front() / 12,
+            opaque_vertices_->size() / 12
+        );
+    }
+}
+
+void TextureBatch::draw_alpha(float z_max, glm::mat4 projection) {
+    if (!empty_alpha()) {
+        alpha_vertices_->sync();
+
+        shader_->use();
+        shader_->uniform_1f("z_max", z_max);
+        shader_->uniform_mat4f("projection", projection);
+        texture_unit_->bind();
+
+        alpha_vao_->draw_arrays(
+            DrawMode::triangles,
+            alpha_vertices_->front() / 12,
+            alpha_vertices_->size() / 12
+        );
+    }
+}
+
+void TextureBatch::add_opaque_(
+    float x, float y,
+    float w, float h,
+    float tx, float ty,
+    float tw, float th,
+    float z,
+    float r, float g, float b, float a,
+    float cx, float cy, float angle
+) {
+    opaque_vertices_->add({
         x,     y,     z, r, g, b, a, x_px_unit_ * tx,        y_px_unit_ * ty,        cx, cy, angle,
         x + w, y,     z, r, g, b, a, x_px_unit_ * (tx + tw), y_px_unit_ * ty,        cx, cy, angle,
         x + w, y + h, z, r, g, b, a, x_px_unit_ * (tx + tw), y_px_unit_ * (ty + th), cx, cy, angle,
@@ -89,19 +149,23 @@ void TextureBatch::add(
     });
 }
 
-void TextureBatch::draw(float z_max, glm::mat4 projection) {
-    vertices_->sync();
-
-    shader_->use();
-    shader_->uniform_1f("z_max", z_max);
-    shader_->uniform_mat4f("projection", projection);
-    texture_unit_->bind();
-
-    vao_->draw_arrays(
-        DrawMode::triangles,
-        vertices_->front() / 10,
-        vertices_->size() / 10
-    );
+void TextureBatch::add_alpha_(
+    float x, float y,
+    float w, float h,
+    float tx, float ty,
+    float tw, float th,
+    float z,
+    float r, float g, float b, float a,
+    float cx, float cy, float angle
+) {
+    alpha_vertices_->add({
+        x,     y,     z, r, g, b, a, x_px_unit_ * tx,        y_px_unit_ * ty,        cx, cy, angle,
+        x + w, y,     z, r, g, b, a, x_px_unit_ * (tx + tw), y_px_unit_ * ty,        cx, cy, angle,
+        x + w, y + h, z, r, g, b, a, x_px_unit_ * (tx + tw), y_px_unit_ * (ty + th), cx, cy, angle,
+        x,     y,     z, r, g, b, a, x_px_unit_ * tx,        y_px_unit_ * ty,        cx, cy, angle,
+        x + w, y + h, z, r, g, b, a, x_px_unit_ * (tx + tw), y_px_unit_ * (ty + th), cx, cy, angle,
+        x,     y + h, z, r, g, b, a, x_px_unit_ * tx,        y_px_unit_ * (ty + th), cx, cy, angle
+    });
 }
 
 } // namespace gl

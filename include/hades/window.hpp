@@ -5,8 +5,9 @@
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
 
-#include "gl/context.hpp"
+#include "hades/context.hpp"
 #include "hades/internal/bitmask_enum.hpp"
+#include "hades/util/framecounter.hpp"
 #include "hades/util/ticker.hpp"
 #include "hades/util/timermgr.hpp"
 #include "hades/eventmgr.hpp"
@@ -48,7 +49,7 @@ public:
 protected:
     WindowMgr *mgr{nullptr};
 
-    std::unique_ptr<gl::Context> ctx{nullptr};
+    std::unique_ptr<Context> ctx{nullptr};
     std::unique_ptr<EventMgr> events{nullptr};
     std::unique_ptr<TimerMgr> timers{nullptr};
 
@@ -78,6 +79,11 @@ private:
 
     glm::ivec2 pos_{0, 0};
     glm::ivec2 size_{0, 0};
+
+    struct {
+        FrameCounter frame_counter{};
+        std::unique_ptr<hades::CP437> font{nullptr};
+    } overlay_;
 
     void start_frame_();
     void end_frame_();

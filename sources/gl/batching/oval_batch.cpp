@@ -46,11 +46,21 @@ void main() {
         )glsl")
         .link();
 
-    vertices_ = std::make_unique<VecBuffer<float>>(
-        ctx_, 30, true, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
+    opaque_vertices_ = std::make_unique<VecBuffer<float>>(
+        ctx_, 120, true, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
 
-    vao_ = std::make_unique<VertexArray>(ctx_);
-    vao_->attrib_pointer(vertices_.get(), {
+    opaque_vao_ = std::make_unique<VertexArray>(ctx_);
+    opaque_vao_->attrib_pointer(opaque_vertices_.get(), {
+        {0, 3, gl::AttrType::float_t, false, sizeof(float) * 10, 0},
+        {1, 4, gl::AttrType::float_t, false, sizeof(float) * 10, sizeof(float) * 3},
+        {2, 3, gl::AttrType::float_t, false, sizeof(float) * 10, sizeof(float) * 7}
+    });
+
+    alpha_vertices_ = std::make_unique<VecBuffer<float>>(
+        ctx_, 120, false, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
+
+    alpha_vao_ = std::make_unique<VertexArray>(ctx_);
+    alpha_vao_->attrib_pointer(alpha_vertices_.get(), {
         {0, 3, gl::AttrType::float_t, false, sizeof(float) * 10, 0},
         {1, 4, gl::AttrType::float_t, false, sizeof(float) * 10, sizeof(float) * 3},
         {2, 3, gl::AttrType::float_t, false, sizeof(float) * 10, sizeof(float) * 7}
@@ -58,6 +68,51 @@ void main() {
 }
 
 void OvalBatch::add(
+    float x, float y,
+    float x_radius, float y_radius,
+    float z,
+    float r, float g, float b, float a,
+    float cx, float cy, float angle
+) {
+    if (a < 1.0f)
+        add_alpha_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle);
+    else
+        add_opaque_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle);
+}
+
+void OvalBatch::draw_opaque(float z_max, glm::mat4 projection) {
+    if (!empty_opaque()) {
+        opaque_vertices_->sync();
+
+        shader_->use();
+        shader_->uniform_1f("z_max", z_max);
+        shader_->uniform_mat4f("projection", projection);
+
+        opaque_vao_->draw_arrays(
+            DrawMode::triangles,
+            opaque_vertices_->front() / 10,
+            opaque_vertices_->size() / 10
+        );
+    }
+}
+
+void OvalBatch::draw_alpha(float z_max, glm::mat4 projection) {
+    if (!empty_alpha()) {
+        alpha_vertices_->sync();
+
+        shader_->use();
+        shader_->uniform_1f("z_max", z_max);
+        shader_->uniform_mat4f("projection", projection);
+
+        alpha_vao_->draw_arrays(
+            DrawMode::triangles,
+            alpha_vertices_->front() / 10,
+            alpha_vertices_->size() / 10
+        );
+    }
+}
+
+void OvalBatch::add_opaque_(
     float x, float y,
     float x_radius, float y_radius,
     float z,
@@ -81,7 +136,7 @@ void OvalBatch::add(
         x3 = x + x_radius * std::cos(a3),
         y3 = y + y_radius * std::sin(a3);
 
-    vertices_->add({
+    opaque_vertices_->add({
         x0, y0, z, r, g, b, a, cx, cy, angle,
         x,  y,  z, r, g, b, a, cx, cy, angle,
         x1, y1, z, r, g, b, a, cx, cy, angle,
@@ -99,27 +154,13 @@ void OvalBatch::add(
         x0, y0, z, r, g, b, a, cx, cy, angle
     });
 
-    add_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x0, y0, a0, x1, y1, a1);
-    add_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x1, y1, a1, x2, y2, a2);
-    add_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x2, y2, a2, x3, y3, a3);
-    add_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x3, y3, a3, x0, y0, a4);
+    add_opaque_recurse_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x0, y0, a0, x1, y1, a1);
+    add_opaque_recurse_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x1, y1, a1, x2, y2, a2);
+    add_opaque_recurse_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x2, y2, a2, x3, y3, a3);
+    add_opaque_recurse_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x3, y3, a3, x0, y0, a4);
 }
 
-void OvalBatch::draw(float z_max, glm::mat4 projection) {
-    vertices_->sync();
-
-    shader_->use();
-    shader_->uniform_1f("z_max", z_max);
-    shader_->uniform_mat4f("projection", projection);
-
-    vao_->draw_arrays(
-        DrawMode::triangles,
-        vertices_->front() / 10,
-        vertices_->size() / 10
-    );
-}
-
-void OvalBatch::add_(
+void OvalBatch::add_opaque_recurse_(
     float x, float y,
     float x_radius, float y_radius,
     float z,
@@ -133,7 +174,7 @@ void OvalBatch::add_(
         x2 = x + x_radius * std::cos(a2),
         y2 = y + y_radius * std::sin(a2);
 
-    vertices_->add({
+    opaque_vertices_->add({
         x0, y0, z, r, g, b, a, cx, cy, angle,
         x2, y2, z, r, g, b, a, cx, cy, angle,
         x1, y1, z, r, g, b, a, cx, cy, angle
@@ -143,10 +184,87 @@ void OvalBatch::add_(
         ((((x0 + x1) / 2.0f) - x2) * (((x0 + x1) / 2.0f) - x2)) +
         ((((y0 + y1) / 2.0f) - y2) * (((y0 + y1) / 2.0f) - y2));
     if (dist_sq > 2.0f) {
-        add_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x0, y0, a0, x2, y2, a2);
-        add_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x1, y1, a1, x2, y2, a2);
+        add_opaque_recurse_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x0, y0, a0, x2, y2, a2);
+        add_opaque_recurse_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x1, y1, a1, x2, y2, a2);
     }
 
+}
+
+void OvalBatch::add_alpha_(
+    float x, float y,
+    float x_radius, float y_radius,
+    float z,
+    float r, float g, float b, float a,
+    float cx, float cy, float angle
+) {
+    static float
+        a0 = 0.0f,
+        a1 = glm::radians(90.0f),
+        a2 = glm::radians(180.0f),
+        a3 = glm::radians(270.0f),
+        a4 = glm::radians(360.0f);
+
+    float
+        x0 = x + x_radius * std::cos(a0),
+        y0 = y + y_radius * std::sin(a0),
+        x1 = x + x_radius * std::cos(a1),
+        y1 = y + y_radius * std::sin(a1),
+        x2 = x + x_radius * std::cos(a2),
+        y2 = y + y_radius * std::sin(a2),
+        x3 = x + x_radius * std::cos(a3),
+        y3 = y + y_radius * std::sin(a3);
+
+    alpha_vertices_->add({
+        x0, y0, z, r, g, b, a, cx, cy, angle,
+        x,  y,  z, r, g, b, a, cx, cy, angle,
+        x1, y1, z, r, g, b, a, cx, cy, angle,
+
+        x1, y1, z, r, g, b, a, cx, cy, angle,
+        x,  y,  z, r, g, b, a, cx, cy, angle,
+        x2, y2, z, r, g, b, a, cx, cy, angle,
+
+        x2, y2, z, r, g, b, a, cx, cy, angle,
+        x,  y,  z, r, g, b, a, cx, cy, angle,
+        x3, y3, z, r, g, b, a, cx, cy, angle,
+
+        x3, y3, z, r, g, b, a, cx, cy, angle,
+        x,  y,  z, r, g, b, a, cx, cy, angle,
+        x0, y0, z, r, g, b, a, cx, cy, angle
+    });
+
+    add_alpha_recurse_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x0, y0, a0, x1, y1, a1);
+    add_alpha_recurse_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x1, y1, a1, x2, y2, a2);
+    add_alpha_recurse_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x2, y2, a2, x3, y3, a3);
+    add_alpha_recurse_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x3, y3, a3, x0, y0, a4);
+}
+
+void OvalBatch::add_alpha_recurse_(
+    float x, float y,
+    float x_radius, float y_radius,
+    float z,
+    float r, float g, float b, float a,
+    float cx, float cy, float angle,
+    float x0, float y0, float a0,
+    float x1, float y1, float a1
+) {
+    float a2 = (a0 + a1) / 2.0f;
+    float
+        x2 = x + x_radius * std::cos(a2),
+        y2 = y + y_radius * std::sin(a2);
+
+    alpha_vertices_->add({
+        x0, y0, z, r, g, b, a, cx, cy, angle,
+        x2, y2, z, r, g, b, a, cx, cy, angle,
+        x1, y1, z, r, g, b, a, cx, cy, angle
+    });
+
+    float dist_sq =
+        ((((x0 + x1) / 2.0f) - x2) * (((x0 + x1) / 2.0f) - x2)) +
+        ((((y0 + y1) / 2.0f) - y2) * (((y0 + y1) / 2.0f) - y2));
+    if (dist_sq > 2.0f) {
+        add_alpha_recurse_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x0, y0, a0, x2, y2, a2);
+        add_alpha_recurse_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x1, y1, a1, x2, y2, a2);
+    }
 }
 
 } // namespace gl
