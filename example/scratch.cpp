@@ -8,6 +8,9 @@ public:
     void update(double dt) override {
         if (events->pressed("escape"))
             window_close();
+
+        if (events->pressed("1"))
+            window_set_vsync(!window_vsync());
     }
 
     void draw() override {
@@ -33,6 +36,7 @@ int main(int, char *[]) {
 
     e.open<Scratch>({
         .title = "Scratch",
+        .monitor = 1,
         .flags = hades::WFlags::borderless
     });
 

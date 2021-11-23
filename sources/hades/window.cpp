@@ -19,25 +19,58 @@ void Window::window_close() {
 }
 
 int Window::window_x() const {
-    return pos_.x;
+    return wm_info_.pos.x;
 }
 
 int Window::window_y() const {
-    return pos_.y;
+    return wm_info_.pos.y;
 }
 
 int Window::window_width() const {
-    return size_.x;
+    return wm_info_.size.x;
 }
 
 int Window::window_height() const {
-    return size_.y;
+    return wm_info_.size.y;
+}
+
+void Window::window_set_floating(bool floating) {
+    glfwSetWindowAttrib(glfw_window_, GLFW_FLOATING, floating ? GLFW_TRUE : GLFW_FALSE);
+}
+
+bool Window::window_floating() {
+    return glfwGetWindowAttrib(glfw_window_, GLFW_FLOATING) == GLFW_TRUE;
+}
+
+void Window::window_set_resizable(bool resizable) {
+    glfwSetWindowAttrib(glfw_window_, GLFW_RESIZABLE, resizable ? GLFW_TRUE : GLFW_FALSE);
+}
+
+bool Window::window_resizable() {
+    return glfwGetWindowAttrib(glfw_window_, GLFW_RESIZABLE) == GLFW_TRUE;
+}
+
+void Window::window_set_visible(bool visible) {
+    glfwSetWindowAttrib(glfw_window_, GLFW_VISIBLE, visible ? GLFW_TRUE : GLFW_FALSE);
+}
+
+bool Window::window_visible() {
+    return glfwGetWindowAttrib(glfw_window_, GLFW_VISIBLE) == GLFW_TRUE;
+}
+
+void Window::window_set_vsync(bool vsync) {
+    wm_info_.vsync = vsync;
+    glfwSwapInterval(wm_info_.vsync ? 1 : 0);
+}
+
+bool Window::window_vsync() {
+    return wm_info_.vsync;
 }
 
 glm::mat4 Window::window_projection() const {
     return glm::ortho(
-        0.0f, static_cast<float>(size_.x),
-        static_cast<float>(size_.y), 0.0f,
+        0.0f, static_cast<float>(wm_info_.size.x),
+        static_cast<float>(wm_info_.size.y), 0.0f,
         0.0f, 1.0f
     );
 }
@@ -50,7 +83,6 @@ void Window::start_frame_() {
 }
 
 void Window::end_frame_() {
-    ctx->switch_to_batch_set("default");
     ctx->draw_batches(window_projection());
 
     ctx->flush();
@@ -58,10 +90,14 @@ void Window::end_frame_() {
     ctx->switch_to_batch_set("__overlay");
     ctx->clear_batches();
 
-    overlay_.font->render(1, 2, "{:.2f} fps", overlay_.frame_counter.fps());
+    overlay_.font->render(
+        1, 2,
+        "{:.2f} fps{}",
+        overlay_.frame_counter.fps(),
+        wm_info_.vsync ? " (vsync)" : ""
+    );
 
     ctx->draw_batches(window_projection());
-    ctx->switch_to_batch_set("default");
 
     fbo_->unbind();
     fbo_->copy_to_default_framebuffer();
@@ -104,15 +140,12 @@ void Window::open_() {
             std::exit(EXIT_FAILURE);
         } else
             spdlog::debug("Created GLFW window ({})", tag);
-        size_ = {mode->width, mode->height};
+        wm_info_.size = {mode->width, mode->height};
 
     } else if (set(open_cfg_.flags, WFlags::borderless)) {
-        glfwWindowHint(GLFW_RED_BITS, mode->redBits);
-        glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
-        glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
-        glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+        glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
-        glfw_window_ = glfwCreateWindow(mode->width, mode->height, open_cfg_.title.c_str(), monitor, nullptr);
+        glfw_window_ = glfwCreateWindow(mode->width, mode->height, open_cfg_.title.c_str(), nullptr, nullptr);
         if (!glfw_window_) {
             const char *description;
             int code = glfwGetError(&description);
@@ -121,7 +154,13 @@ void Window::open_() {
             std::exit(EXIT_FAILURE);
         } else
             spdlog::debug("Created GLFW window ({})", tag);
-        size_ = {mode->width, mode->height};
+        wm_info_.size = {mode->width, mode->height};
+        wm_info_.borderless = true;
+
+        int base_x, base_y;
+        glfwGetMonitorPos(monitor, &base_x, &base_y);
+        wm_info_.pos = {base_x, base_y};
+        glfwSetWindowPos(glfw_window_, wm_info_.pos.x, wm_info_.pos.y);
 
     } else {
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
@@ -136,17 +175,17 @@ void Window::open_() {
             std::exit(EXIT_FAILURE);
         } else
             spdlog::debug("Created GLFW window ({})", tag);
-        size_ = open_cfg_.size;
+        wm_info_.size = open_cfg_.size;
 
         int base_x, base_y;
         glfwGetMonitorPos(monitor, &base_x, &base_y);
         if (set(open_cfg_.flags, WFlags::centered))
-            pos_ = {base_x + (mode->width - size_.x) / 2,
-                    base_y + (mode->height - size_.y) / 2};
+            wm_info_.pos = {base_x + (mode->width - wm_info_.size.x) / 2,
+                            base_y + (mode->height - wm_info_.size.y) / 2};
         else
-            pos_ = {base_x + open_cfg_.position.x,
-                    base_y + open_cfg_.position.y};
-        glfwSetWindowPos(glfw_window_, pos_.x, pos_.y);
+            wm_info_.pos = {base_x + open_cfg_.position.x,
+                            base_y + open_cfg_.position.y};
+        glfwSetWindowPos(glfw_window_, wm_info_.pos.x, wm_info_.pos.y);
 
         if (!set(open_cfg_.flags, WFlags::hidden))
             glfwShowWindow(glfw_window_);
@@ -184,7 +223,8 @@ void Window::initialize_gl_() {
 
     ctx = std::make_unique<Context>(ctx_, tag);
 
-    glfwSwapInterval(set(open_cfg_.flags, WFlags::vsync) ? 1 : 0);
+    wm_info_.vsync = set(open_cfg_.flags, WFlags::vsync);
+    glfwSwapInterval(wm_info_.vsync ? 1 : 0);
 
 //    ctx->enable(gl::Capability::blend);
     ctx->blend_func(gl::BlendFunc::src_alpha, gl::BlendFunc::one_minus_src_alpha);

@@ -18,13 +18,13 @@
 namespace hades {
 
 enum class WFlags {
-    none,
-    resizable,
-    vsync,
-    hidden,
-    centered,
-    fullscreen,
-    borderless
+    none       = 1 << 0,
+    resizable  = 1 << 1,
+    vsync      = 1 << 2,
+    hidden     = 1 << 3,
+    centered   = 1 << 4,
+    fullscreen = 1 << 5,
+    borderless = 1 << 6
 };
 
 struct WCfg {
@@ -67,6 +67,18 @@ protected:
     int window_width() const;
     int window_height() const;
 
+    void window_set_floating(bool floating);
+    bool window_floating();
+
+    void window_set_resizable(bool resizable);
+    bool window_resizable();
+
+    void window_set_visible(bool visible);
+    bool window_visible();
+
+    void window_set_vsync(bool vsync);
+    bool window_vsync();
+
     glm::mat4 window_projection() const;
 
 private:
@@ -79,8 +91,14 @@ private:
     GLFWwindow *glfw_window_{nullptr};
     WCfg open_cfg_{};
 
-    glm::ivec2 pos_{0, 0};
-    glm::ivec2 size_{0, 0};
+    struct {
+        glm::ivec2 pos{0, 0};
+        glm::ivec2 size{0, 0};
+
+        bool borderless{false};
+
+        bool vsync{false};
+    } wm_info_;
 
     struct {
         FrameCounter frame_counter{};

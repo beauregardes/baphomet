@@ -16,9 +16,9 @@ class EventMgr {
 
 public:
     struct {
-        int x {0}, y {0};
-        int dx {0}, dy {0};
-        int sx {0}, sy {0};
+        double x {0}, y {0};
+        double dx {0}, dy {0};
+        double sx {0}, sy {0};
 
         bool got_first_event {false};
 

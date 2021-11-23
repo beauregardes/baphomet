@@ -114,16 +114,19 @@ void WindowMgr::event_loop() {
             glfwSetScrollCallback(w->glfw_window_, glfw_scroll_callback_);
             glfwSetWindowSizeCallback(w->glfw_window_, glfw_window_size_callback_);
             glfwSetWindowPosCallback(w->glfw_window_, glfw_window_pos_callback_);
+            glfwSetWindowFocusCallback(w->glfw_window_, glfw_window_focus_callback_);
 
             std::string tag = w->tag;
+            initialize_mut_.lock();
             initialize_queue_.push(std::move(w));
+            initialize_mut_.unlock();
             spdlog::debug("Opened, pushed to initialize_queue_ ({})", tag);
 
             create_queue_.pop();
         }
         create_mut_.unlock();
 
-        glfwWaitEventsTimeout(1.0);
+        glfwWaitEvents();
 
         destroy_mut_.lock();
         while (!destroy_queue_.empty()) {
@@ -189,13 +192,21 @@ void WindowMgr::glfw_scroll_callback_(GLFWwindow *window, double xoffset, double
 void WindowMgr::glfw_window_size_callback_(GLFWwindow *window, int width, int height) {
     auto e = reinterpret_cast<WindowMgr *>(glfwGetWindowUserPointer(window));
     if (auto it = e->windows_.find(window); it != e->windows_.end())
-        it->second->size_ = glm::ivec2(width, height);
+        it->second->wm_info_.size = glm::ivec2(width, height);
 }
 
 void WindowMgr::glfw_window_pos_callback_(GLFWwindow *window, int xpos, int ypos) {
     auto e = reinterpret_cast<WindowMgr *>(glfwGetWindowUserPointer(window));
     if (auto it = e->windows_.find(window); it != e->windows_.end())
-        it->second->pos_ = glm::ivec2(xpos, ypos);
+        it->second->wm_info_.pos = glm::ivec2(xpos, ypos);
+}
+
+void WindowMgr::glfw_window_focus_callback_(GLFWwindow *window, int focused) {
+    auto e = reinterpret_cast<WindowMgr *>(glfwGetWindowUserPointer(window));
+    if (auto it = e->windows_.find(window); it != e->windows_.end()) {
+        if (it->second->wm_info_.borderless)
+            it->second->window_set_floating(focused == 1);
+    }
 }
 
 } // namespace hades

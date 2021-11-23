@@ -62,6 +62,7 @@ private:
 
     static void glfw_window_size_callback_(GLFWwindow *window, int width, int height);
     static void glfw_window_pos_callback_(GLFWwindow *window, int xpos, int ypos);
+    static void glfw_window_focus_callback_(GLFWwindow *window, int focused);
 };
 
 template<DerivesHadesWindow T>
