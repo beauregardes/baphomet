@@ -11,18 +11,20 @@ public:
     }
 
     void draw() override {
-        ctx->clear_color(hades::rgb(0x404040));
+        ctx->clear_color(hades::rgb(0x101010));
         ctx->clear();
 
-        ctx->oval(150, 75, 100, 50, hades::rgba(0xff808080));
-        ctx->oval(200, 100, 100, 50, hades::rgba(0x80ff8080));
-        ctx->oval(250, 125, 100, 50, hades::rgba(0x8080ff80));
+        ctx->oval(window_width() / 2 - 75, window_height() / 2 - 45, 100, 60, hades::rgba(0xff8080ff));
+        ctx->oval(window_width() / 2 - 25, window_height() / 2 - 15, 100, 60, hades::rgba(0x80ff80ff));
 
         ctx->oval(
             events->mouse.x, events->mouse.y,
-            100, 50,
+            60, 60,
             hades::rgba(0xff80ff80)
         );
+
+        ctx->oval(window_width() / 2 + 25, window_height() / 2 + 15, 100, 60, hades::rgba(0x8080ffff));
+        ctx->oval(window_width() / 2 + 75, window_height() / 2 + 45, 100, 60, hades::rgba(0xffff80ff));
     }
 };
 
@@ -31,7 +33,7 @@ int main(int, char *[]) {
 
     e.open<Scratch>({
         .title = "Scratch 1",
-        .size = {1280, 720},
+        .size = {500, 500},
         .glversion = {4, 5},
         .monitor = 1,
         .flags = hades::WFlags::centered
@@ -39,3 +41,5 @@ int main(int, char *[]) {
 
     e.event_loop();
 }
+
+
