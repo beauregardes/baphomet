@@ -108,6 +108,10 @@ void Window::make_current_() {
     glfwMakeContextCurrent(glfw_window_);
 }
 
+#define _NET_WM_STATE_REMOVE        0    // remove/unset property
+#define _NET_WM_STATE_ADD           1    // add/set property
+#define _NET_WM_STATE_TOGGLE        2    // toggle property
+
 void Window::open_() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, open_cfg_.glversion.x);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, open_cfg_.glversion.y);
@@ -144,6 +148,7 @@ void Window::open_() {
 
     } else if (set(open_cfg_.flags, WFlags::borderless)) {
         glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+        glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
 
         glfw_window_ = glfwCreateWindow(mode->width, mode->height, open_cfg_.title.c_str(), nullptr, nullptr);
         if (!glfw_window_) {
