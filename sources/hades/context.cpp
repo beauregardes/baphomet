@@ -78,7 +78,6 @@ void Context::clear(gl::ClearMask mask) {
 
 void Context::flush() {
     ctx_->Flush();
-    clear(gl::ClearMask::depth);
 }
 
 /***********

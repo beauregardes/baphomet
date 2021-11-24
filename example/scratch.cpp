@@ -17,13 +17,15 @@ public:
         ctx->clear_color(hades::rgb(0x101020));
         ctx->clear();
 
-        ctx->oval(window_width() / 2 - 75, window_height() / 2 - 45, 100, 60, hades::rgba(0xff8080ff));
-        ctx->oval(window_width() / 2 - 25, window_height() / 2 - 15, 100, 60, hades::rgba(0x80ff80ff));
+        auto size = window_size();
 
-        ctx->oval(events->mouse.x,         events->mouse.y,          60,  60, hades::rgba(0xff80ff80));
+        ctx->oval(size.x / 2 - 75, size.y / 2 - 45, 100, 60, hades::rgba(0xff8080ff));
+        ctx->oval(size.x / 2 - 25, size.y / 2 - 15, 100, 60, hades::rgba(0x80ff80ff));
 
-        ctx->oval(window_width() / 2 + 25, window_height() / 2 + 15, 100, 60, hades::rgba(0x8080ffff));
-        ctx->oval(window_width() / 2 + 75, window_height() / 2 + 45, 100, 60, hades::rgba(0xffff80ff));
+        ctx->oval(events->mouse.x, events->mouse.y, 60, 60, hades::rgba(0xff80ff80));
+
+        ctx->oval(size.x / 2 + 25, size.y / 2 + 15, 100, 60, hades::rgba(0x8080ffff));
+        ctx->oval(size.x / 2 + 75, size.y / 2 + 45, 100, 60, hades::rgba(0xffff80ff));
     }
 };
 
@@ -32,7 +34,8 @@ int main(int, char *[]) {
 
     e.open<Scratch>({
         .title = "Scratch",
-        .flags = hades::WFlags::borderless
+        .size = {500, 500},
+        .flags = hades::WFlags::centered,
     });
 
     e.event_loop();

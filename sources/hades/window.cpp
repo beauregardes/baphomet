@@ -1,5 +1,6 @@
-#include <hades/window.hpp>
 #include "hades/window.hpp"
+
+#include "hades/util/platform.hpp"
 
 #include "glm/gtc/matrix_transform.hpp"
 #include "spdlog/spdlog.h"
@@ -18,20 +19,12 @@ void Window::window_close() {
     glfwSetWindowShouldClose(glfw_window_, GLFW_TRUE);
 }
 
-int Window::window_x() const {
-    return wm_info_.pos.x;
+void Window::window_set_auto_iconify(bool auto_iconify) {
+    glfwSetWindowAttrib(glfw_window_, GLFW_AUTO_ICONIFY, auto_iconify ? GLFW_TRUE : GLFW_FALSE);
 }
 
-int Window::window_y() const {
-    return wm_info_.pos.y;
-}
-
-int Window::window_width() const {
-    return wm_info_.size.x;
-}
-
-int Window::window_height() const {
-    return wm_info_.size.y;
+bool Window::window_auto_iconify() {
+    return glfwGetWindowAttrib(glfw_window_, GLFW_AUTO_ICONIFY) == GLFW_TRUE;
 }
 
 void Window::window_set_floating(bool floating) {
@@ -58,6 +51,14 @@ bool Window::window_visible() {
     return glfwGetWindowAttrib(glfw_window_, GLFW_VISIBLE) == GLFW_TRUE;
 }
 
+void Window::window_set_decorated(bool decorated) {
+    glfwSetWindowAttrib(glfw_window_, GLFW_DECORATED, decorated ? GLFW_TRUE : GLFW_FALSE);
+}
+
+bool Window::window_decorated() {
+    return glfwGetWindowAttrib(glfw_window_, GLFW_DECORATED) == GLFW_TRUE;
+}
+
 void Window::window_set_vsync(bool vsync) {
     wm_info_.vsync = vsync;
     glfwSwapInterval(wm_info_.vsync ? 1 : 0);
@@ -67,10 +68,39 @@ bool Window::window_vsync() {
     return wm_info_.vsync;
 }
 
-glm::mat4 Window::window_projection() const {
+void Window::window_set_size(int width, int height) {
+    glfwSetWindowSize(glfw_window_, width, height);
+}
+
+glm::ivec2 Window::window_size() {
+    int width, height;
+    glfwGetWindowSize(glfw_window_, &width, &height);
+    return {width, height};
+}
+
+void Window::window_set_size_limits(int min_width, int min_height, int max_width, int max_height) {
+    glfwSetWindowSizeLimits(glfw_window_, min_width, min_height, max_width, max_height);
+}
+
+void Window::window_set_aspect_ratio(int numerator, int denominator) {
+    glfwSetWindowAspectRatio(glfw_window_, numerator, denominator);
+}
+
+void Window::window_set_pos(int x, int y) {
+    glfwSetWindowPos(glfw_window_, x, y);
+}
+
+glm::ivec2 Window::window_pos() {
+    int x, y;
+    glfwGetWindowPos(glfw_window_, &x, &y);
+    return {x, y};
+}
+
+glm::mat4 Window::window_projection() {
+    auto size = window_size();
     return glm::ortho(
-        0.0f, static_cast<float>(wm_info_.size.x),
-        static_cast<float>(wm_info_.size.y), 0.0f,
+        0.0f, static_cast<float>(size.x),
+        static_cast<float>(size.y), 0.0f,
         0.0f, 1.0f
     );
 }
@@ -80,18 +110,21 @@ void Window::start_frame_() {
 
     ctx->switch_to_batch_set("default");
     ctx->clear_batches();
+
+    ctx->clear(gl::ClearMask::depth);
 }
 
 void Window::end_frame_() {
     ctx->draw_batches(window_projection());
 
     ctx->flush();
+    ctx->clear(gl::ClearMask::depth);
 
     ctx->switch_to_batch_set("__overlay");
     ctx->clear_batches();
 
     overlay_.font->render(
-        1, 2,
+        1, 2, 2.0f,
         "{:.2f} fps{}",
         overlay_.frame_counter.fps(),
         wm_info_.vsync ? " (vsync)" : ""
@@ -114,10 +147,24 @@ void Window::open_() {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+    if (set(open_cfg_.flags, WFlags::fullscreen) || set(open_cfg_.flags, WFlags::borderless)) {
+#if (HADES_PLATFORM == WINDOWS)
+        open_fullscreen_windows_();
+#elif (HADES_PLATFORM == LINUX)
+        open_fullscreen_linux();
+#endif
+    } else {
+        open_windowed_();
+    }
+
+    events = std::make_unique<EventMgr>(glfw_window_);
+    timers = std::make_unique<TimerMgr>();
+}
+
+GLFWmonitor *Window::get_monitor_() {
     int monitor_count = 0;
     auto monitors = glfwGetMonitors(&monitor_count);
 
-    GLFWmonitor *monitor;
     if (open_cfg_.monitor >= monitor_count) {
         spdlog::warn(
             "Monitor {} out of range (only {} monitors available); defaulting to primary ({})",
@@ -125,61 +172,105 @@ void Window::open_() {
             monitor_count,
             tag
         );
-        monitor = monitors[0];
-    } else
-        monitor = monitors[open_cfg_.monitor];
+        return monitors[0];
+    }
+    return monitors[open_cfg_.monitor];
+}
+
+void Window::open_fullscreen_windows_() {
+    GLFWmonitor *monitor = get_monitor_();
     const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
-    if (set(open_cfg_.flags, WFlags::fullscreen) || set(open_cfg_.flags, WFlags::borderless)) {
-        if (set(open_cfg_.flags, WFlags::borderless))
-            glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE);
+    if (set(open_cfg_.flags, WFlags::borderless)) {
+        wm_info_.borderless = true;
 
+        glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE);
+        glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+        glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
+
+        glfw_window_ = glfwCreateWindow(mode->width, mode->height, open_cfg_.title.c_str(), nullptr, nullptr);
+    } else
         glfw_window_ = glfwCreateWindow(mode->width, mode->height, open_cfg_.title.c_str(), monitor, nullptr);
-        if (!glfw_window_) {
-            const char *description;
-            int code = glfwGetError(&description);
-            spdlog::critical("Failed to create GLFW window: ({})\n* ({}) {}", tag, code, description);
-            glfwTerminate();
-            std::exit(EXIT_FAILURE);
-        } else
-            spdlog::debug("Created GLFW window ({})", tag);
-        wm_info_.size = {mode->width, mode->height};
 
+    if (!glfw_window_) {
+        const char *description;
+        int code = glfwGetError(&description);
+        spdlog::critical("Failed to create GLFW window: ({})\n* ({}) {}", tag, code, description);
+        glfwTerminate();
+        std::exit(EXIT_FAILURE);
+    } else
+        spdlog::debug("Created GLFW window ({})", tag);
+
+    if (set(open_cfg_.flags, WFlags::borderless)) {
         int base_x, base_y;
         glfwGetMonitorPos(monitor, &base_x, &base_y);
-        wm_info_.pos = {base_x, base_y};
+        glfwSetWindowPos(glfw_window_, base_x, base_y);
+    }
+}
 
-    } else {
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-        glfwWindowHint(GLFW_RESIZABLE, set(open_cfg_.flags, WFlags::resizable) ? GLFW_TRUE : GLFW_FALSE);
+void Window::open_fullscreen_linux_() {
+    /* We are making the assumption that the user is running a version of X11
+     * that treats *all* fullscreen windows as borderless fullscreen windows.
+     * This seems to generally be true for a good majority of systems. This may
+     * also just act exactly like a normal fullscreen, there's not really any
+     * way to tell ahead of time. The trick with an undecorated window that
+     * is the same size as the monitor only seems to work on Windows.
+     */
 
-        glfw_window_ = glfwCreateWindow(open_cfg_.size.x, open_cfg_.size.y, open_cfg_.title.c_str(), nullptr, nullptr);
-        if (!glfw_window_) {
-            const char *description;
-            int code = glfwGetError(&description);
-            spdlog::critical("Failed to create GLFW window: ({})\n* ({}) {}", tag, code, description);
-            glfwTerminate();
-            std::exit(EXIT_FAILURE);
-        } else
-            spdlog::debug("Created GLFW window ({})", tag);
-        wm_info_.size = open_cfg_.size;
+    GLFWmonitor *monitor = get_monitor_();
+    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
-        int base_x, base_y;
-        glfwGetMonitorPos(monitor, &base_x, &base_y);
-        if (set(open_cfg_.flags, WFlags::centered))
-            wm_info_.pos = {base_x + (mode->width - wm_info_.size.x) / 2,
-                            base_y + (mode->height - wm_info_.size.y) / 2};
-        else
-            wm_info_.pos = {base_x + open_cfg_.position.x,
-                            base_y + open_cfg_.position.y};
-        glfwSetWindowPos(glfw_window_, wm_info_.pos.x, wm_info_.pos.y);
+    if (set(open_cfg_.flags, WFlags::borderless)) {
+        wm_info_.borderless = true;
 
-        if (!set(open_cfg_.flags, WFlags::hidden))
-            glfwShowWindow(glfw_window_);
+        glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE);
     }
 
-    events = std::make_unique<EventMgr>(glfw_window_);
-    timers = std::make_unique<TimerMgr>();
+    glfw_window_ = glfwCreateWindow(mode->width + 1, mode->height + 1, open_cfg_.title.c_str(), monitor, nullptr);
+    if (!glfw_window_) {
+        const char *description;
+        int code = glfwGetError(&description);
+        spdlog::critical("Failed to create GLFW window: ({})\n* ({}) {}", tag, code, description);
+        glfwTerminate();
+        std::exit(EXIT_FAILURE);
+    } else
+        spdlog::debug("Created GLFW window ({})", tag);
+}
+
+void Window::open_windowed_() {
+    GLFWmonitor *monitor = get_monitor_();
+    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, set(open_cfg_.flags, WFlags::resizable) ? GLFW_TRUE : GLFW_FALSE);
+
+    glfw_window_ = glfwCreateWindow(open_cfg_.size.x, open_cfg_.size.y, open_cfg_.title.c_str(), nullptr, nullptr);
+    if (!glfw_window_) {
+        const char *description;
+        int code = glfwGetError(&description);
+        spdlog::critical("Failed to create GLFW window: ({})\n* ({}) {}", tag, code, description);
+        glfwTerminate();
+        std::exit(EXIT_FAILURE);
+    } else
+        spdlog::debug("Created GLFW window ({})", tag);
+
+    int base_x, base_y;
+    glfwGetMonitorPos(monitor, &base_x, &base_y);
+    if (set(open_cfg_.flags, WFlags::centered))
+        glfwSetWindowPos(
+            glfw_window_,
+            base_x + (mode->width - open_cfg_.size.x) / 2,
+            base_y + (mode->height - open_cfg_.size.y) / 2
+         );
+    else
+        glfwSetWindowPos(
+            glfw_window_,
+            base_x + open_cfg_.position.x,
+            base_y + open_cfg_.position.y
+        );
+
+    if (!set(open_cfg_.flags, WFlags::hidden))
+        glfwShowWindow(glfw_window_);
 }
 
 void Window::initialize_gl_() {
@@ -218,7 +309,8 @@ void Window::initialize_gl_() {
 
     ctx->enable(gl::Capability::depth_test);
 
-    fbo_ = gl::FramebufferBuilder(ctx_, window_width(), window_height())
+    auto size = window_size();
+    fbo_ = gl::FramebufferBuilder(ctx_, size.x, size.y)
         .renderbuffer(gl::RBufFormat::rgba8)
         .renderbuffer(gl::RBufFormat::d32f)
         .check_complete();

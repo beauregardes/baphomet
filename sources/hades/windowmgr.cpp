@@ -190,23 +190,25 @@ void WindowMgr::glfw_scroll_callback_(GLFWwindow *window, double xoffset, double
 }
 
 void WindowMgr::glfw_window_size_callback_(GLFWwindow *window, int width, int height) {
-    auto e = reinterpret_cast<WindowMgr *>(glfwGetWindowUserPointer(window));
-    if (auto it = e->windows_.find(window); it != e->windows_.end())
-        it->second->wm_info_.size = glm::ivec2(width, height);
+//    auto e = reinterpret_cast<WindowMgr *>(glfwGetWindowUserPointer(window));
+//    if (auto it = e->windows_.find(window); it != e->windows_.end())
+//        it->second->wm_info_.size = glm::ivec2(width, height);
 }
 
 void WindowMgr::glfw_window_pos_callback_(GLFWwindow *window, int xpos, int ypos) {
-    auto e = reinterpret_cast<WindowMgr *>(glfwGetWindowUserPointer(window));
-    if (auto it = e->windows_.find(window); it != e->windows_.end())
-        it->second->wm_info_.pos = glm::ivec2(xpos, ypos);
+//    auto e = reinterpret_cast<WindowMgr *>(glfwGetWindowUserPointer(window));
+//    if (auto it = e->windows_.find(window); it != e->windows_.end())
+//        it->second->wm_info_.pos = glm::ivec2(xpos, ypos);
 }
 
 void WindowMgr::glfw_window_focus_callback_(GLFWwindow *window, int focused) {
+#if defined(_WIN32) || defined(__CYGWIN__)
     auto e = reinterpret_cast<WindowMgr *>(glfwGetWindowUserPointer(window));
     if (auto it = e->windows_.find(window); it != e->windows_.end()) {
         if (it->second->wm_info_.borderless)
             it->second->window_set_floating(focused == 1);
     }
+#endif
 }
 
 } // namespace hades

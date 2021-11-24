@@ -61,11 +61,8 @@ protected:
 
     void window_close();
 
-    int window_x() const;
-    int window_y() const;
-
-    int window_width() const;
-    int window_height() const;
+    void window_set_auto_iconify(bool auto_iconify);
+    bool window_auto_iconify();
 
     void window_set_floating(bool floating);
     bool window_floating();
@@ -76,10 +73,21 @@ protected:
     void window_set_visible(bool visible);
     bool window_visible();
 
+    void window_set_decorated(bool decorated);
+    bool window_decorated();
+
     void window_set_vsync(bool vsync);
     bool window_vsync();
 
-    glm::mat4 window_projection() const;
+    void window_set_size(int width, int height);
+    glm::ivec2 window_size();
+    void window_set_size_limits(int min_width, int min_height, int max_width, int max_height);
+    void window_set_aspect_ratio(int numerator, int denominator);
+
+    void window_set_pos(int x, int y);
+    glm::ivec2 window_pos();
+
+    glm::mat4 window_projection();
 
 private:
     GladGLContext *ctx_{nullptr};
@@ -92,11 +100,7 @@ private:
     WCfg open_cfg_{};
 
     struct {
-        glm::ivec2 pos{0, 0};
-        glm::ivec2 size{0, 0};
-
         bool borderless{false};
-
         bool vsync{false};
     } wm_info_;
 
@@ -111,6 +115,12 @@ private:
     void make_current_();
 
     void open_();
+
+    GLFWmonitor *get_monitor_();
+    void open_fullscreen_windows_();
+    void open_fullscreen_linux_();
+    void open_windowed_();
+
     void initialize_gl_();
 };
 
