@@ -108,10 +108,6 @@ void Window::make_current_() {
     glfwMakeContextCurrent(glfw_window_);
 }
 
-#define _NET_WM_STATE_REMOVE        0    // remove/unset property
-#define _NET_WM_STATE_ADD           1    // add/set property
-#define _NET_WM_STATE_TOGGLE        2    // toggle property
-
 void Window::open_() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, open_cfg_.glversion.x);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, open_cfg_.glversion.y);
@@ -134,7 +130,10 @@ void Window::open_() {
         monitor = monitors[open_cfg_.monitor];
     const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
-    if (set(open_cfg_.flags, WFlags::fullscreen)) {
+    if (set(open_cfg_.flags, WFlags::fullscreen) || set(open_cfg_.flags, WFlags::borderless)) {
+        if (set(open_cfg_.flags, WFlags::borderless))
+            glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE);
+
         glfw_window_ = glfwCreateWindow(mode->width, mode->height, open_cfg_.title.c_str(), monitor, nullptr);
         if (!glfw_window_) {
             const char *description;
@@ -146,26 +145,9 @@ void Window::open_() {
             spdlog::debug("Created GLFW window ({})", tag);
         wm_info_.size = {mode->width, mode->height};
 
-    } else if (set(open_cfg_.flags, WFlags::borderless)) {
-        glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-        glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
-
-        glfw_window_ = glfwCreateWindow(mode->width, mode->height, open_cfg_.title.c_str(), nullptr, nullptr);
-        if (!glfw_window_) {
-            const char *description;
-            int code = glfwGetError(&description);
-            spdlog::critical("Failed to create GLFW window: ({})\n* ({}) {}", tag, code, description);
-            glfwTerminate();
-            std::exit(EXIT_FAILURE);
-        } else
-            spdlog::debug("Created GLFW window ({})", tag);
-        wm_info_.size = {mode->width, mode->height};
-        wm_info_.borderless = true;
-
         int base_x, base_y;
         glfwGetMonitorPos(monitor, &base_x, &base_y);
         wm_info_.pos = {base_x, base_y};
-        glfwSetWindowPos(glfw_window_, wm_info_.pos.x, wm_info_.pos.y);
 
     } else {
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
