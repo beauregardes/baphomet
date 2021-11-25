@@ -131,7 +131,7 @@ FramebufferBuilder &FramebufferBuilder::texture(const std::string &tag, TexForma
 }
 
 FramebufferBuilder &FramebufferBuilder::texture(TexFormat format) {
-    return texture(hades::rand::base58(11), format);
+    return texture(rnd::base58(11), format);
 }
 
 FramebufferBuilder &FramebufferBuilder::renderbuffer(const std::string &tag, RBufFormat internalformat) {
@@ -154,7 +154,7 @@ FramebufferBuilder &FramebufferBuilder::renderbuffer(const std::string &tag, RBu
 }
 
 FramebufferBuilder &FramebufferBuilder::renderbuffer(RBufFormat internalformat) {
-    return renderbuffer(hades::rand::base58(11), internalformat);
+    return renderbuffer(rnd::base58(11), internalformat);
 }
 
 std::unique_ptr<Framebuffer> FramebufferBuilder::check_complete() {

@@ -13,7 +13,7 @@
 #include <ranges>
 #include <string>
 
-namespace hades::rand {
+namespace rnd {
 
 struct seed_data {
     pcg_extras::pcg128_t seed{0};
@@ -238,7 +238,11 @@ T get() {
  * COLORS
  */
 
-RGB rgb(bool randomize_alpha = false);
+hades::RGB rgb();
+hades::RGB rgb(glm::ivec2 r_range, glm::ivec2 g_range, glm::ivec2 b_range);
+
+hades::RGB rgba();
+hades::RGB rgba(glm::ivec2 r_range, glm::ivec2 g_range, glm::ivec2 b_range, glm::ivec2 a_range);
 
 /*******
  * MISC
@@ -246,6 +250,6 @@ RGB rgb(bool randomize_alpha = false);
 
 std::string base58(std::size_t length);
 
-} // namespace hades::rand
+} // namespace rnd
 
 #endif //HADES_UTIL_RANDOM_HPP

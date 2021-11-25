@@ -333,7 +333,7 @@ void Shader::del_id_() {
 }
 
 ShaderBuilder::ShaderBuilder(GladGLContext *gl_ctx)
-    : ShaderBuilder(gl_ctx, hades::rand::base58(11)) {}
+    : ShaderBuilder(gl_ctx, rnd::base58(11)) {}
 
 ShaderBuilder::ShaderBuilder(GladGLContext *gl_ctx, const std::string &tag)
     : tag_(tag), ctx_(gl_ctx) {

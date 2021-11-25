@@ -48,19 +48,19 @@ public:
 
     template<AfterCallable Func>
     std::string after(const std::vector<double> &intervals, Func action) {
-        auto tag = rand::base58(11);
+        auto tag = rnd::base58(11);
         return after(tag, intervals, action);
     }
 
     template<AfterCallable Func>
     std::string after(std::initializer_list<double> intervals, Func action) {
-        auto tag = rand::base58(11);
+        auto tag = rnd::base58(11);
         return after(tag, intervals, action);
     }
 
     template<AfterCallable Func>
     std::string after(double interval, Func action) {
-        auto tag = rand::base58(11);
+        auto tag = rnd::base58(11);
         return after(tag, interval, action);
     }
 
@@ -86,19 +86,19 @@ public:
 
     template<EveryCallable Func>
     std::string every(const std::vector<double> &intervals, Func action) {
-        auto tag = rand::base58(11);
+        auto tag = rnd::base58(11);
         return every(tag, intervals, action);
     }
 
     template<EveryCallable Func>
     std::string every(std::initializer_list<double> intervals, Func action) {
-        auto tag = rand::base58(11);
+        auto tag = rnd::base58(11);
         return every(tag, intervals, action);
     }
 
     template<EveryCallable Func>
     std::string every(double interval, Func action) {
-        auto tag = rand::base58(11);
+        auto tag = rnd::base58(11);
         return every(tag, interval, action);
     }
 
@@ -124,19 +124,19 @@ public:
 
     template<EveryCallable Func>
     std::string every(const std::vector<double> &intervals, int count, Func action) {
-        auto tag = rand::base58(11);
+        auto tag = rnd::base58(11);
         return every(tag, intervals, count, action);
     }
 
     template<EveryCallable Func>
     std::string every(std::initializer_list<double> intervals, int count, Func action) {
-        auto tag = rand::base58(11);
+        auto tag = rnd::base58(11);
         return every(tag, intervals, count, action);
     }
 
     template<EveryCallable Func>
     std::string every(double interval, int count, Func action) {
-        auto tag = rand::base58(11);
+        auto tag = rnd::base58(11);
         return every(tag, interval, count, action);
     }
 
@@ -162,19 +162,19 @@ public:
 
     template<UntilCallable Func>
     std::string until(const std::vector<double> &intervals, Func action) {
-        auto tag = rand::base58(11);
+        auto tag = rnd::base58(11);
         return until(tag, intervals, action);
     }
 
     template<UntilCallable Func>
     std::string until(std::initializer_list<double> intervals, Func action) {
-        auto tag = rand::base58(11);
+        auto tag = rnd::base58(11);
         return until(tag, intervals, action);
     }
 
     template<UntilCallable Func>
     std::string until(double interval, Func action) {
-        auto tag = rand::base58(11);
+        auto tag = rnd::base58(11);
         return until(tag, interval, action);
     }
 
@@ -200,19 +200,19 @@ public:
 
     template<UntilCallable Func>
     std::string until(const std::vector<double> &intervals, int count, Func action) {
-        auto tag = rand::base58(11);
+        auto tag = rnd::base58(11);
         return until(tag, intervals, count, action);
     }
 
     template<UntilCallable Func>
     std::string until(std::initializer_list<double> intervals, int count, Func action) {
-        auto tag = rand::base58(11);
+        auto tag = rnd::base58(11);
         return until(tag, intervals, count, action);
     }
 
     template<UntilCallable Func>
     std::string until(double interval, int count, Func action) {
-        auto tag = rand::base58(11);
+        auto tag = rnd::base58(11);
         return until(tag, interval, count, action);
     }
 
@@ -253,7 +253,7 @@ private:
     class AfterTimer : public Timer {
     public:
         AfterTimer(const std::vector<double> &intervals, Func action)
-            : Timer(rand::choose(intervals)), action_(action) {}
+            : Timer(rnd::choose(intervals)), action_(action) {}
 
         void update(double dt) override {
             acc_ += dt;
@@ -275,7 +275,7 @@ private:
     class EveryTimer : public Timer {
     public:
         EveryTimer(const std::vector<double> &intervals, Func action)
-            : Timer(rand::choose(intervals)), action_(action), intervals_(intervals) {}
+            : Timer(rnd::choose(intervals)), action_(action), intervals_(intervals) {}
 
         void update(double dt) override {
             acc_ += dt;
@@ -287,7 +287,7 @@ private:
             action_();
 
             acc_ -= interval_;
-            interval_ = rand::choose(intervals_);
+            interval_ = rnd::choose(intervals_);
 
             triggered = false;
         }
@@ -301,7 +301,7 @@ private:
     class EveryCountTimer : public Timer {
     public:
         EveryCountTimer(const std::vector<double> &intervals, int count, Func action)
-            : Timer(rand::choose(intervals)), action_(action), intervals_(intervals), count_(count) {}
+            : Timer(rnd::choose(intervals)), action_(action), intervals_(intervals), count_(count) {}
 
         void update(double dt) override {
             acc_ += dt;
@@ -313,7 +313,7 @@ private:
             action_();
 
             acc_ -= interval_;
-            interval_ = rand::choose(intervals_);
+            interval_ = rnd::choose(intervals_);
 
             count_--;
             if (count_ <= 0)
@@ -332,7 +332,7 @@ private:
     class UntilTimer : public Timer {
     public:
         UntilTimer(const std::vector<double> &intervals, Func action)
-            : Timer(rand::choose(intervals)), action_(action), intervals_(intervals) {}
+            : Timer(rnd::choose(intervals)), action_(action), intervals_(intervals) {}
 
         void update(double dt) override {
             acc_ += dt;
@@ -347,7 +347,7 @@ private:
                 expired = true;
 
             acc_ -= interval_;
-            interval_ = rand::choose(intervals_);
+            interval_ = rnd::choose(intervals_);
 
             triggered = false;
         }
@@ -361,7 +361,7 @@ private:
     class UntilCountTimer : public Timer {
     public:
         UntilCountTimer(const std::vector<double> &intervals, int count, Func action)
-            : Timer(rand::choose(intervals)), action_(action), intervals_(intervals), count_(count) {}
+            : Timer(rnd::choose(intervals)), action_(action), intervals_(intervals), count_(count) {}
 
         void update(double dt) override {
             acc_ += dt;
@@ -376,7 +376,7 @@ private:
                 expired = true;
 
             acc_ -= interval_;
-            interval_ = rand::choose(intervals_);
+            interval_ = rnd::choose(intervals_);
 
             count_--;
             if (count_ <= 0)

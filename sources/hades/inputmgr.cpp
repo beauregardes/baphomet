@@ -1,38 +1,38 @@
-#include "hades/eventmgr.hpp"
+#include "hades/inputmgr.hpp"
 
 namespace hades {
 
-EventMgr::EventMgr(GLFWwindow *parent)
+InputMgr::InputMgr(GLFWwindow *parent)
     : parent_(parent) {}
 
-void EventMgr::set_mouse_locked(bool locked) {
+void InputMgr::set_mouse_locked(bool locked) {
     glfwSetInputMode(parent_, GLFW_CURSOR, locked ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
     mouse.locked = locked;
 }
 
-void EventMgr::set_mouse_hidden(bool hidden) {
+void InputMgr::set_mouse_hidden(bool hidden) {
     glfwSetInputMode(parent_, GLFW_CURSOR, hidden ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
     mouse.hidden = hidden;
 }
 
-bool EventMgr::raw_mouse_motion_supported() {
+bool InputMgr::raw_mouse_motion_supported() {
     return glfwRawMouseMotionSupported() == 1;
 }
 
-void EventMgr::set_raw_mouse_motion(bool raw) {
+void InputMgr::set_raw_mouse_motion(bool raw) {
     glfwSetInputMode(parent_, GLFW_RAW_MOUSE_MOTION, raw ? GLFW_TRUE : GLFW_FALSE);
     mouse.raw_motion = raw;
 }
 
-bool EventMgr::pressed(const std::string &action) {
+bool InputMgr::pressed(const std::string &action) {
     return state_[action] && !prev_state_[action];
 }
 
-bool EventMgr::released(const std::string &action) {
+bool InputMgr::released(const std::string &action) {
     return !state_[action] && prev_state_[action];
 }
 
-bool EventMgr::down(const std::string &action, double interval, double delay) {
+bool InputMgr::down(const std::string &action, double interval, double delay) {
     if (interval <= 0.0 && delay <= 0.0)
         return state_[action];
 
@@ -58,7 +58,7 @@ bool EventMgr::down(const std::string &action, double interval, double delay) {
     return false;
 }
 
-void EventMgr::update_(double dt) {
+void InputMgr::update_(double dt) {
     state_updates_.lock();
     for (auto &p : state_)
         prev_state_[p.first] = p.second;
@@ -99,7 +99,7 @@ void EventMgr::update_(double dt) {
     }
 }
 
-void EventMgr::glfw_key_event_(int key, int scancode, int action, int mods) {
+void InputMgr::glfw_key_event_(int key, int scancode, int action, int mods) {
     auto key_str = glfw_key_to_str_(key);
     if (action == GLFW_PRESS)
         state_updates_.ts_push({key_str, true});
@@ -107,7 +107,7 @@ void EventMgr::glfw_key_event_(int key, int scancode, int action, int mods) {
         state_updates_.ts_push({key_str, false});
 }
 
-void EventMgr::glfw_cursor_position_event_(double xpos, double ypos) {
+void InputMgr::glfw_cursor_position_event_(double xpos, double ypos) {
     mouse.dx += xpos - mouse.x;  // += because multiple events can happen in a single frame
     mouse.dy += ypos - mouse.y;  // see previous comment
     mouse.x = xpos;
@@ -120,10 +120,10 @@ void EventMgr::glfw_cursor_position_event_(double xpos, double ypos) {
     }
 }
 
-void EventMgr::glfw_cursor_enter_event_(int entered) {
+void InputMgr::glfw_cursor_enter_event_(int entered) {
 }
 
-void EventMgr::glfw_mouse_button_event_(int button, int action, int mods) {
+void InputMgr::glfw_mouse_button_event_(int button, int action, int mods) {
     auto button_str = glfw_button_to_str_(button);
     if (action == GLFW_PRESS)
         state_updates_.ts_push({button_str, true});
@@ -131,12 +131,12 @@ void EventMgr::glfw_mouse_button_event_(int button, int action, int mods) {
         state_updates_.ts_push({button_str, false});
 }
 
-void EventMgr::glfw_scroll_event_(double xoffset, double yoffset) {
+void InputMgr::glfw_scroll_event_(double xoffset, double yoffset) {
     mouse.sx = xoffset;
     mouse.sy = yoffset;
 }
 
-std::string EventMgr::glfw_key_to_str_(int key) {
+std::string InputMgr::glfw_key_to_str_(int key) {
     static std::unordered_map<int, std::string> mapping {
         {GLFW_KEY_UNKNOWN, "unknown"},
         {GLFW_KEY_SPACE, "space"},
@@ -263,7 +263,7 @@ std::string EventMgr::glfw_key_to_str_(int key) {
     return mapping[key];
 }
 
-std::string EventMgr::glfw_button_to_str_(int button) {
+std::string InputMgr::glfw_button_to_str_(int button) {
     static std::unordered_map<int, std::string> mapping {
         {GLFW_MOUSE_BUTTON_1, "mb_left"},
         {GLFW_MOUSE_BUTTON_2, "mb_right"},

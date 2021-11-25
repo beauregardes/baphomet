@@ -124,14 +124,13 @@ void Window::open_(const WCfg &cfg, glm::ivec2 glversion) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     if (set(cfg.flags, WFlags::fullscreen) || set(cfg.flags, WFlags::borderless)) {
-#if (HADES_PLATFORM == WINDOWS)
+#if defined(HADES_PLATFORM_WINDOWS)
         open_fullscreen_windows_(cfg);
-#elif (HADES_PLATFORM == LINUX)
-        open_fullscreen_linux(cfg);
+#elif defined(HADES_PLATFORM_LINUX)
+        open_fullscreen_linux_(cfg);
 #endif
-    } else {
+    } else
         open_windowed_(cfg);
-    }
 }
 
 void Window::close_() {
@@ -156,6 +155,12 @@ GLFWmonitor *Window::get_monitor_(const WCfg &cfg) {
 void Window::open_fullscreen_windows_(const WCfg &cfg) {
     GLFWmonitor *monitor = get_monitor_(cfg);
     const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+
+//    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);  // Why is this necessary?
+    glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+    glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+    glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+    glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
     if (set(cfg.flags, WFlags::borderless)) {
         wm_info_.borderless = true;
@@ -195,6 +200,12 @@ void Window::open_fullscreen_linux_(const WCfg &cfg) {
 
     GLFWmonitor *monitor = get_monitor_(cfg);
     const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+
+    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);  // Why is this necessary?
+    glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+    glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+    glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+    glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
     if (set(cfg.flags, WFlags::borderless)) {
         wm_info_.borderless = true;

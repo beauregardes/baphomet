@@ -1,10 +1,10 @@
-#include "hades/context.hpp"
+#include "hades/gfxmgr.hpp"
 
 #include "hades/util/random.hpp"
 
 namespace hades {
 
-Context::Context(GladGLContext *ctx)
+GfxMgr::GfxMgr(GladGLContext *ctx)
     : ctx_(ctx) {
 
     resource_loader = std::make_unique<hades::ResourceLoader>(ctx);
@@ -12,7 +12,7 @@ Context::Context(GladGLContext *ctx)
     new_batch_set_("default", true);
 }
 
-Context::Context(Context &&other) noexcept {
+GfxMgr::GfxMgr(GfxMgr &&other) noexcept {
     ctx_ = other.ctx_;
     resource_loader = std::move(other.resource_loader);
     batch_sets_ = std::move(other.batch_sets_);
@@ -22,7 +22,7 @@ Context::Context(Context &&other) noexcept {
     other.active_batch_ = "default";
 }
 
-Context &Context::operator=(Context &&other) noexcept {
+GfxMgr &GfxMgr::operator=(GfxMgr &&other) noexcept {
     if (this != &other) {
         ctx_ = other.ctx_;
         resource_loader = std::move(other.resource_loader);
@@ -35,35 +35,35 @@ Context &Context::operator=(Context &&other) noexcept {
     return *this;
 }
 
-void Context::enable_(gl::Capability cap) {
+void GfxMgr::enable_(gl::Capability cap) {
     ctx_->Enable(unwrap(cap));
 }
 
-void Context::disable_(gl::Capability cap) {
+void GfxMgr::disable_(gl::Capability cap) {
     ctx_->Disable(unwrap(cap));
 }
 
-void Context::depth_func_(gl::DepthFunc func) {
+void GfxMgr::depth_func_(gl::DepthFunc func) {
     ctx_->DepthFunc(unwrap(func));
 }
 
-void Context::depth_mask_(bool flag) {
+void GfxMgr::depth_mask_(bool flag) {
     ctx_->DepthMask(flag ? GL_TRUE : GL_FALSE);
 }
 
-void Context::blend_func_(gl::BlendFunc src, gl::BlendFunc dst) {
+void GfxMgr::blend_func_(gl::BlendFunc src, gl::BlendFunc dst) {
     ctx_->BlendFunc(unwrap(src), unwrap(dst));
 }
 
-void Context::viewport_(int x, int y, int w, int h) {
+void GfxMgr::viewport_(int x, int y, int w, int h) {
     ctx_->Viewport(x, y, w, h);
 }
 
-void Context::clip_control_(gl::ClipOrigin origin, gl::ClipDepth depth) {
+void GfxMgr::clip_control_(gl::ClipOrigin origin, gl::ClipDepth depth) {
     ctx_->ClipControl(unwrap(origin), unwrap(depth));
 }
 
-void Context::clear_color(const hades::RGB &color) {
+void GfxMgr::clear_color(const hades::RGB &color) {
     ctx_->ClearColor(
         static_cast<float>(color.r) / 255.0f,
         static_cast<float>(color.g) / 255.0f,
@@ -72,11 +72,11 @@ void Context::clear_color(const hades::RGB &color) {
     );
 }
 
-void Context::clear(gl::ClearMask mask) {
+void GfxMgr::clear(gl::ClearMask mask) {
     ctx_->Clear(unwrap(mask));
 }
 
-void Context::flush_() {
+void GfxMgr::flush_() {
     ctx_->Flush();
 }
 
@@ -84,22 +84,22 @@ void Context::flush_() {
  * BATCHING
  */
 
-void Context::new_batch_set_(const std::string &name, bool switch_to) {
+void GfxMgr::new_batch_set_(const std::string &name, bool switch_to) {
     batch_sets_[name] = std::make_unique<BatchSet>();
 
     if (switch_to)
         switch_to_batch_set_(name);
 }
 
-void Context::switch_to_batch_set_(const std::string &name) {
+void GfxMgr::switch_to_batch_set_(const std::string &name) {
     active_batch_ = name;
 }
 
-void Context::clear_batches_() {
+void GfxMgr::clear_batches_() {
     batch_sets_[active_batch_]->clear();
 }
 
-void Context::draw_batches_(glm::mat4 projection) {
+void GfxMgr::draw_batches_(glm::mat4 projection) {
     batch_sets_[active_batch_]->draw_opaque(projection);
 
     enable_(gl::Capability::blend);
@@ -115,7 +115,7 @@ void Context::draw_batches_(glm::mat4 projection) {
  * PRIMITIVES
  */
 
-void Context::pixel(float x, float y, const hades::RGB &color) {
+void GfxMgr::pixel(float x, float y, const hades::RGB &color) {
     if (!batch_sets_[active_batch_]->pixels)
         batch_sets_[active_batch_]->pixels = std::make_unique<gl::PixelBatch>(ctx_);
 
@@ -124,7 +124,7 @@ void Context::pixel(float x, float y, const hades::RGB &color) {
     batch_sets_[active_batch_]->z_level++;
 }
 
-void Context::line(float x0, float y0, float x1, float y1, const hades::RGB &color, float cx, float cy, float angle) {
+void GfxMgr::line(float x0, float y0, float x1, float y1, const hades::RGB &color, float cx, float cy, float angle) {
     if (!batch_sets_[active_batch_]->lines)
         batch_sets_[active_batch_]->lines = std::make_unique<gl::LineBatch>(ctx_);
 
@@ -139,15 +139,15 @@ void Context::line(float x0, float y0, float x1, float y1, const hades::RGB &col
     batch_sets_[active_batch_]->z_level++;
 }
 
-void Context::line(float x0, float y0, float x1, float y1, const hades::RGB &color, float angle) {
+void GfxMgr::line(float x0, float y0, float x1, float y1, const hades::RGB &color, float angle) {
     line(x0, y0, x1, y1, color, (x0 + x1) / 2.0f, (y0 + y1) / 2.0f, angle);
 }
 
-void Context::line(float x0, float y0, float x1, float y1, const hades::RGB &color) {
+void GfxMgr::line(float x0, float y0, float x1, float y1, const hades::RGB &color) {
     line(x0, y0, x1, y1, color, 0.0f, 0.0f, 0.0f);
 }
 
-void Context::tri(float x0, float y0, float x1, float y1, float x2, float y2, const hades::RGB &color, float cx, float cy, float angle) {
+void GfxMgr::tri(float x0, float y0, float x1, float y1, float x2, float y2, const hades::RGB &color, float cx, float cy, float angle) {
     if (!batch_sets_[active_batch_]->tris)
         batch_sets_[active_batch_]->tris = std::make_unique<gl::TriBatch>(ctx_);
 
@@ -163,15 +163,15 @@ void Context::tri(float x0, float y0, float x1, float y1, float x2, float y2, co
     batch_sets_[active_batch_]->z_level++;
 }
 
-void Context::tri(float x0, float y0, float x1, float y1, float x2, float y2, const hades::RGB &color, float angle) {
+void GfxMgr::tri(float x0, float y0, float x1, float y1, float x2, float y2, const hades::RGB &color, float angle) {
     tri(x0, y0, x1, y1, x2, y2, color, (x0 + x1 + x2) / 3.0f, (y0 + y1 + y2) / 3.0f, angle);
 }
 
-void Context::tri(float x0, float y0, float x1, float y1, float x2, float y2, const hades::RGB &color) {
+void GfxMgr::tri(float x0, float y0, float x1, float y1, float x2, float y2, const hades::RGB &color) {
     tri(x0, y0, x1, y1, x2, y2, color, 0.0f, 0.0f, 0.0f);
 }
 
-void Context::tri(float x, float y, float radius, const hades::RGB &color, float angle) {
+void GfxMgr::tri(float x, float y, float radius, const hades::RGB &color, float angle) {
     tri(
         x + radius * std::cos(-glm::radians(90.0f)),  y + radius * std::sin(-glm::radians(90.0f)),
         x + radius * std::cos(-glm::radians(210.0f)), y + radius * std::sin(-glm::radians(210.0f)),
@@ -181,7 +181,7 @@ void Context::tri(float x, float y, float radius, const hades::RGB &color, float
     );
 }
 
-void Context::tri(float x, float y, float radius, const hades::RGB &color) {
+void GfxMgr::tri(float x, float y, float radius, const hades::RGB &color) {
     tri(
         x + radius * std::cos(-glm::radians(90.0f)),  y + radius * std::sin(-glm::radians(90.0f)),
         x + radius * std::cos(-glm::radians(210.0f)), y + radius * std::sin(-glm::radians(210.0f)),
@@ -191,7 +191,7 @@ void Context::tri(float x, float y, float radius, const hades::RGB &color) {
     );
 }
 
-void Context::rect(float x, float y, float w, float h, const hades::RGB &color, float cx, float cy, float angle) {
+void GfxMgr::rect(float x, float y, float w, float h, const hades::RGB &color, float cx, float cy, float angle) {
     if (!batch_sets_[active_batch_]->rects)
         batch_sets_[active_batch_]->rects = std::make_unique<gl::RectBatch>(ctx_);
 
@@ -206,15 +206,15 @@ void Context::rect(float x, float y, float w, float h, const hades::RGB &color, 
     batch_sets_[active_batch_]->z_level++;
 }
 
-void Context::rect(float x, float y, float w, float h, const hades::RGB &color, float angle) {
+void GfxMgr::rect(float x, float y, float w, float h, const hades::RGB &color, float angle) {
     rect(x, y, w, h, color, (x + w) / 2.0f, (y + h) / 2.0f, angle);
 }
 
-void Context::rect(float x, float y, float w, float h, const hades::RGB &color) {
+void GfxMgr::rect(float x, float y, float w, float h, const hades::RGB &color) {
     rect(x, y, w, h, color, 0.0f, 0.0f, 0.0f);
 }
 
-void Context::oval(float x, float y, float x_radius, float y_radius, const hades::RGB &color, float cx, float cy, float angle) {
+void GfxMgr::oval(float x, float y, float x_radius, float y_radius, const hades::RGB &color, float cx, float cy, float angle) {
     if (!batch_sets_[active_batch_]->ovals)
         batch_sets_[active_batch_]->ovals = std::make_unique<gl::OvalBatch>(ctx_);
 
@@ -224,28 +224,28 @@ void Context::oval(float x, float y, float x_radius, float y_radius, const hades
         x_radius + 0.5f, y_radius + 0.5f,
         batch_sets_[active_batch_]->z_level,
         cv.r, cv.g, cv.b, cv.a,
-        cx, cy, angle
+        cx + 0.5f, cy + 0.5f, glm::radians(angle)
     );
     batch_sets_[active_batch_]->z_level++;
 }
 
-void Context::oval(float x, float y, float x_radius, float y_radius, const hades::RGB &color, float angle) {
+void GfxMgr::oval(float x, float y, float x_radius, float y_radius, const hades::RGB &color, float angle) {
     oval(x, y, x_radius, y_radius, color, x, y, angle);
 }
 
-void Context::oval(float x, float y, float x_radius, float y_radius, const hades::RGB &color) {
+void GfxMgr::oval(float x, float y, float x_radius, float y_radius, const hades::RGB &color) {
     oval(x, y, x_radius, y_radius, color, 0.0f, 0.0f, 0.0f);
 }
 
-void Context::circle(float x, float y, float radius, const hades::RGB &color, float cx, float cy, float angle) {
+void GfxMgr::circle(float x, float y, float radius, const hades::RGB &color, float cx, float cy, float angle) {
     oval(x, y, radius, radius, color, cx, cy, angle);
 }
 
-void Context::circle(float x, float y, float radius, const hades::RGB &color, float angle) {
+void GfxMgr::circle(float x, float y, float radius, const hades::RGB &color, float angle) {
     oval(x, y, radius, radius, color, x, y, 0.0f);
 }
 
-void Context::circle(float x, float y, float radius, const hades::RGB &color) {
+void GfxMgr::circle(float x, float y, float radius, const hades::RGB &color) {
     oval(x, y, radius, radius, color, 0.0f, 0.0f, 0.0f);
 }
 
@@ -253,8 +253,8 @@ void Context::circle(float x, float y, float radius, const hades::RGB &color) {
  * TEXTURES
  */
 
-std::unique_ptr<hades::Texture> Context::load_texture(const std::string &path, bool retro) {
-    auto name = hades::rand::base58(11);
+std::unique_ptr<hades::Texture> GfxMgr::load_texture(const std::string &path, bool retro) {
+    auto name = rnd::base58(11);
     resource_loader->load_texture_unit(name, path, retro);
 
     auto &tex = resource_loader->get_texture_unit(name);
@@ -267,8 +267,8 @@ std::unique_ptr<hades::Texture> Context::load_texture(const std::string &path, b
     );
 }
 
-std::unique_ptr<hades::CP437> Context::load_cp437(const std::string &path, int char_w, int char_h, bool retro) {
-    auto name = hades::rand::base58(11);
+std::unique_ptr<hades::CP437> GfxMgr::load_cp437(const std::string &path, int char_w, int char_h, bool retro) {
+    auto name = rnd::base58(11);
     resource_loader->load_texture_unit(name, path, retro);
 
     auto &tex = resource_loader->get_texture_unit(name);

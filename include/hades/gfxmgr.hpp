@@ -1,5 +1,5 @@
-#ifndef GL_CONTEXT_H
-#define GL_CONTEXT_H
+#ifndef HADES_CONTEXT_H
+#define HADES_CONTEXT_H
 
 #include "glad/gl.h"
 #include "glm/glm.hpp"
@@ -18,19 +18,19 @@
 
 namespace hades {
 
-class Context {
+class GfxMgr {
     friend class Application;
 
 public:
-    Context(GladGLContext *ctx);
+    GfxMgr(GladGLContext *ctx);
 
-    ~Context() = default;
+    ~GfxMgr() = default;
 
-    Context(const Context &) = delete;
-    Context &operator=(const Context &) = delete;
+    GfxMgr(const GfxMgr &) = delete;
+    GfxMgr &operator=(const GfxMgr &) = delete;
 
-    Context(Context &&other) noexcept;
-    Context &operator=(Context &&other) noexcept;
+    GfxMgr(GfxMgr &&other) noexcept;
+    GfxMgr &operator=(GfxMgr &&other) noexcept;
 
     /*****************
      * OPENGL CONTROL
@@ -115,4 +115,4 @@ private:
 
 } // namespace hades
 
-#endif //GL_CONTEXT_H
+#endif //HADES_CONTEXT_H

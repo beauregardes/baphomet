@@ -3,8 +3,8 @@
 
 #include "gl/framebuffer.hpp"
 
-#include "hades/context.hpp"
-#include "hades/eventmgr.hpp"
+#include "hades/gfxmgr.hpp"
+#include "hades/inputmgr.hpp"
 #include "hades/window.hpp"
 
 #include "hades/util/timermgr.hpp"
@@ -19,10 +19,10 @@ public:
 
 protected:
     std::unique_ptr<Window> window{nullptr};
-    std::unique_ptr<EventMgr> events{nullptr};
-    std::unique_ptr<Context> ctx{nullptr};
+    std::unique_ptr<InputMgr> input{nullptr};
+    std::unique_ptr<GfxMgr> gfx{nullptr};
 
-    std::unique_ptr<TimerMgr> timers{nullptr};
+    std::unique_ptr<TimerMgr> timer{nullptr};
 
     virtual void initialize();
     virtual void update(double dt);

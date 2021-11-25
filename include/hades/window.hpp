@@ -5,12 +5,12 @@
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
 
-#include "hades/context.hpp"
+#include "hades/gfxmgr.hpp"
 #include "hades/internal/bitmask_enum.hpp"
 #include "hades/util/framecounter.hpp"
 #include "hades/util/ticker.hpp"
 #include "hades/util/timermgr.hpp"
-#include "hades/eventmgr.hpp"
+#include "hades/inputmgr.hpp"
 
 #include <memory>
 #include <string>

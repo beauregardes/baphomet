@@ -2,7 +2,7 @@
 
 #include "spdlog/spdlog.h"
 
-namespace hades::rand {
+namespace rnd {
 
 void gen_seed_vals() {
     pcg_extras::pcg128_t seed_vals[4];
@@ -54,7 +54,7 @@ void debug_show_seed() {
     if (std::uint64_t(seed_info().seed >> 64) == 0 && std::uint64_t(seed_info().stream >> 64) == 0) {
         spdlog::debug(
             "Seed statement:\n"
-            "  hades::rand::seed({:#x}, {:#x});",
+            "  rnd::seed({:#x}, {:#x});",
             std::uint64_t(seed_info().seed),
             std::uint64_t(seed_info().stream)
         );
@@ -65,7 +65,7 @@ void debug_show_seed() {
         auto stream_lo = std::uint64_t(seed_info().stream);
         spdlog::debug(
             "Seed statement:\n"
-            "  hades::rand::seed128(\n"
+            "  rnd::seed128(\n"
             "    {:#x}, {:#x},\n"
             "    {:#x}, {:#x}\n"
             "  );",
@@ -75,12 +75,37 @@ void debug_show_seed() {
     }
 }
 
-RGB rgb(bool randomize_alpha) {
+hades::RGB rgb() {
+    return hades::rgb(
+        get<int>(0, 255),
+        get<int>(0, 255),
+        get<int>(0, 255)
+    );
+}
+
+hades::RGB rgb(glm::ivec2 r_range, glm::ivec2 g_range, glm::ivec2 b_range) {
+    return hades::rgb(
+        get<int>(r_range.x, r_range.y),
+        get<int>(g_range.x, g_range.y),
+        get<int>(b_range.x, b_range.y)
+    );
+}
+
+hades::RGB rgba() {
     return hades::rgba(
         get<int>(0, 255),
         get<int>(0, 255),
         get<int>(0, 255),
-        randomize_alpha ? get<int>(0, 255) : 255
+        get<int>(0, 255)
+    );
+}
+
+hades::RGB rgba(glm::ivec2 r_range, glm::ivec2 g_range, glm::ivec2 b_range, glm::ivec2 a_range) {
+    return hades::rgba(
+        get<int>(r_range.x, r_range.y),
+        get<int>(g_range.x, g_range.y),
+        get<int>(b_range.x, b_range.y),
+        get<int>(a_range.x, a_range.y)
     );
 }
 
@@ -96,4 +121,4 @@ std::string base58(std::size_t length) {
     return id;
 }
 
-} // namespace hades::rand
+} // namespace rnd

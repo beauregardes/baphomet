@@ -1,5 +1,5 @@
-#ifndef HADES_EVENTMGR_HPP
-#define HADES_EVENTMGR_HPP
+#ifndef HADES_INPUTMGR_HPP
+#define HADES_INPUTMGR_HPP
 
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
@@ -11,7 +11,7 @@
 
 namespace hades {
 
-class EventMgr {
+class InputMgr {
     friend class Application;
     friend class Runner;
 
@@ -28,7 +28,7 @@ public:
         bool raw_motion {false};
     } mouse;
 
-    EventMgr(GLFWwindow *parent);
+    InputMgr(GLFWwindow *parent);
 
     void set_mouse_locked(bool locked);
     void set_mouse_hidden(bool hidden);
@@ -71,4 +71,4 @@ private:
 
 } // namespace hades
 
-#endif //HADES_EVENTMGR_HPP
+#endif //HADES_INPUTMGR_HPP

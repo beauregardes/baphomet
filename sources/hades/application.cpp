@@ -7,41 +7,43 @@ void Application::update(double dt) {}
 void Application::draw() {}
 
 void Application::shutdown() {
-    glfwSetWindowShouldClose(window->glfw_window_, GLFW_TRUE);
+    window->close_();
 }
 
 void Application::start_frame_() {
     fbo_->bind();
 
-    ctx->switch_to_batch_set_("default");
-    ctx->clear_batches_();
+    gfx->switch_to_batch_set_("default");
+    gfx->clear_batches_();
 
-    ctx->clear(gl::ClearMask::depth);
+    gfx->clear(gl::ClearMask::depth);
 }
 
 void Application::end_frame_() {
-    ctx->draw_batches_(window->projection());
-    ctx->flush_();
-
-    ctx->clear(gl::ClearMask::depth);
-    draw_overlay_();
+    gfx->draw_batches_(window->projection());
 
     fbo_->unbind();
+
+    gfx->clear(gl::ClearMask::color | gl::ClearMask::depth);
     fbo_->copy_to_default_framebuffer();
+
+    gfx->clear(gl::ClearMask::depth);
+    draw_overlay_();
+
     glfwSwapBuffers(window->glfw_window_);
 }
 
 void Application::draw_overlay_() {
-    ctx->switch_to_batch_set_("__overlay");
-    ctx->clear_batches_();
+    gfx->switch_to_batch_set_("__overlay");
+    gfx->clear_batches_();
 
     auto fps_str = fmt::format("{:.2f} FPS", overlay_.frame_counter.fps());
     if (window->vsync())
         fps_str += " (vsync)";
 
-    overlay_.font->render(1, 2, fps_str);
+    overlay_.font->render(2, 2, fps_str);
 
-    ctx->draw_batches_(window->projection());
+    gfx->draw_batches_(window->projection());
 }
 
 /******************
@@ -53,8 +55,8 @@ void Application::open_(const WCfg &cfg, glm::ivec2 glversion) {
     window->open_(cfg, glversion);
     window->wm_info_.vsync = set(cfg.flags, WFlags::vsync);
 
-    events = std::make_unique<EventMgr>(window->glfw_window_);
-    timers = std::make_unique<TimerMgr>();
+    input = std::make_unique<InputMgr>(window->glfw_window_);
+    timer = std::make_unique<TimerMgr>();
 }
 
 void Application::initgl_(glm::ivec2 glversion) {
@@ -82,26 +84,26 @@ void Application::initgl_(glm::ivec2 glversion) {
     spdlog::debug("=> Vendor: {}", ctx_->GetString(GL_VENDOR));
     spdlog::debug("=> Renderer: {}", ctx_->GetString(GL_RENDERER));
 
-    ctx = std::make_unique<Context>(ctx_);
+    gfx = std::make_unique<GfxMgr>(ctx_);
 
     glfwSwapInterval(window->vsync() ? 1 : 0);
 
-    ctx->blend_func_(gl::BlendFunc::src_alpha, gl::BlendFunc::one_minus_src_alpha);
+    gfx->blend_func_(gl::BlendFunc::src_alpha, gl::BlendFunc::one_minus_src_alpha);
 
-    ctx->enable_(gl::Capability::depth_test);
+    gfx->enable_(gl::Capability::depth_test);
 
     fbo_ = gl::FramebufferBuilder(ctx_, window->w(), window->h())
         .renderbuffer(gl::RBufFormat::rgba8)
         .renderbuffer(gl::RBufFormat::d32f)
         .check_complete();
 
-    ctx->new_batch_set_("__overlay", true);
-    overlay_.font = ctx->load_cp437(
+    gfx->new_batch_set_("__overlay", true);
+    overlay_.font = gfx->load_cp437(
         (hades::RESOURCE_PATH / "font" / "1px_6x8_no_bg.png").string(),
         6, 8,
         true
     );
-    ctx->switch_to_batch_set_("default");
+    gfx->switch_to_batch_set_("default");
 }
 
 } // namespace hades
