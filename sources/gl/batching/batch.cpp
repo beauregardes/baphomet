@@ -6,16 +6,16 @@ Batch::Batch(GladGLContext *ctx)
     : ctx_(ctx) {}
 
 bool Batch::empty_opaque() {
-    return opaque_vertices_->size() == 0;
+    return !opaque_vertices_ || opaque_vertices_->size() == 0;
 }
 
 bool Batch::empty_alpha() {
-    return alpha_vertices_->size() == 0;
+    return !alpha_vertices_ || alpha_vertices_->size() == 0;
 }
 
 void Batch::clear() {
-    opaque_vertices_->clear();
-    alpha_vertices_->clear();
+    if (opaque_vertices_) opaque_vertices_->clear();
+    if (alpha_vertices_)  alpha_vertices_->clear();
 }
 
 } // namespace gl

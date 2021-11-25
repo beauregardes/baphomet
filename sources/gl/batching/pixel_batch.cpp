@@ -3,7 +3,7 @@
 namespace gl {
 
 PixelBatch::PixelBatch(GladGLContext *ctx) : Batch(ctx) {
-    shader_ = ShaderBuilder(ctx_)
+    shader_ = ShaderBuilder(ctx_, "PixelBatch")
         .vert_from_src(R"glsl(
 #version 330 core
 layout (location = 0) in vec3 in_pos;
@@ -31,24 +31,6 @@ void main() {
 }
         )glsl")
         .link();
-
-    opaque_vertices_ = std::make_unique<VecBuffer<float>>(
-        ctx_, 7, true, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
-
-    opaque_vao_ = std::make_unique<VertexArray>(ctx_);
-    opaque_vao_->attrib_pointer(opaque_vertices_.get(), {
-        {0, 3, gl::AttrType::float_t, false, sizeof(float) * 7, 0},
-        {1, 4, gl::AttrType::float_t, false, sizeof(float) * 7, sizeof(float) * 3}
-    });
-
-    alpha_vertices_ = std::make_unique<VecBuffer<float>>(
-        ctx_, 7, false, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
-
-    alpha_vao_ = std::make_unique<VertexArray>(ctx_);
-    alpha_vao_->attrib_pointer(alpha_vertices_.get(), {
-        {0, 3, gl::AttrType::float_t, false, sizeof(float) * 7, 0},
-        {1, 4, gl::AttrType::float_t, false, sizeof(float) * 7, sizeof(float) * 3}
-    });
 }
 
 void PixelBatch::add(
@@ -99,6 +81,17 @@ void PixelBatch::add_opaque_(
     float z,
     float r, float g, float b, float a
 ) {
+    if (!opaque_vertices_) {
+        opaque_vertices_ = std::make_unique<VecBuffer<float>>(
+            ctx_, 7, true, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
+
+        opaque_vao_ = std::make_unique<VertexArray>(ctx_);
+        opaque_vao_->attrib_pointer(opaque_vertices_.get(), {
+            {0, 3, gl::AttrType::float_t, false, sizeof(float) * 7, 0},
+            {1, 4, gl::AttrType::float_t, false, sizeof(float) * 7, sizeof(float) * 3}
+        });
+    }
+
     opaque_vertices_->add({x, y, z, r, g, b, a});
 }
 
@@ -107,6 +100,17 @@ void PixelBatch::add_alpha_(
     float z,
     float r, float g, float b, float a
 ) {
+    if (!alpha_vertices_) {
+        alpha_vertices_ = std::make_unique<VecBuffer<float>>(
+            ctx_, 7, false, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
+
+        alpha_vao_ = std::make_unique<VertexArray>(ctx_);
+        alpha_vao_->attrib_pointer(alpha_vertices_.get(), {
+            {0, 3, gl::AttrType::float_t, false, sizeof(float) * 7, 0},
+            {1, 4, gl::AttrType::float_t, false, sizeof(float) * 7, sizeof(float) * 3}
+        });
+    }
+
     alpha_vertices_->add({x, y, z, r, g, b, a});
 }
 

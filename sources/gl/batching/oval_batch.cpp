@@ -3,7 +3,7 @@
 namespace gl {
 
 OvalBatch::OvalBatch(GladGLContext *ctx) : Batch(ctx) {
-    shader_ = ShaderBuilder(ctx_)
+    shader_ = ShaderBuilder(ctx_, "OvalBatch")
         .vert_from_src(R"glsl(
 #version 330 core
 layout (location = 0) in vec3 in_pos;
@@ -45,26 +45,6 @@ void main() {
 }
         )glsl")
         .link();
-
-    opaque_vertices_ = std::make_unique<VecBuffer<float>>(
-        ctx_, 120, true, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
-
-    opaque_vao_ = std::make_unique<VertexArray>(ctx_);
-    opaque_vao_->attrib_pointer(opaque_vertices_.get(), {
-        {0, 3, gl::AttrType::float_t, false, sizeof(float) * 10, 0},
-        {1, 4, gl::AttrType::float_t, false, sizeof(float) * 10, sizeof(float) * 3},
-        {2, 3, gl::AttrType::float_t, false, sizeof(float) * 10, sizeof(float) * 7}
-    });
-
-    alpha_vertices_ = std::make_unique<VecBuffer<float>>(
-        ctx_, 120, false, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
-
-    alpha_vao_ = std::make_unique<VertexArray>(ctx_);
-    alpha_vao_->attrib_pointer(alpha_vertices_.get(), {
-        {0, 3, gl::AttrType::float_t, false, sizeof(float) * 10, 0},
-        {1, 4, gl::AttrType::float_t, false, sizeof(float) * 10, sizeof(float) * 3},
-        {2, 3, gl::AttrType::float_t, false, sizeof(float) * 10, sizeof(float) * 7}
-    });
 }
 
 void OvalBatch::add(
@@ -119,6 +99,18 @@ void OvalBatch::add_opaque_(
     float r, float g, float b, float a,
     float cx, float cy, float angle
 ) {
+    if (!opaque_vertices_) {
+        opaque_vertices_ = std::make_unique<VecBuffer<float>>(
+            ctx_, 120, true, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
+
+        opaque_vao_ = std::make_unique<VertexArray>(ctx_);
+        opaque_vao_->attrib_pointer(opaque_vertices_.get(), {
+            {0, 3, gl::AttrType::float_t, false, sizeof(float) * 10, 0},
+            {1, 4, gl::AttrType::float_t, false, sizeof(float) * 10, sizeof(float) * 3},
+            {2, 3, gl::AttrType::float_t, false, sizeof(float) * 10, sizeof(float) * 7}
+        });
+    }
+
     static float
         a0 = 0.0f,
         a1 = glm::radians(90.0f),
@@ -197,6 +189,18 @@ void OvalBatch::add_alpha_(
     float r, float g, float b, float a,
     float cx, float cy, float angle
 ) {
+    if (!alpha_vertices_) {
+        alpha_vertices_ = std::make_unique<VecBuffer<float>>(
+            ctx_, 120, false, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
+
+        alpha_vao_ = std::make_unique<VertexArray>(ctx_);
+        alpha_vao_->attrib_pointer(alpha_vertices_.get(), {
+            {0, 3, gl::AttrType::float_t, false, sizeof(float) * 10, 0},
+            {1, 4, gl::AttrType::float_t, false, sizeof(float) * 10, sizeof(float) * 3},
+            {2, 3, gl::AttrType::float_t, false, sizeof(float) * 10, sizeof(float) * 7}
+        });
+    }
+
     static float
         a0 = 0.0f,
         a1 = glm::radians(90.0f),

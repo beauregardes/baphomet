@@ -5,7 +5,7 @@ namespace gl {
 TextureBatch::TextureBatch(GladGLContext *ctx, const std::unique_ptr<gl::TextureUnit> &texture_unit)
     : Batch(ctx), texture_unit_(texture_unit) {
 
-    shader_ = ShaderBuilder(ctx_)
+    shader_ = ShaderBuilder(ctx_, "TextureBatch")
         .vert_from_src(R"glsl(
 #version 330 core
 layout (location = 0) in vec3 in_pos;
@@ -54,28 +54,6 @@ void main() {
 }
         )glsl")
         .link();
-
-    opaque_vertices_ = std::make_unique<VecBuffer<float>>(
-        ctx_, 72, true, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
-
-    opaque_vao_ = std::make_unique<VertexArray>(ctx_);
-    opaque_vao_->attrib_pointer(opaque_vertices_.get(), {
-        {0, 3, gl::AttrType::float_t, false, sizeof(float) * 12, 0},
-        {1, 4, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 3},
-        {2, 2, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 7},
-        {3, 3, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 9}
-    });
-
-    alpha_vertices_ = std::make_unique<VecBuffer<float>>(
-        ctx_, 72, false, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
-
-    alpha_vao_ = std::make_unique<VertexArray>(ctx_);
-    alpha_vao_->attrib_pointer(alpha_vertices_.get(), {
-        {0, 3, gl::AttrType::float_t, false, sizeof(float) * 12, 0},
-        {1, 4, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 3},
-        {2, 2, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 7},
-        {3, 3, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 9}
-    });
 
     x_px_unit_ = 1.0f / texture_unit_->width();
     y_px_unit_ = 1.0f / texture_unit_->height();
@@ -139,6 +117,19 @@ void TextureBatch::add_opaque_(
     float r, float g, float b, float a,
     float cx, float cy, float angle
 ) {
+    if (!opaque_vertices_) {
+        opaque_vertices_ = std::make_unique<VecBuffer<float>>(
+            ctx_, 72, true, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
+
+        opaque_vao_ = std::make_unique<VertexArray>(ctx_);
+        opaque_vao_->attrib_pointer(opaque_vertices_.get(), {
+            {0, 3, gl::AttrType::float_t, false, sizeof(float) * 12, 0},
+            {1, 4, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 3},
+            {2, 2, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 7},
+            {3, 3, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 9}
+        });
+    }
+
     opaque_vertices_->add({
         x,     y,     z, r, g, b, a, x_px_unit_ * tx,        y_px_unit_ * ty,        cx, cy, angle,
         x + w, y,     z, r, g, b, a, x_px_unit_ * (tx + tw), y_px_unit_ * ty,        cx, cy, angle,
@@ -158,6 +149,19 @@ void TextureBatch::add_alpha_(
     float r, float g, float b, float a,
     float cx, float cy, float angle
 ) {
+    if (!alpha_vertices_) {
+        alpha_vertices_ = std::make_unique<VecBuffer<float>>(
+            ctx_, 72, false, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
+
+        alpha_vao_ = std::make_unique<VertexArray>(ctx_);
+        alpha_vao_->attrib_pointer(alpha_vertices_.get(), {
+            {0, 3, gl::AttrType::float_t, false, sizeof(float) * 12, 0},
+            {1, 4, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 3},
+            {2, 2, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 7},
+            {3, 3, gl::AttrType::float_t, false, sizeof(float) * 12, sizeof(float) * 9}
+        });
+    }
+
     alpha_vertices_->add({
         x,     y,     z, r, g, b, a, x_px_unit_ * tx,        y_px_unit_ * ty,        cx, cy, angle,
         x + w, y,     z, r, g, b, a, x_px_unit_ * (tx + tw), y_px_unit_ * ty,        cx, cy, angle,
