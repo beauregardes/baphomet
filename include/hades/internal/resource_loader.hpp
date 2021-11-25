@@ -12,6 +12,7 @@ const static std::filesystem::path RESOURCE_PATH = std::filesystem::path(__FILE_
     .parent_path()
     .parent_path()
     .parent_path()
+    .parent_path()
     / "resources";
 
 class ResourceLoader {

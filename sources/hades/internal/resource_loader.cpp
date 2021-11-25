@@ -1,4 +1,4 @@
-#include "hades/resource_loader.hpp"
+#include "hades/internal/resource_loader.hpp"
 
 namespace hades {
 

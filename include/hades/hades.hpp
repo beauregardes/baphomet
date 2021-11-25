@@ -7,7 +7,7 @@
 #include "hades/util/time.hpp"
 
 #include "hades/color.hpp"
-#include "hades/windowmgr.hpp"
-#include "hades/window.hpp"
+#include "hades/application.hpp"
+#include "hades/runner.hpp"
 
 #endif //HADES_HADES_HPP

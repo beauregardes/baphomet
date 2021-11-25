@@ -29,99 +29,68 @@ enum class WFlags {
 
 struct WCfg {
     std::string title;
+
     glm::ivec2 size{0, 0};
-    glm::ivec2 glversion{3, 3};
+    glm::ivec2 position{0, 0};
 
     int monitor{0};
-    glm::ivec2 position{0, 0};
 
     WFlags flags{WFlags::none};
 };
 
-class WindowMgr;
-
 class Window {
-    friend class WindowMgr;
+    friend class Application;
+    friend class Runner;
 
 public:
-    std::string tag;
+    void set_auto_iconify(bool auto_iconify);
+    bool auto_iconify();
 
-    virtual ~Window();
+    void set_floating(bool floating);
+    bool floating();
 
-protected:
-    WindowMgr *mgr{nullptr};
+    void set_resizable(bool resizable);
+    bool resizable();
 
-    std::unique_ptr<Context> ctx{nullptr};
-    std::unique_ptr<EventMgr> events{nullptr};
-    std::unique_ptr<TimerMgr> timers{nullptr};
+    void set_visible(bool visible);
+    bool visible();
 
-    virtual void initialize();
-    virtual void update(double dt);
-    virtual void draw();
+    void set_decorated(bool decorated);
+    bool decorated();
 
-    void window_close();
+    void set_vsync(bool vsync);
+    bool vsync();
 
-    void window_set_auto_iconify(bool auto_iconify);
-    bool window_auto_iconify();
+    void set_size(int width, int height);
+    glm::ivec2 size();
+    int w();
+    int h();
 
-    void window_set_floating(bool floating);
-    bool window_floating();
+    void set_size_limits(int min_width, int min_height, int max_width, int max_height);
+    void set_aspect_ratio(int numerator, int denominator);
 
-    void window_set_resizable(bool resizable);
-    bool window_resizable();
+    void set_pos(int x, int y);
+    glm::ivec2 pos();
+    int x();
+    int y();
 
-    void window_set_visible(bool visible);
-    bool window_visible();
-
-    void window_set_decorated(bool decorated);
-    bool window_decorated();
-
-    void window_set_vsync(bool vsync);
-    bool window_vsync();
-
-    void window_set_size(int width, int height);
-    glm::ivec2 window_size();
-    void window_set_size_limits(int min_width, int min_height, int max_width, int max_height);
-    void window_set_aspect_ratio(int numerator, int denominator);
-
-    void window_set_pos(int x, int y);
-    glm::ivec2 window_pos();
-
-    glm::mat4 window_projection();
+    glm::mat4 projection();
 
 private:
-    GladGLContext *ctx_{nullptr};
-
-    std::unique_ptr<gl::Framebuffer> fbo_{nullptr};
-
-    Ticker dt_timer_{};
-
     GLFWwindow *glfw_window_{nullptr};
-    WCfg open_cfg_{};
 
     struct {
         bool borderless{false};
         bool vsync{false};
     } wm_info_;
 
-    struct {
-        FrameCounter frame_counter{};
-        std::unique_ptr<hades::CP437> font{nullptr};
-    } overlay_;
+    void open_(const WCfg &cfg, glm::ivec2 glversion);
+    void close_();
 
-    void start_frame_();
-    void end_frame_();
-
-    void make_current_();
-
-    void open_();
-
-    GLFWmonitor *get_monitor_();
-    void open_fullscreen_windows_();
-    void open_fullscreen_linux_();
-    void open_windowed_();
-
-    void initialize_gl_();
+    GLFWmonitor *get_monitor_(const WCfg &cfg);
+    void open_fullscreen_windows_(const WCfg &cfg);
+    void open_fullscreen_linux_(const WCfg &cfg);
+    void open_windowed_(const WCfg &cfg);
 };
 
 } // namespace hades

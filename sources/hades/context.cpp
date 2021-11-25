@@ -4,12 +4,12 @@
 
 namespace hades {
 
-Context::Context(GladGLContext *ctx, const std::string &tag)
-    : tag(tag), ctx_(ctx) {
+Context::Context(GladGLContext *ctx)
+    : ctx_(ctx) {
 
     resource_loader = std::make_unique<hades::ResourceLoader>(ctx);
 
-    batch_sets_[active_batch_] = std::make_unique<BatchSet>(ctx);
+    new_batch_set_("default", true);
 }
 
 Context::Context(Context &&other) noexcept {
@@ -35,31 +35,31 @@ Context &Context::operator=(Context &&other) noexcept {
     return *this;
 }
 
-void Context::enable(gl::Capability cap) {
+void Context::enable_(gl::Capability cap) {
     ctx_->Enable(unwrap(cap));
 }
 
-void Context::disable(gl::Capability cap) {
+void Context::disable_(gl::Capability cap) {
     ctx_->Disable(unwrap(cap));
 }
 
-void Context::depth_func(gl::DepthFunc func) {
+void Context::depth_func_(gl::DepthFunc func) {
     ctx_->DepthFunc(unwrap(func));
 }
 
-void Context::depth_mask(bool flag) {
+void Context::depth_mask_(bool flag) {
     ctx_->DepthMask(flag ? GL_TRUE : GL_FALSE);
 }
 
-void Context::blend_func(gl::BlendFunc src, gl::BlendFunc dst) {
+void Context::blend_func_(gl::BlendFunc src, gl::BlendFunc dst) {
     ctx_->BlendFunc(unwrap(src), unwrap(dst));
 }
 
-void Context::viewport(int x, int y, int w, int h) {
+void Context::viewport_(int x, int y, int w, int h) {
     ctx_->Viewport(x, y, w, h);
 }
 
-void Context::clip_control(gl::ClipOrigin origin, gl::ClipDepth depth) {
+void Context::clip_control_(gl::ClipOrigin origin, gl::ClipDepth depth) {
     ctx_->ClipControl(unwrap(origin), unwrap(depth));
 }
 
@@ -76,7 +76,7 @@ void Context::clear(gl::ClearMask mask) {
     ctx_->Clear(unwrap(mask));
 }
 
-void Context::flush() {
+void Context::flush_() {
     ctx_->Flush();
 }
 
@@ -84,28 +84,31 @@ void Context::flush() {
  * BATCHING
  */
 
-void Context::new_batch_set(const std::string &name) {
-    batch_sets_[name] = std::make_unique<BatchSet>(ctx_);
+void Context::new_batch_set_(const std::string &name, bool switch_to) {
+    batch_sets_[name] = std::make_unique<BatchSet>();
+
+    if (switch_to)
+        switch_to_batch_set_(name);
 }
 
-void Context::switch_to_batch_set(const std::string &name) {
+void Context::switch_to_batch_set_(const std::string &name) {
     active_batch_ = name;
 }
 
-void Context::clear_batches() {
+void Context::clear_batches_() {
     batch_sets_[active_batch_]->clear();
 }
 
-void Context::draw_batches(glm::mat4 projection) {
+void Context::draw_batches_(glm::mat4 projection) {
     batch_sets_[active_batch_]->draw_opaque(projection);
 
-    enable(gl::Capability::blend);
-    depth_mask(false);
+    enable_(gl::Capability::blend);
+    depth_mask_(false);
 
     batch_sets_[active_batch_]->draw_alpha(projection);
-    
-    depth_mask(true);
-    disable(gl::Capability::blend);
+
+    depth_mask_(true);
+    disable_(gl::Capability::blend);
 }
 
 /*************
@@ -113,12 +116,18 @@ void Context::draw_batches(glm::mat4 projection) {
  */
 
 void Context::pixel(float x, float y, const hades::RGB &color) {
+    if (!batch_sets_[active_batch_]->pixels)
+        batch_sets_[active_batch_]->pixels = std::make_unique<gl::PixelBatch>(ctx_);
+
     auto cv = color.vec4();
     batch_sets_[active_batch_]->pixels->add(x + 0.5f, y + 0.5f, batch_sets_[active_batch_]->z_level, cv.r, cv.g, cv.b, cv.a);
     batch_sets_[active_batch_]->z_level++;
 }
 
 void Context::line(float x0, float y0, float x1, float y1, const hades::RGB &color, float cx, float cy, float angle) {
+    if (!batch_sets_[active_batch_]->lines)
+        batch_sets_[active_batch_]->lines = std::make_unique<gl::LineBatch>(ctx_);
+
     auto cv = color.vec4();
     batch_sets_[active_batch_]->lines->add(
         x0 + 0.5f, y0 + 0.5f,
@@ -139,6 +148,9 @@ void Context::line(float x0, float y0, float x1, float y1, const hades::RGB &col
 }
 
 void Context::tri(float x0, float y0, float x1, float y1, float x2, float y2, const hades::RGB &color, float cx, float cy, float angle) {
+    if (!batch_sets_[active_batch_]->tris)
+        batch_sets_[active_batch_]->tris = std::make_unique<gl::TriBatch>(ctx_);
+
     auto cv = color.vec4();
     batch_sets_[active_batch_]->tris->add(
         x0, y0,
@@ -180,6 +192,9 @@ void Context::tri(float x, float y, float radius, const hades::RGB &color) {
 }
 
 void Context::rect(float x, float y, float w, float h, const hades::RGB &color, float cx, float cy, float angle) {
+    if (!batch_sets_[active_batch_]->rects)
+        batch_sets_[active_batch_]->rects = std::make_unique<gl::RectBatch>(ctx_);
+
     auto cv = color.vec4();
     batch_sets_[active_batch_]->rects->add(
         x, y,
@@ -200,6 +215,9 @@ void Context::rect(float x, float y, float w, float h, const hades::RGB &color) 
 }
 
 void Context::oval(float x, float y, float x_radius, float y_radius, const hades::RGB &color, float cx, float cy, float angle) {
+    if (!batch_sets_[active_batch_]->ovals)
+        batch_sets_[active_batch_]->ovals = std::make_unique<gl::OvalBatch>(ctx_);
+
     auto cv = color.vec4();
     batch_sets_[active_batch_]->ovals->add(
         x + 0.5f, y + 0.5f,

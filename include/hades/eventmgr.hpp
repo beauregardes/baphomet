@@ -12,7 +12,8 @@
 namespace hades {
 
 class EventMgr {
-    friend class WindowMgr;
+    friend class Application;
+    friend class Runner;
 
 public:
     struct {

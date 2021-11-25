@@ -5,16 +5,11 @@
 #include "glm/glm.hpp"
 
 #include "gl/context_enums.hpp"
-#include "gl/framebuffer.hpp"
-#include "gl/shader.hpp"
-#include "gl/static_buffer.hpp"
-#include "gl/vec_buffer.hpp"
-#include "gl/vertex_array.hpp"
 
-#include "hades/batch_set.hpp"
+#include "hades/internal/batch_set.hpp"
 #include "hades/color.hpp"
 #include "hades/texture.hpp"
-#include "hades/resource_loader.hpp"
+#include "hades/internal/resource_loader.hpp"
 #include "hades/font/cp437.hpp"
 
 #include <memory>
@@ -24,10 +19,10 @@
 namespace hades {
 
 class Context {
-public:
-    std::string tag;
+    friend class Application;
 
-    Context(GladGLContext *ctx, const std::string &tag);
+public:
+    Context(GladGLContext *ctx);
 
     ~Context() = default;
 
@@ -37,32 +32,12 @@ public:
     Context(Context &&other) noexcept;
     Context &operator=(Context &&other) noexcept;
 
-    void enable(gl::Capability cap);
-    void disable(gl::Capability cap);
-
-    void depth_func(gl::DepthFunc func);
-    void depth_mask(bool flag);
-
-    void blend_func(gl::BlendFunc src, gl::BlendFunc dst);
-
-    void viewport(int x, int y, int w, int h);
-
-    void clip_control(gl::ClipOrigin origin, gl::ClipDepth depth);
+    /*****************
+     * OPENGL CONTROL
+     */
 
     void clear_color(const hades::RGB &color);
     void clear(gl::ClearMask mask = gl::ClearMask::color | gl::ClearMask::depth);
-
-    void flush();
-
-    /***********
-     * BATCHING
-     */
-
-    void new_batch_set(const std::string &name);
-    void switch_to_batch_set(const std::string &name);
-
-    void clear_batches();
-    void draw_batches(glm::mat4 projection);
 
     /*************
      * PRIMITIVES
@@ -108,6 +83,34 @@ private:
 
     std::unordered_map<std::string, std::unique_ptr<BatchSet>> batch_sets_{};
     std::string active_batch_{"default"};
+
+    /*****************
+     * OPENGL CONTROL
+     */
+
+    void enable_(gl::Capability cap);
+    void disable_(gl::Capability cap);
+
+    void depth_func_(gl::DepthFunc func);
+    void depth_mask_(bool flag);
+
+    void blend_func_(gl::BlendFunc src, gl::BlendFunc dst);
+
+    void viewport_(int x, int y, int w, int h);
+
+    void clip_control_(gl::ClipOrigin origin, gl::ClipDepth depth);
+
+    void flush_();
+
+    /***********
+     * BATCHING
+     */
+
+    void new_batch_set_(const std::string &name, bool switch_to = false);
+    void switch_to_batch_set_(const std::string &name);
+
+    void clear_batches_();
+    void draw_batches_(glm::mat4 projection);
 };
 
 } // namespace hades

@@ -26,15 +26,10 @@ public:
 
     std::unordered_map <std::string, std::unique_ptr<gl::TextureBatch>> textures{};
 
-    BatchSet(GladGLContext *ctx);
-
     void clear();
 
     void draw_opaque(glm::mat4 projection);
     void draw_alpha(glm::mat4 projection);
-
-private:
-    GladGLContext *ctx_;
 };
 
 } // namespace hades
