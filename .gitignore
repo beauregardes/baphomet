@@ -1,3 +1,4 @@
 .idea/
 _scratch/
 cmake-build*/
+.build*/

@@ -1,0 +1,35 @@
+set -e
+
+OPTIND=1
+
+mode=debug
+prog=""
+
+while getopts "m:p:" opt; do
+	case "$opt" in
+		m) mode=$OPTARG;;
+		p) prog=$OPTARG;;
+	esac 
+done
+
+if [[ ${mode^^} = DEBUG ]]; then
+	builddir=.build_debug
+	mode=Debug
+elif [[ ${mode^^} = RELEASE ]]; then
+	builddir=.build_release
+	mode=Release
+else
+	echo "Invalid mode: '$mode'"
+	exit 1
+fi
+
+mkdir -p $builddir
+cd $builddir
+cmake -DCMAKE_BUILD_TYPE=$mode ..
+make -j 9
+cd ..
+
+if [[ -v prog ]]; then
+	./$builddir/$prog
+fi
+
