@@ -40,8 +40,18 @@ void Application::draw_overlay_() {
     auto fps_str = fmt::format("{:.2f} FPS", overlay_.frame_counter.fps());
     if (window->vsync())
         fps_str += " (vsync)";
+    overlay_.font->render(1, 2, fps_str);
 
-    overlay_.font->render(2, 2, fps_str);
+    auto batch_str = fmt::format(
+        "pixels: {}\nlines: {}\ntris: {}\nrect: {}\novals: {}\ntexture: {}\n",
+        gfx->pixel_count_(),
+        gfx->line_count_() / 2,
+        gfx->tri_count_() / 3,
+        gfx->rect_count_() / 3,
+        gfx->oval_count_() / 3,
+        gfx->texture_count_() / 3
+    );
+    overlay_.font->render(1, 2 + overlay_.font->char_h() * 2, batch_str);
 
     gfx->draw_batches_(window->projection());
 }

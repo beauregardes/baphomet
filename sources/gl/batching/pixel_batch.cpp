@@ -2,7 +2,7 @@
 
 namespace gl {
 
-PixelBatch::PixelBatch(GladGLContext *ctx) : Batch(ctx) {
+PixelBatch::PixelBatch(GladGLContext *ctx) : Batch(ctx, 7) {
     shader_ = ShaderBuilder(ctx_, "PixelBatch")
         .vert_from_src(R"glsl(
 #version 330 core
@@ -54,8 +54,8 @@ void PixelBatch::draw_opaque(float z_max, glm::mat4 projection) {
 
         opaque_vao_->draw_arrays(
             DrawMode::points,
-            opaque_vertices_->front() / 7,
-            opaque_vertices_->size() / 7
+            opaque_vertices_->front() / floats_per_vertex_,
+            opaque_vertices_->size() / floats_per_vertex_
         );
     }
 }
@@ -70,8 +70,8 @@ void PixelBatch::draw_alpha(float z_max, glm::mat4 projection) {
 
         alpha_vao_->draw_arrays(
             DrawMode::points,
-            alpha_vertices_->front() / 7,
-            alpha_vertices_->size() / 7
+            alpha_vertices_->front() / floats_per_vertex_,
+            alpha_vertices_->size() / floats_per_vertex_
         );
     }
 }
@@ -83,7 +83,7 @@ void PixelBatch::add_opaque_(
 ) {
     if (!opaque_vertices_) {
         opaque_vertices_ = std::make_unique<VecBuffer<float>>(
-            ctx_, 7, true, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
+            ctx_, floats_per_vertex_, true, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
 
         opaque_vao_ = std::make_unique<VertexArray>(ctx_);
         opaque_vao_->attrib_pointer(opaque_vertices_.get(), {
@@ -102,7 +102,7 @@ void PixelBatch::add_alpha_(
 ) {
     if (!alpha_vertices_) {
         alpha_vertices_ = std::make_unique<VecBuffer<float>>(
-            ctx_, 7, false, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
+            ctx_, floats_per_vertex_, false, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
 
         alpha_vao_ = std::make_unique<VertexArray>(ctx_);
         alpha_vao_->attrib_pointer(alpha_vertices_.get(), {

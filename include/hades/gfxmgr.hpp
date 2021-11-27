@@ -111,6 +111,17 @@ private:
 
     void clear_batches_();
     void draw_batches_(glm::mat4 projection);
+
+    /********
+     * DEBUG
+     */
+
+    std::size_t pixel_count_();
+    std::size_t line_count_();
+    std::size_t tri_count_();
+    std::size_t rect_count_();
+    std::size_t oval_count_();
+    std::size_t texture_count_();
 };
 
 } // namespace hades

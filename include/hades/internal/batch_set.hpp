@@ -28,6 +28,20 @@ public:
 
     void clear();
 
+    std::size_t pixel_vertex_count_opaque() const;
+    std::size_t line_vertex_count_opaque() const;
+    std::size_t tri_vertex_count_opaque() const;
+    std::size_t rect_vertex_count_opaque() const;
+    std::size_t oval_vertex_count_opaque() const;
+    std::size_t texture_vertex_count_opaque() const;
+
+    std::size_t pixel_vertex_count_alpha() const;
+    std::size_t line_vertex_count_alpha() const;
+    std::size_t tri_vertex_count_alpha() const;
+    std::size_t rect_vertex_count_alpha() const;
+    std::size_t oval_vertex_count_alpha() const;
+    std::size_t texture_vertex_count_alpha() const;
+
     void draw_opaque(glm::mat4 projection);
     void draw_alpha(glm::mat4 projection);
 };

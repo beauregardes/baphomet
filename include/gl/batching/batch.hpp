@@ -14,18 +14,23 @@ namespace gl {
 
 class Batch {
 public:
-    Batch(GladGLContext *ctx);
+    Batch(GladGLContext *ctx, std::size_t floats_per_vertex);
 
     virtual void clear();
 
-    virtual bool empty_opaque();
-    virtual bool empty_alpha();
+    bool empty_opaque();
+    bool empty_alpha();
+
+    std::size_t size_opaque();
+    std::size_t size_alpha();
 
     virtual void draw_opaque(float z_max, glm::mat4 projection) = 0;
     virtual void draw_alpha(float z_max, glm::mat4 projection) = 0;
 
 protected:
     GladGLContext *ctx_{nullptr};
+
+    std::size_t floats_per_vertex_{0};
 
     std::unique_ptr<Shader> shader_{nullptr};
 

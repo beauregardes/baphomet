@@ -3,7 +3,7 @@
 namespace gl {
 
 TextureBatch::TextureBatch(GladGLContext *ctx, const std::unique_ptr<gl::TextureUnit> &texture_unit)
-    : Batch(ctx), texture_unit_(texture_unit) {
+    : Batch(ctx, 12), texture_unit_(texture_unit) {
 
     shader_ = ShaderBuilder(ctx_, "TextureBatch")
         .vert_from_src(R"glsl(
@@ -85,8 +85,8 @@ void TextureBatch::draw_opaque(float z_max, glm::mat4 projection) {
 
         opaque_vao_->draw_arrays(
             DrawMode::triangles,
-            opaque_vertices_->front() / 12,
-            opaque_vertices_->size() / 12
+            opaque_vertices_->front() / floats_per_vertex_,
+            opaque_vertices_->size() / floats_per_vertex_
         );
     }
 }
@@ -102,8 +102,8 @@ void TextureBatch::draw_alpha(float z_max, glm::mat4 projection) {
 
         alpha_vao_->draw_arrays(
             DrawMode::triangles,
-            alpha_vertices_->front() / 12,
-            alpha_vertices_->size() / 12
+            alpha_vertices_->front() / floats_per_vertex_,
+            alpha_vertices_->size() / floats_per_vertex_
         );
     }
 }
@@ -119,7 +119,7 @@ void TextureBatch::add_opaque_(
 ) {
     if (!opaque_vertices_) {
         opaque_vertices_ = std::make_unique<VecBuffer<float>>(
-            ctx_, 72, true, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
+            ctx_, floats_per_vertex_ * 6, true, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
 
         opaque_vao_ = std::make_unique<VertexArray>(ctx_);
         opaque_vao_->attrib_pointer(opaque_vertices_.get(), {
@@ -151,7 +151,7 @@ void TextureBatch::add_alpha_(
 ) {
     if (!alpha_vertices_) {
         alpha_vertices_ = std::make_unique<VecBuffer<float>>(
-            ctx_, 72, false, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
+            ctx_, floats_per_vertex_ * 6, false, gl::BufTarget::array, gl::BufUsage::dynamic_draw);
 
         alpha_vao_ = std::make_unique<VertexArray>(ctx_);
         alpha_vao_->attrib_pointer(alpha_vertices_.get(), {

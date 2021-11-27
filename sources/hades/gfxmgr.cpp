@@ -35,33 +35,9 @@ GfxMgr &GfxMgr::operator=(GfxMgr &&other) noexcept {
     return *this;
 }
 
-void GfxMgr::enable_(gl::Capability cap) {
-    ctx_->Enable(unwrap(cap));
-}
-
-void GfxMgr::disable_(gl::Capability cap) {
-    ctx_->Disable(unwrap(cap));
-}
-
-void GfxMgr::depth_func_(gl::DepthFunc func) {
-    ctx_->DepthFunc(unwrap(func));
-}
-
-void GfxMgr::depth_mask_(bool flag) {
-    ctx_->DepthMask(flag ? GL_TRUE : GL_FALSE);
-}
-
-void GfxMgr::blend_func_(gl::BlendFunc src, gl::BlendFunc dst) {
-    ctx_->BlendFunc(unwrap(src), unwrap(dst));
-}
-
-void GfxMgr::viewport_(int x, int y, int w, int h) {
-    ctx_->Viewport(x, y, w, h);
-}
-
-void GfxMgr::clip_control_(gl::ClipOrigin origin, gl::ClipDepth depth) {
-    ctx_->ClipControl(unwrap(origin), unwrap(depth));
-}
+/*****************
+ * OPENGL CONTROL
+ */
 
 void GfxMgr::clear_color(const hades::RGB &color) {
     ctx_->ClearColor(
@@ -74,41 +50,6 @@ void GfxMgr::clear_color(const hades::RGB &color) {
 
 void GfxMgr::clear(gl::ClearMask mask) {
     ctx_->Clear(unwrap(mask));
-}
-
-void GfxMgr::flush_() {
-    ctx_->Flush();
-}
-
-/***********
- * BATCHING
- */
-
-void GfxMgr::new_batch_set_(const std::string &name, bool switch_to) {
-    batch_sets_[name] = std::make_unique<BatchSet>();
-
-    if (switch_to)
-        switch_to_batch_set_(name);
-}
-
-void GfxMgr::switch_to_batch_set_(const std::string &name) {
-    active_batch_ = name;
-}
-
-void GfxMgr::clear_batches_() {
-    batch_sets_[active_batch_]->clear();
-}
-
-void GfxMgr::draw_batches_(glm::mat4 projection) {
-    batch_sets_[active_batch_]->draw_opaque(projection);
-
-    enable_(gl::Capability::blend);
-    depth_mask_(false);
-
-    batch_sets_[active_batch_]->draw_alpha(projection);
-
-    depth_mask_(true);
-    disable_(gl::Capability::blend);
 }
 
 /*************
@@ -280,6 +221,107 @@ std::unique_ptr<hades::CP437> GfxMgr::load_cp437(const std::string &path, int ch
         char_w, char_h,
         batch_sets_[active_batch_]->z_level
     );
+}
+
+/*****************
+ * OPENGL CONTROL
+ */
+
+void GfxMgr::enable_(gl::Capability cap) {
+    ctx_->Enable(unwrap(cap));
+}
+
+void GfxMgr::disable_(gl::Capability cap) {
+    ctx_->Disable(unwrap(cap));
+}
+
+void GfxMgr::depth_func_(gl::DepthFunc func) {
+    ctx_->DepthFunc(unwrap(func));
+}
+
+void GfxMgr::depth_mask_(bool flag) {
+    ctx_->DepthMask(flag ? GL_TRUE : GL_FALSE);
+}
+
+void GfxMgr::blend_func_(gl::BlendFunc src, gl::BlendFunc dst) {
+    ctx_->BlendFunc(unwrap(src), unwrap(dst));
+}
+
+void GfxMgr::viewport_(int x, int y, int w, int h) {
+    ctx_->Viewport(x, y, w, h);
+}
+
+void GfxMgr::clip_control_(gl::ClipOrigin origin, gl::ClipDepth depth) {
+    ctx_->ClipControl(unwrap(origin), unwrap(depth));
+}
+
+void GfxMgr::flush_() {
+    ctx_->Flush();
+}
+
+/***********
+ * BATCHING
+ */
+
+void GfxMgr::new_batch_set_(const std::string &name, bool switch_to) {
+    batch_sets_[name] = std::make_unique<BatchSet>();
+
+    if (switch_to)
+        switch_to_batch_set_(name);
+}
+
+void GfxMgr::switch_to_batch_set_(const std::string &name) {
+    active_batch_ = name;
+}
+
+void GfxMgr::clear_batches_() {
+    batch_sets_[active_batch_]->clear();
+}
+
+void GfxMgr::draw_batches_(glm::mat4 projection) {
+    batch_sets_[active_batch_]->draw_opaque(projection);
+
+    enable_(gl::Capability::blend);
+    depth_mask_(false);
+
+    batch_sets_[active_batch_]->draw_alpha(projection);
+
+    depth_mask_(true);
+    disable_(gl::Capability::blend);
+}
+
+/********
+ * DEBUG
+ */
+
+std::size_t GfxMgr::pixel_count_() {
+    return batch_sets_["default"]->pixel_vertex_count_opaque() +
+           batch_sets_["default"]->pixel_vertex_count_alpha();
+}
+
+std::size_t GfxMgr::line_count_() {
+    return batch_sets_["default"]->line_vertex_count_opaque() +
+           batch_sets_["default"]->line_vertex_count_alpha();
+}
+
+std::size_t GfxMgr::tri_count_() {
+    return batch_sets_["default"]->tri_vertex_count_opaque() +
+           batch_sets_["default"]->tri_vertex_count_alpha();
+}
+
+std::size_t GfxMgr::rect_count_() {
+    return batch_sets_["default"]->rect_vertex_count_opaque() +
+           batch_sets_["default"]->rect_vertex_count_alpha();
+}
+
+std::size_t GfxMgr::oval_count_() {
+    return batch_sets_["default"]->oval_vertex_count_opaque() +
+           batch_sets_["default"]->oval_vertex_count_alpha();
+}
+
+std::size_t GfxMgr::texture_count_() {
+    return batch_sets_["default"]->texture_vertex_count_opaque() +
+           batch_sets_["default"]->texture_vertex_count_alpha();
 }
 
 } // namespace hades
