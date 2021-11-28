@@ -2,53 +2,64 @@
 
 class Testing : public hades::Application {
 public:
-    std::vector<glm::vec4> rects{};
-    std::vector<hades::RGB> colors{};
+  std::unique_ptr<hades::Spritesheet> ss;
+  std::vector<std::vector<std::string>> sprite_names{};
 
-    float rad{15.0f};
+  void initialize() override {
+    ss = gfx->load_spritesheet("example/resources/8squares.png")
+      .set_tiled(16, 16)
+      .add_sprite("1", 0, 0)
+      .add_sprite("2", 1, 0)
+      .add_sprite("3", 2, 0)
+      .add_sprite("4", 3, 0)
+      .add_sprite("5", 0, 1)
+      .add_sprite("6", 1, 1)
+      .add_sprite("7", 2, 1)
+      .add_sprite("8", 3, 1)
+      .build();
 
-    void initialize() override {
-        rnd::debug_show_seed();
-    }
+    sprite_names = std::vector<std::vector<std::string>>(
+      window->h() / ss->tile_h(), 
+      std::vector<std::string>(
+        window->w() / ss->tile_w()
+      )
+    );
+    randomize_tiles();  // initial setup
 
-    void update(double dt) override {
-        if (input->pressed("escape"))
-            shutdown();
+    timer->every(1.0, [&]{ randomize_tiles(); });
+  }
 
-        if (input->pressed("mb_left")) {
-            rects.emplace_back(input->mouse.x, input->mouse.y, rad, rad);
-            colors.emplace_back(rnd::rgb());
-        }
+  void randomize_tiles() {
+    for (int y = 0; y < sprite_names.size(); ++y)
+      for (int x = 0; x < sprite_names[y].size(); ++x)
+        sprite_names[y][x] = rnd::choose({"1", "2", "3", "4", "5", "6", "7", "8"}); 
+  }
 
-        if (input->pressed("r")) {
-            rects.clear();
-            colors.clear();
-        }
+  void update(double dt) override {
+    if (input->pressed("escape"))
+      shutdown();
+  }
 
-        if (input->mouse.sy > 0)
-            rad += 1.0f;
-        else if (input->mouse.sy < 0)
-            rad -= 1.0f;
-    }
+  void draw() override {
+    gfx->clear_color(hades::rgb(0x181818));
+    gfx->clear();
 
-    void draw() override {
-        gfx->clear_color(hades::rgb(0x181818));
-        gfx->clear();
-
-        for (std::size_t i = 0; i < rects.size(); ++i)
-            gfx->oval(rects[i].x, rects[i].y, rects[i].z, rects[i].w, colors[i]);
-    }
+    for (int y = 0; y < sprite_names.size(); ++y)
+      for (int x = 0; x < sprite_names.size(); ++x)
+        ss->draw(sprite_names[y][x], x * ss->tile_w(), y * ss->tile_h());
+  }
 };
 
 int main(int, char *[]) {
-    hades::Runner()
-        .open<Testing>({
-            .title = "Testing",
-            .monitor = 1,
-            .flags = hades::WFlags::borderless
-        })
-        .initgl()
-        .start();
+  hades::Runner()
+    .open<Testing>({
+      .title = "Testing",
+      .size = {512, 512},
+      .monitor = 1,
+      .flags = hades::WFlags::centered
+    })
+    .initgl()
+    .start();
 }
 
 

@@ -7,6 +7,9 @@
 #include "hades/util/time.hpp"
 
 #include "hades/color.hpp"
+#include "hades/spritesheet.hpp"
+#include "hades/texture.hpp"
+
 #include "hades/application.hpp"
 #include "hades/runner.hpp"
 

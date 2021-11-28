@@ -16,34 +16,34 @@ namespace hades {
 
 class BatchSet {
 public:
-    float z_level{1.0f};
+  float z_level{1.0f};
 
-    std::unique_ptr <gl::PixelBatch> pixels{nullptr};
-    std::unique_ptr <gl::LineBatch> lines{nullptr};
-    std::unique_ptr <gl::TriBatch> tris{nullptr};
-    std::unique_ptr <gl::RectBatch> rects{nullptr};
-    std::unique_ptr <gl::OvalBatch> ovals{nullptr};
+  std::unique_ptr <gl::PixelBatch> pixels{nullptr};
+  std::unique_ptr <gl::LineBatch> lines{nullptr};
+  std::unique_ptr <gl::TriBatch> tris{nullptr};
+  std::unique_ptr <gl::RectBatch> rects{nullptr};
+  std::unique_ptr <gl::OvalBatch> ovals{nullptr};
 
-    std::unordered_map <std::string, std::unique_ptr<gl::TextureBatch>> textures{};
+  std::unordered_map <std::string, std::unique_ptr<gl::TextureBatch>> textures{};
 
-    void clear();
+  void clear();
 
-    std::size_t pixel_vertex_count_opaque() const;
-    std::size_t line_vertex_count_opaque() const;
-    std::size_t tri_vertex_count_opaque() const;
-    std::size_t rect_vertex_count_opaque() const;
-    std::size_t oval_vertex_count_opaque() const;
-    std::size_t texture_vertex_count_opaque() const;
+  std::size_t pixel_vertex_count_opaque() const;
+  std::size_t line_vertex_count_opaque() const;
+  std::size_t tri_vertex_count_opaque() const;
+  std::size_t rect_vertex_count_opaque() const;
+  std::size_t oval_vertex_count_opaque() const;
+  std::size_t texture_vertex_count_opaque() const;
 
-    std::size_t pixel_vertex_count_alpha() const;
-    std::size_t line_vertex_count_alpha() const;
-    std::size_t tri_vertex_count_alpha() const;
-    std::size_t rect_vertex_count_alpha() const;
-    std::size_t oval_vertex_count_alpha() const;
-    std::size_t texture_vertex_count_alpha() const;
+  std::size_t pixel_vertex_count_alpha() const;
+  std::size_t line_vertex_count_alpha() const;
+  std::size_t tri_vertex_count_alpha() const;
+  std::size_t rect_vertex_count_alpha() const;
+  std::size_t oval_vertex_count_alpha() const;
+  std::size_t texture_vertex_count_alpha() const;
 
-    void draw_opaque(glm::mat4 projection);
-    void draw_alpha(glm::mat4 projection);
+  void draw_opaque(glm::mat4 projection);
+  void draw_alpha(glm::mat4 projection);
 };
 
 } // namespace hades

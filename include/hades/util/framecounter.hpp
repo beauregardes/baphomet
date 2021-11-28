@@ -11,15 +11,15 @@ namespace hades {
 
 class FrameCounter {
 public:
-    void update();
+  void update();
 
-    double fps();
+  double fps();
 
 private:
-    std::deque<std::uint64_t> timestamps_{};
+  std::deque<std::uint64_t> timestamps_{};
 
-    hades::Ticker ticker_{0.5};
-    hades::EMA averager_{1.0};
+  hades::Ticker ticker_{0.5};
+  hades::EMA averager_{1.0};
 };
 
 } // namespace hades

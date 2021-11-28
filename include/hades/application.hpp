@@ -12,45 +12,45 @@
 namespace hades {
 
 class Application {
-    friend class Runner;
+  friend class Runner;
 
 public:
-    virtual ~Application() = default;
+  virtual ~Application() = default;
 
 protected:
-    std::unique_ptr<Window> window{nullptr};
-    std::unique_ptr<InputMgr> input{nullptr};
-    std::unique_ptr<GfxMgr> gfx{nullptr};
+  std::unique_ptr<Window> window{nullptr};
+  std::unique_ptr<InputMgr> input{nullptr};
+  std::unique_ptr<GfxMgr> gfx{nullptr};
 
-    std::unique_ptr<TimerMgr> timer{nullptr};
+  std::unique_ptr<TimerMgr> timer{nullptr};
 
-    virtual void initialize();
-    virtual void update(double dt);
-    virtual void draw();
+  virtual void initialize();
+  virtual void update(double dt);
+  virtual void draw();
 
-    void shutdown();
+  void shutdown();
 
 private:
-    GladGLContext *ctx_{nullptr};
+  GladGLContext *ctx_{nullptr};
 
-    std::unique_ptr<gl::Framebuffer> fbo_{nullptr};
+  std::unique_ptr<gl::Framebuffer> fbo_{nullptr};
 
-    struct {
-        FrameCounter frame_counter{};
-        std::unique_ptr<hades::CP437> font{nullptr};
-    } overlay_{};
+  struct {
+    FrameCounter frame_counter{};
+    std::unique_ptr<hades::CP437> font{nullptr};
+  } overlay_{};
 
-    void start_frame_();
-    void end_frame_();
+  void start_frame_();
+  void end_frame_();
 
-    void draw_overlay_();
+  void draw_overlay_();
 
-    /******************
-     * INITIALIZATION *
-     ******************/
+  /******************
+   * INITIALIZATION *
+   ******************/
 
-    void open_(const WCfg &cfg, glm::ivec2 glversion);
-    void initgl_(glm::ivec2 glversion);
+  void open_(const WCfg &cfg, glm::ivec2 glversion);
+  void initgl_(glm::ivec2 glversion);
 };
 
 } // namespace hades
