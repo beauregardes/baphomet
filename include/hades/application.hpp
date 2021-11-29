@@ -43,6 +43,8 @@ private:
   void start_frame_();
   void end_frame_();
 
+  void draw_overlay_text_with_bg_(glm::vec2 &base_pos, const std::string &text);
+  void draw_overlay_skip_line_(glm::vec2 &base_pos);
   void draw_overlay_();
 
   /******************

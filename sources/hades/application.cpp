@@ -33,25 +33,55 @@ void Application::end_frame_() {
   glfwSwapBuffers(window->glfw_window_);
 }
 
-void Application::draw_overlay_() {
+void Application::draw_overlay_text_with_bg_(glm::vec2 &base_pos, const std::string &text) {
+  auto bounds = overlay_.font->calc_text_bounds(base_pos.x, base_pos.y, text);
+  gfx->rect(
+    bounds.x, 
+    bounds.y - 1, 
+    bounds.z + 1,
+    bounds.w + 1, 
+    hades::rgba(0x00000080)
+  );
+  
+  overlay_.font->render(base_pos.x, base_pos.y, hades::rgba(0xffffffff), text);
+
+  base_pos.y += bounds.w + 1;
+}
+
+void Application::draw_overlay_skip_line_(glm::vec2 &base_pos) {
+  base_pos.y += overlay_.font->char_h() + 1;
+}
+
+void Application::draw_overlay_() { 
   gfx->switch_to_batch_set_("__overlay");
   gfx->clear_batches_();
+
+  glm::vec2 base_pos{1.0f, 2.0f};
 
   auto fps_str = fmt::format("{:.2f} FPS", overlay_.frame_counter.fps());
   if (window->vsync())
     fps_str += " (vsync)";
-  overlay_.font->render(1, 2, fps_str);
+  draw_overlay_text_with_bg_(base_pos, fps_str);
 
-  auto batch_str = fmt::format(
-    "pixels: {}\nlines: {}\ntris: {}\nrect: {}\novals: {}\ntexture: {}\n",
-    gfx->pixel_count_(),
-    gfx->line_count_() / 2,
-    gfx->tri_count_() / 3,
-    gfx->rect_count_() / 3,
-    gfx->oval_count_() / 3,
-    gfx->texture_count_() / 3
-  );
-  overlay_.font->render(1, 2 + overlay_.font->char_h() * 2, batch_str);
+  draw_overlay_skip_line_(base_pos);
+
+  draw_overlay_text_with_bg_(
+    base_pos, fmt::format("pixels: {}", gfx->pixel_count_()));
+
+  draw_overlay_text_with_bg_(
+    base_pos, fmt::format("lines: {}", gfx->line_count_() / 2));
+
+  draw_overlay_text_with_bg_(
+    base_pos, fmt::format("tris: {}", gfx->tri_count_() / 3));
+
+  draw_overlay_text_with_bg_(
+    base_pos, fmt::format("rects: {}", gfx->rect_count_() / 3));
+
+  draw_overlay_text_with_bg_(
+    base_pos, fmt::format("ovals: {}", gfx->oval_count_() / 3));
+
+  draw_overlay_text_with_bg_(
+    base_pos, fmt::format("textures: {}", gfx->texture_count_() / 3));
 
   gfx->draw_batches_(window->projection());
 }
@@ -101,6 +131,8 @@ void Application::initgl_(glm::ivec2 glversion) {
   gfx->blend_func_(gl::BlendFunc::src_alpha, gl::BlendFunc::one_minus_src_alpha);
 
   gfx->enable_(gl::Capability::depth_test);
+
+  ctx_->Enable(GL_TEXTURE_2D);
 
   fbo_ = gl::FramebufferBuilder(ctx_, window->w(), window->h())
     .renderbuffer(gl::RBufFormat::rgba8)

@@ -7,7 +7,7 @@ public:
 
   void initialize() override {
     ss = gfx->load_spritesheet("example/resources/8squares.png")
-      .set_tiled(16, 16)
+      .set_tiled(8, 8)
       .add_sprite("1", 0, 0)
       .add_sprite("2", 1, 0)
       .add_sprite("3", 2, 0)
