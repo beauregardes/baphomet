@@ -39,7 +39,8 @@ protected:
   virtual void update(double dt);
   virtual void draw();
 
-  void debug_log(const std::string &msg);
+  template <typename S, typename... Args>
+  void debug_log(const S &format, Args &&... args);
 
   void shutdown();
 
@@ -70,6 +71,8 @@ private:
   void draw_overlay_text_with_bg_(glm::vec2 &base_pos, const std::string &text);
   void draw_overlay_skip_line_(glm::vec2 &base_pos);
 
+  void debug_log_(fmt::string_view format, fmt::format_args args);
+
   /******************
    * INITIALIZATION *
    ******************/
@@ -77,6 +80,11 @@ private:
   void open_(const WCfg &cfg, glm::ivec2 glversion);
   void initgl_(glm::ivec2 glversion);
 };
+
+template <typename S, typename... Args>
+void Application::debug_log(const S &format, Args &&... args) {
+  debug_log_(format, fmt::make_args_checked<Args...>(format, args...));
+}
 
 } // namespace hades
 

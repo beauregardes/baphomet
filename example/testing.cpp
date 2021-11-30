@@ -5,8 +5,6 @@ public:
   std::unique_ptr<hades::Spritesheet> ss;
   std::vector<std::vector<std::string>> sprite_names{};
 
-  int log_counter{1};
-
   void initialize() override {
     ss = gfx->load_spritesheet("example/resources/8squares.png")
       .set_tiled(8, 8)
@@ -28,12 +26,7 @@ public:
     );
     randomize_tiles();  // initial setup
 
-    timer->every(0.25, [&]{ 
-      randomize_tiles();
-
-      debug_log(fmt::format("Ticked {} times", log_counter));
-      log_counter++;
-    });
+    timer->every(0.5, [&]{ randomize_tiles(); });
   }
 
   void randomize_tiles() {
@@ -45,6 +38,15 @@ public:
   void update(double dt) override {
     if (input->pressed("escape"))
       shutdown();
+
+    if (input->pressed("1"))
+      debug_log("You pressed 1");
+
+    if (input->pressed("2"))
+      debug_log("You pressed 2");
+
+    if (input->pressed("mb_left"))
+      debug_log("Click: ({}, {})", input->mouse.x, input->mouse.y);
   }
 
   void draw() override {
@@ -68,5 +70,3 @@ int main(int, char *[]) {
     .initgl()
     .start();
 }
-
-

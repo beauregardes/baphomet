@@ -6,10 +6,6 @@ void Application::initialize() {}
 void Application::update(double dt) {}
 void Application::draw() {}
 
-void Application::debug_log(const std::string &msg) {
-  overlay_.log.messages.emplace_back(DebugLogLine(msg));
-}
-
 void Application::shutdown() {
   window->close_();
 }
@@ -129,6 +125,11 @@ void Application::draw_overlay_text_with_bg_(glm::vec2 &base_pos, const std::str
 
 void Application::draw_overlay_skip_line_(glm::vec2 &base_pos) {
   base_pos.y += overlay_.font->char_h() + 3;
+}
+
+void Application::debug_log_(fmt::string_view format, fmt::format_args args) {
+  auto msg = fmt::vformat(format, args);
+  overlay_.log.messages.emplace_back(msg);
 }
 
 /******************

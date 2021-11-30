@@ -67,7 +67,6 @@ void Runner::register_glfw_callbacks_() {
   glfwSetWindowSizeCallback(w, glfw_window_size_callback_);
   glfwSetWindowPosCallback(w, glfw_window_pos_callback_);
   glfwSetWindowFocusCallback(w, glfw_window_focus_callback_);
-  w = nullptr;
 }
 
 void Runner::glfw_key_callback_(GLFWwindow *window, int key, int scancode, int action, int mods) {
