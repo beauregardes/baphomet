@@ -33,29 +33,29 @@ void CP437::render(float x, float y, float scale, const hades::RGB &color, const
   render_(x, y, scale, color, text);
 }
 
-glm::vec4 CP437::calc_text_bounds(float x, float y, const std::string &text) {
+Rect CP437::calc_text_bounds(float x, float y, const std::string &text) {
   return calc_text_bounds(x, y, 1.0f, text);
 }
 
-glm::vec4 CP437::calc_text_bounds(float x, float y, float scale, const std::string &text) {
-  glm::vec4 bounds{x, y, 0.0f, 0.0f};
+Rect CP437::calc_text_bounds(float x, float y, float scale, const std::string &text) {
+  Rect bounds{x, y, 0.0f, 0.0f};
 
   for (const auto &c : text) {
-    if (bounds.w == 0.0f)
-      bounds.w = char_h_;
+    if (bounds.h == 0.0f)
+      bounds.h = char_h_;
 
     int idx = static_cast<int>(c);
 
     if (idx == 10) {
-      bounds.w += scale * char_h_;
+      bounds.h += scale * char_h_;
       continue;
 
     } else if (idx == 32) {
-      bounds.z += scale * char_w_;
+      bounds.w += scale * char_w_;
       continue;
 
     } else if (idx >= 33 && idx <= 126) {
-      bounds.z += scale * char_w_;
+      bounds.w += scale * char_w_;
     }
   }
 

@@ -11,6 +11,17 @@
 
 namespace hades {
 
+struct DebugLogLine {
+  bool should_show{true};
+  double timeout{5.0};
+  int opacity{255};
+
+  std::string msg{};
+
+  DebugLogLine(const std::string &msg) 
+    : msg(msg) {}
+};
+
 class Application {
   friend class Runner;
 
@@ -28,24 +39,36 @@ protected:
   virtual void update(double dt);
   virtual void draw();
 
+  void debug_log(const std::string &msg);
+
   void shutdown();
 
 private:
   GladGLContext *ctx_{nullptr};
 
+  FrameCounter frame_counter_{};
+
   std::unique_ptr<gl::Framebuffer> fbo_{nullptr};
 
   struct {
-    FrameCounter frame_counter{};
     std::unique_ptr<hades::CP437> font{nullptr};
+
+    struct {
+      std::vector<DebugLogLine> messages{};
+      std::size_t size_limit{1000};
+    } log;
   } overlay_{};
 
   void start_frame_();
   void end_frame_();
 
+  void draw_overlay_();
+
+  void draw_debug_log_();
+  void draw_debug_log_line_(glm::vec2 &base_pos, std::size_t idx);
+
   void draw_overlay_text_with_bg_(glm::vec2 &base_pos, const std::string &text);
   void draw_overlay_skip_line_(glm::vec2 &base_pos);
-  void draw_overlay_();
 
   /******************
    * INITIALIZATION *

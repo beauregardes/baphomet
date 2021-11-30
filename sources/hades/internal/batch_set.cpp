@@ -24,56 +24,56 @@ void BatchSet::clear() {
 }
 
 std::size_t BatchSet::pixel_vertex_count_opaque() const {
-  return pixels ? pixels->size_opaque() : 0;
+  return pixels ? pixels->vertex_count_opaque() : 0;
 }
 
 std::size_t BatchSet::line_vertex_count_opaque() const {
-  return lines ? lines->size_opaque() : 0;
+  return lines ? lines->vertex_count_opaque() : 0;
 }
 
 std::size_t BatchSet::tri_vertex_count_opaque() const {
-  return tris ? tris->size_opaque() : 0;
+  return tris ? tris->vertex_count_opaque() : 0;
 }
 
 std::size_t BatchSet::rect_vertex_count_opaque() const {
-  return rects ? rects->size_opaque() : 0;
+  return rects ? rects->vertex_count_opaque() : 0;
 }
 
 std::size_t BatchSet::oval_vertex_count_opaque() const {
-  return ovals ? ovals->size_opaque() : 0;
+  return ovals ? ovals->vertex_count_opaque() : 0;
 }
 
 std::size_t BatchSet::texture_vertex_count_opaque() const {
   std::size_t vertex_count{0};
   for (const auto &p : tex_batches_)
-    vertex_count += p.second->size_alpha();
+    vertex_count += p.second->vertex_count_alpha();
   return vertex_count;
 }
 
 std::size_t BatchSet::pixel_vertex_count_alpha() const {
-  return pixels ? pixels->size_alpha() : 0;
+  return pixels ? pixels->vertex_count_alpha() : 0;
 }
 
 std::size_t BatchSet::line_vertex_count_alpha() const {
-  return lines ? lines->size_alpha() : 0;
+  return lines ? lines->vertex_count_alpha() : 0;
 }
 
 std::size_t BatchSet::tri_vertex_count_alpha() const {
-  return tris ? tris->size_alpha() : 0;
+  return tris ? tris->vertex_count_alpha() : 0;
 }
 
 std::size_t BatchSet::rect_vertex_count_alpha() const {
-  return rects ? rects->size_alpha() : 0;
+  return rects ? rects->vertex_count_alpha() : 0;
 }
 
 std::size_t BatchSet::oval_vertex_count_alpha() const {
-  return ovals ? ovals->size_alpha() : 0;
+  return ovals ? ovals->vertex_count_alpha() : 0;
 }
 
 std::size_t BatchSet::texture_vertex_count_alpha() const {
   std::size_t vertex_count{0};
   for (const auto &p : tex_batches_)
-    vertex_count += p.second->size_opaque();
+    vertex_count += p.second->vertex_count_opaque();
   return vertex_count;
 }
 

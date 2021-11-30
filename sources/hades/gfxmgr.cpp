@@ -138,6 +138,92 @@ void GfxMgr::circle(float x, float y, float radius, const hades::RGB &color) {
   oval(x, y, radius, radius, color, 0.0f, 0.0f, 0.0f);
 }
 
+// ********** SHAPES **********
+
+void GfxMgr::pixel(Point p, const hades::RGB &color) {
+  pixel(p.x, p.y, color);
+}
+
+void GfxMgr::line(Line l, const hades::RGB &color, float cx, float cy, float angle) {
+  line(l.x0, l.y0, l.x1, l.y1, color, cx, cy, angle);
+}
+
+void GfxMgr::line(Line l, const hades::RGB &color, float angle) {
+  line(l.x0, l.y0, l.x1, l.y1, color, (l.x0 + l.x1) / 2.0f, (l.y0 + l.y1) / 2.0f, angle);
+}
+
+void GfxMgr::line(Line l, const hades::RGB &color) {
+  line(l.x0, l.y0, l.x1, l.y1, color, 0.0f, 0.0f, 0.0f);
+}
+
+void GfxMgr::tri(Tri t, const hades::RGB &color, float cx, float cy, float angle) {
+  tri(t.x0, t.y0, t.x1, t.y1, t.x2, t.y2, color, cx, cy, angle);
+}
+
+void GfxMgr::tri(Tri t, const hades::RGB &color, float angle) {
+  tri(t.x0, t.y0, t.x1, t.y1, t.x2, t.y2, color, (t.x0 + t.x1 + t.x2) / 3.0f, (t.y0 + t.y1 + t.y2) / 3.0f, angle);
+}
+
+void GfxMgr::tri(Tri t, const hades::RGB &color) {
+  tri(t.x0, t.y0, t.x1, t.y1, t.x2, t.y2, color, 0.0f, 0.0f, 0.0f);
+}
+
+void GfxMgr::tri(Point origin, float radius, const hades::RGB &color, float angle) {
+  tri(
+    origin.x + radius * std::cos(-glm::radians(90.0f)),  origin.y + radius * std::sin(-glm::radians(90.0f)),
+    origin.x + radius * std::cos(-glm::radians(210.0f)), origin.y + radius * std::sin(-glm::radians(210.0f)),
+    origin.x + radius * std::cos(-glm::radians(330.0f)), origin.y + radius * std::sin(-glm::radians(330.0f)),
+    color,
+    origin.x, origin.y, angle
+  );
+}
+
+void GfxMgr::tri(Point origin, float radius, const hades::RGB &color) {
+  tri(
+    origin.x + radius * std::cos(-glm::radians(90.0f)),  origin.y + radius * std::sin(-glm::radians(90.0f)),
+    origin.x + radius * std::cos(-glm::radians(210.0f)), origin.y + radius * std::sin(-glm::radians(210.0f)),
+    origin.x + radius * std::cos(-glm::radians(330.0f)), origin.y + radius * std::sin(-glm::radians(330.0f)),
+    color,
+    0.0f, 0.0f, 0.0f
+  );
+}
+
+void GfxMgr::rect(Rect r, const hades::RGB &color, float cx, float cy, float angle) {
+  rect(r.x, r.y, r.w, r.h, color, cx, cy, angle);
+}
+
+void GfxMgr::rect(Rect r, const hades::RGB &color, float angle) {
+  rect(r.x, r.y, r.w, r.h, color, (r.x + r.w) / 2.0f, (r.y + r.h) / 2.0f, angle);
+}
+
+void GfxMgr::rect(Rect r, const hades::RGB &color) {
+  rect(r.x, r.y, r.w, r.y, color, 0.0f, 0.0f, 0.0f);
+}
+
+void GfxMgr::oval(Oval o, const hades::RGB &color, float cx, float cy, float angle) {
+  oval(o.x, o.y, o.rad_x, o.rad_y, color, cx, cy, angle);
+}
+
+void GfxMgr::oval(Oval o, const hades::RGB &color, float angle) {
+  oval(o.x, o.y, o.rad_x, o.rad_y, color, o.x, o.y, angle);
+}
+
+void GfxMgr::oval(Oval o, const hades::RGB &color) {
+  oval(o.x, o.y, o.rad_x, o.rad_y, color, 0.0f, 0.0f, 0.0f);
+}
+
+void GfxMgr::circle(Circle c, const hades::RGB &color, float cx, float cy, float angle) {
+  oval(c.x, c.y, c.rad, c.rad, color, cx, cy, angle);
+}
+
+void GfxMgr::circle(Circle c, const hades::RGB &color, float angle) {
+  oval(c.x, c.y, c.rad, c.rad, color, c.x, c.y, angle);
+}
+
+void GfxMgr::circle(Circle c, const hades::RGB &color) {
+  oval(c.x, c.y, c.rad, c.rad, color, 0.0f, 0.0f, 0.0f);
+}
+
 /***********
  * TEXTURES
  */

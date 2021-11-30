@@ -34,20 +34,19 @@ void Runner::start() {
   application_->initgl_(open_params_.glversion);
 
   application_->initialize();
-
-  Ticker t{};
+  
   do {
-    t.tick();
-
-    application_->overlay_.frame_counter.update();
-    application_->update(t.dt_sec());
+    application_->frame_counter_.update();
+    double dt = application_->frame_counter_.dt();
+    
+    application_->update(dt);
 
     application_->start_frame_();
     application_->draw();
     application_->end_frame_();
 
-    application_->input->update_(t.dt_sec());
-    application_->timer->update(t.dt_sec());
+    application_->input->update_(dt);
+    application_->timer->update(dt);
 
     glfwPollEvents();
   } while (!glfwWindowShouldClose(application_->window->glfw_window_));

@@ -6,6 +6,10 @@ void Application::initialize() {}
 void Application::update(double dt) {}
 void Application::draw() {}
 
+void Application::debug_log(const std::string &msg) {
+  overlay_.log.messages.emplace_back(DebugLogLine(msg));
+}
+
 void Application::shutdown() {
   window->close_();
 }
@@ -33,32 +37,13 @@ void Application::end_frame_() {
   glfwSwapBuffers(window->glfw_window_);
 }
 
-void Application::draw_overlay_text_with_bg_(glm::vec2 &base_pos, const std::string &text) {
-  auto bounds = overlay_.font->calc_text_bounds(base_pos.x, base_pos.y, text);
-  gfx->rect(
-    bounds.x, 
-    bounds.y - 1, 
-    bounds.z + 1,
-    bounds.w + 1, 
-    hades::rgba(0x00000080)
-  );
-  
-  overlay_.font->render(base_pos.x, base_pos.y, hades::rgba(0xffffffff), text);
-
-  base_pos.y += bounds.w + 1;
-}
-
-void Application::draw_overlay_skip_line_(glm::vec2 &base_pos) {
-  base_pos.y += overlay_.font->char_h() + 1;
-}
-
 void Application::draw_overlay_() { 
   gfx->switch_to_batch_set_("__overlay");
   gfx->clear_batches_();
 
-  glm::vec2 base_pos{1.0f, 2.0f};
+  glm::vec2 base_pos{1.0f, 1.0f};
 
-  auto fps_str = fmt::format("{:.2f} FPS", overlay_.frame_counter.fps());
+  auto fps_str = fmt::format("{:.2f} FPS", frame_counter_.fps());
   if (window->vsync())
     fps_str += " (vsync)";
   draw_overlay_text_with_bg_(base_pos, fps_str);
@@ -83,7 +68,67 @@ void Application::draw_overlay_() {
   draw_overlay_text_with_bg_(
     base_pos, fmt::format("textures: {}", gfx->texture_count_() / 3));
 
+  draw_debug_log_();
+
   gfx->draw_batches_(window->projection());
+}
+
+void Application::draw_debug_log_() {
+  double dt = frame_counter_.dt();
+
+  glm::vec2 base_pos{1.0f, window->h() - 1};
+  for (int i = overlay_.log.messages.size() - 1; i >= 0; --i) {
+    auto &m = overlay_.log.messages[i];
+
+    if (m.timeout > 0) {
+      m.timeout -= dt;
+      if (m.timeout <= 0.0)
+        m.should_show = false;
+      else if (m.timeout > 0.0 && m.timeout < 1.0)
+        m.opacity = int(255.0 * m.timeout);
+    }
+
+    if (m.should_show)
+      draw_debug_log_line_(base_pos, i);
+  }
+}
+
+void Application::draw_debug_log_line_(glm::vec2 &base_pos, std::size_t idx) {
+  auto &m = overlay_.log.messages[idx];
+
+  auto bounds = overlay_.font->calc_text_bounds(0.0f, 0.0f, m.msg);
+
+  base_pos.y -= bounds.h + 3;
+  gfx->rect(
+    base_pos.x, base_pos.y, bounds.w + 3, bounds.h + 3,
+    hades::rgba(0, 0, 0, 192 * (m.opacity / 255.0))
+  );
+
+  overlay_.font->render(
+    base_pos.x + 1, base_pos.y + 2, 
+    hades::rgba(255, 255, 255, m.opacity), 
+    m.msg
+  );
+}
+
+void Application::draw_overlay_text_with_bg_(glm::vec2 &base_pos, const std::string &text) {
+  auto bounds = overlay_.font->calc_text_bounds(base_pos.x, base_pos.y, text);
+  gfx->rect(
+    bounds.x, bounds.y, bounds.w + 3, bounds.h + 3, 
+    hades::rgba(0, 0, 0, 192)
+  );
+  
+  overlay_.font->render(
+    base_pos.x + 1, base_pos.y + 2, 
+    hades::rgba(0xffffffff), 
+    text
+  );
+
+  base_pos.y += bounds.h + 3;
+}
+
+void Application::draw_overlay_skip_line_(glm::vec2 &base_pos) {
+  base_pos.y += overlay_.font->char_h() + 3;
 }
 
 /******************

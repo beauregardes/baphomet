@@ -6,12 +6,13 @@
 
 #include "gl/context_enums.hpp"
 
+#include "hades/font/cp437.hpp"
 #include "hades/internal/batch_set.hpp"
+#include "hades/internal/resource_loader.hpp"
+#include "hades/util/shapes.hpp"
 #include "hades/color.hpp"
 #include "hades/spritesheet.hpp"
 #include "hades/texture.hpp"
-#include "hades/internal/resource_loader.hpp"
-#include "hades/font/cp437.hpp"
 
 #include <memory>
 #include <string>
@@ -68,6 +69,33 @@ public:
   void circle(float x, float y, float radius, const hades::RGB &color, float cx, float cy, float angle);
   void circle(float x, float y, float radius, const hades::RGB &color, float angle);
   void circle(float x, float y, float radius, const hades::RGB &color);
+
+  // ********** SHAPES **********
+
+  void pixel(Point p, const hades::RGB &color);
+
+  void line(Line l, const hades::RGB &color, float cx, float cy, float angle);
+  void line(Line l, const hades::RGB &color, float angle);
+  void line(Line l, const hades::RGB &color);
+
+  void tri(Tri t, const hades::RGB &color, float cx, float cy, float angle);
+  void tri(Tri t, const hades::RGB &color, float angle);
+  void tri(Tri t, const hades::RGB &color);
+
+  void tri(Point origin, float radius, const hades::RGB &color, float angle);
+  void tri(Point origin, float radius, const hades::RGB &color);
+
+  void rect(Rect r, const hades::RGB &color, float cx, float cy, float angle);
+  void rect(Rect r, const hades::RGB &color, float angle);
+  void rect(Rect r, const hades::RGB &color);
+
+  void oval(Oval o, const hades::RGB &color, float cx, float cy, float angle);
+  void oval(Oval o, const hades::RGB &color, float angle);
+  void oval(Oval o, const hades::RGB &color);
+
+  void circle(Circle c, const hades::RGB &color, float cx, float cy, float angle);
+  void circle(Circle c, const hades::RGB &color, float angle);
+  void circle(Circle c, const hades::RGB &color);
 
   /***********
    * TEXTURES

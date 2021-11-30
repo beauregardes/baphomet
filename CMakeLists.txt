@@ -67,6 +67,7 @@ add_library(
     "include/hades/util/averagers.hpp"
     "include/hades/util/framecounter.hpp"
     "include/hades/util/random.hpp"
+    "include/hades/util/shapes.hpp"
     "include/hades/util/ticker.hpp"
     "include/hades/util/time.hpp"
     "include/hades/util/timermgr.hpp"

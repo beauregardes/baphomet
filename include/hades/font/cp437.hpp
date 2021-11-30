@@ -2,6 +2,7 @@
 #define HADES_CP437_HPP
 
 #include "hades/texture.hpp"
+#include "hades/util/shapes.hpp"
 
 namespace hades {
 
@@ -23,8 +24,8 @@ public:
   void render(float x, float y, float scale, const std::string &text);
   void render(float x, float y, float scale, const hades::RGB &color, const std::string &text);
 
-  glm::vec4 calc_text_bounds(float x, float y, const std::string &text);
-  glm::vec4 calc_text_bounds(float x, float y, float scale, const std::string &text);
+  Rect calc_text_bounds(float x, float y, const std::string &text);
+  Rect calc_text_bounds(float x, float y, float scale, const std::string &text);
 
 private:
   GLuint char_w_{0}, char_h_{0};
