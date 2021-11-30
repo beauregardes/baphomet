@@ -3,6 +3,7 @@
 
 #include "hades/color.hpp"
 #include "hades/texture.hpp"
+#include "hades/internal/batch_set.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -12,8 +13,9 @@ namespace hades {
 class Spritesheet {
 public:
   Spritesheet(
-    std::unique_ptr<Texture> texture,
-    std::unordered_map<std::string, glm::vec4>,
+    const std::unique_ptr<BatchSet> &bs,
+    const std::string &name,
+    std::unordered_map<std::string, glm::vec4> mappings,
     float tile_w, float tile_h
   );
 
@@ -47,7 +49,9 @@ public:
   );
 
 private:
-  std::unique_ptr<Texture> texture_{nullptr};
+  const std::unique_ptr<BatchSet> &bs_;
+  std::string name_{};
+
   std::unordered_map<std::string, glm::vec4> mappings_{};
 
   float tile_w_{0}, tile_h_{0};
@@ -55,7 +59,7 @@ private:
 
 class SpritesheetBuilder {
 public:
-  SpritesheetBuilder(std::unique_ptr<Texture> texture);
+  SpritesheetBuilder(const std::unique_ptr<BatchSet> &bs, const std::string &name);
 
   SpritesheetBuilder &load_ini(const std::string &path);
 
@@ -81,7 +85,9 @@ public:
   std::unique_ptr<Spritesheet> build();
 
 private:
-  std::unique_ptr<Texture> texture_{nullptr};
+  const std::unique_ptr<BatchSet> &bs_;
+  std::string name_{};
+
   std::unordered_map<std::string, glm::vec4> mappings_{};
 
   bool tiled_{false};

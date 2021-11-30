@@ -3,10 +3,11 @@
 namespace hades {
 
 Spritesheet::Spritesheet(
-  std::unique_ptr<Texture> texture,
+  const std::unique_ptr<BatchSet> &bs,
+  const std::string &name,
   std::unordered_map<std::string, glm::vec4> mappings,
   float tile_w, float tile_h
-) : texture_(std::move(texture)), mappings_(mappings), tile_w_(tile_w), tile_h_(tile_h) {}
+) : bs_(bs), name_(name), mappings_(mappings), tile_w_(tile_w), tile_h_(tile_h) {}
 
 float Spritesheet::tile_w() const {
   return tile_w_;
@@ -22,7 +23,8 @@ void Spritesheet::draw(
   float cx, float cy, float angle,
   const hades::RGB &color
 ) {
-  texture_->draw(
+  bs_->add_texture(
+    name_,
     x, y, w, h,
     mappings_[name].x, mappings_[name].y, mappings_[name].z, mappings_[name].w,
     cx, cy, angle,
@@ -35,9 +37,11 @@ void Spritesheet::draw(
   float x, float y, float w, float h,
   const hades::RGB &color
 ) {
-  texture_->draw(
+  bs_->add_texture(
+    name_,
     x, y, w, h,
     mappings_[name].x, mappings_[name].y, mappings_[name].z, mappings_[name].w,
+    0.0f, 0.0f, 0.0f,
     color
   );
 }
@@ -48,7 +52,8 @@ void Spritesheet::draw(
   float cx, float cy, float angle,
   const hades::RGB &color
 ) {
-  texture_->draw(
+  bs_->add_texture(
+    name_,
     x, y, mappings_[name].z, mappings_[name].w,
     mappings_[name].x, mappings_[name].y, mappings_[name].z, mappings_[name].w,
     cx, cy, angle,
@@ -61,15 +66,17 @@ void Spritesheet::draw(
   float x, float y, 
   const hades::RGB &color
 ) {
-  texture_->draw(
+  bs_->add_texture(
+    name_,
     x, y, mappings_[name].z, mappings_[name].w,
     mappings_[name].x, mappings_[name].y, mappings_[name].z, mappings_[name].w,
+    0.0f, 0.0f, 0.0f,
     color
   );
 }
 
-SpritesheetBuilder::SpritesheetBuilder(std::unique_ptr<Texture> texture)
-  : texture_(std::move(texture)) {}
+SpritesheetBuilder::SpritesheetBuilder(const std::unique_ptr<BatchSet> &bs, const std::string &name)
+  : bs_(bs), name_(name) {}
 
 SpritesheetBuilder &SpritesheetBuilder::load_ini(const std::string &path) {
   // TODO: NYI
@@ -125,7 +132,7 @@ SpritesheetBuilder &SpritesheetBuilder::add_sprite(
 }
 
 std::unique_ptr<Spritesheet> SpritesheetBuilder::build() {
-  return std::make_unique<Spritesheet>(std::move(texture_), mappings_, tile_w_, tile_h_);
+  return std::make_unique<Spritesheet>(bs_, name_, mappings_, tile_w_, tile_h_);
 }
 
 } // namespace hades

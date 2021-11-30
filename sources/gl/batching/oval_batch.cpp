@@ -2,7 +2,7 @@
 
 namespace gl {
 
-OvalBatch::OvalBatch(GladGLContext *ctx) : Batch(ctx, 10) {
+OvalBatch::OvalBatch(GladGLContext *ctx) : Batch(ctx, 10, BatchType::oval) {
   shader_ = ShaderBuilder(ctx_, "OvalBatch")
             .vert_from_src(R"glsl(
 #version 330 core
@@ -76,7 +76,7 @@ void OvalBatch::draw_opaque(float z_max, glm::mat4 projection) {
   }
 }
 
-void OvalBatch::draw_alpha(float z_max, glm::mat4 projection) {
+void OvalBatch::draw_alpha(float z_max, glm::mat4 projection, GLint first, GLsizei count) {
   if (!empty_alpha()) {
     alpha_vertices_->sync();
 
@@ -86,8 +86,8 @@ void OvalBatch::draw_alpha(float z_max, glm::mat4 projection) {
 
     alpha_vao_->draw_arrays(
       DrawMode::triangles,
-      alpha_vertices_->front() / floats_per_vertex_,
-      alpha_vertices_->size() / floats_per_vertex_
+      first / floats_per_vertex_,
+      count / floats_per_vertex_
     );
   }
 }

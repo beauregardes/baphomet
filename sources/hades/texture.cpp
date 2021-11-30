@@ -2,8 +2,11 @@
 
 namespace hades {
 
-Texture::Texture(const std::unique_ptr<gl::TextureBatch> &batch, GLuint width, GLuint height, float &z_level)
-  : batch_(batch), z_level_(z_level), width_(width), height_(height) {}
+Texture::Texture(
+  const std::unique_ptr<BatchSet> &bs,
+  const std::string &name,
+  GLuint width, GLuint height
+) : bs_(bs), name_(name), width_(width), height_(height) {}
 
 GLuint Texture::w() const {
   return width_;
@@ -19,18 +22,13 @@ void Texture::draw(
   float cx, float cy, float angle,
   const hades::RGB &color
 ) {
-  auto cv = color.vec4();
-  batch_->add(
-    x, y,
-    w, h,
-    tx, ty,
-    tw, th,
-    z_level_,
-    cv.r, cv.g, cv.b, cv.a,
-    cx, cy,
-    glm::radians(angle)
+  bs_->add_texture(
+    name_,
+    x, y, w, h,
+    tx, ty, tw, th,
+    cx, cy, angle,
+    color
   );
-  z_level_++;
 }
 
 void Texture::draw(

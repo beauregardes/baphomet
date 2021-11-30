@@ -3,9 +3,9 @@ set -e
 OPTIND=1
 
 mode=debug
-prog=""
+prog=''
 
-while getopts "m:p:" opt; do
+while getopts 'm:p:' opt; do
 	case "$opt" in
 		m) mode=$OPTARG;;
 		p) prog=$OPTARG;;
@@ -29,7 +29,6 @@ cmake -DCMAKE_BUILD_TYPE=$mode ..
 make -j 9
 cd ..
 
-if [[ -v prog ]]; then
+if [[ ! $prog = '' ]]; then
 	./$builddir/$prog
 fi
-

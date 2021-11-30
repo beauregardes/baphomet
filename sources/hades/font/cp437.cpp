@@ -3,11 +3,11 @@
 namespace hades {
 
 CP437::CP437(
-  const std::unique_ptr<gl::TextureBatch> &batch,
+  const std::unique_ptr<BatchSet> &bs,
+  const std::string &name,
   GLuint width, GLuint height,
-  GLuint char_w, GLuint char_h,
-  float &z_level
-) : Texture(batch, width, height, z_level), char_w_(char_w), char_h_(char_h) {}
+  GLuint char_w, GLuint char_h
+) : Texture(bs, name, width, height), char_w_(char_w), char_h_(char_h) {}
 
 GLuint CP437::char_w() const {
   return char_w_;
@@ -87,12 +87,10 @@ void CP437::render_(float x, float y, float scale, const hades::RGB &color, cons
         char_w_, char_h_,
         color
       );
-      z_level_--;
-
+      
       curr_x += scale * char_w_;
     }
   }
-  z_level_++;
 }
 
 } // namespace hades

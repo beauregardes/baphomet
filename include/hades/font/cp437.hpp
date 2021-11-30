@@ -3,17 +3,15 @@
 
 #include "hades/texture.hpp"
 
-#include "fmt/format.h"
-
 namespace hades {
 
 class CP437 : public Texture {
 public:
   CP437(
-    const std::unique_ptr<gl::TextureBatch> &batch,
+    const std::unique_ptr<BatchSet> &bs,
+    const std::string &name,
     GLuint width, GLuint height,
-    GLuint char_w, GLuint char_h,
-    float &z_level
+    GLuint char_w, GLuint char_h
   );
 
   GLuint char_w() const;

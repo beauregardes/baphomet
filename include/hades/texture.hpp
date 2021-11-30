@@ -1,18 +1,17 @@
 #ifndef HADES_TEXTURE_HPP
 #define HADES_TEXTURE_HPP
 
-#include "gl/batching/texture_batch.hpp"
-
 #include "hades/color.hpp"
+#include "hades/internal/batch_set.hpp"
 
 namespace hades {
 
 class Texture {
 public:
   Texture(
-    const std::unique_ptr<gl::TextureBatch> &batch,
-    GLuint width, GLuint height,
-    float &z_level
+    const std::unique_ptr<BatchSet> &bs,
+    const std::string &name,
+    GLuint width, GLuint height
   );
 
   GLuint w() const;
@@ -54,8 +53,8 @@ public:
   );
 
 protected:
-  const std::unique_ptr<gl::TextureBatch> &batch_;
-  float &z_level_;
+  const std::unique_ptr<BatchSet> &bs_{nullptr};
+  std::string name_{};
 
   GLuint width_{0}, height_{0};
 };

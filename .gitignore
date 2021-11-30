@@ -2,3 +2,4 @@
 _scratch/
 cmake-build*/
 .build*/
+.vscode/

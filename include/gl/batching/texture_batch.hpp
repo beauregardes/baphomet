@@ -11,6 +11,8 @@ public:
   TextureBatch(GladGLContext *ctx, const std::unique_ptr<gl::TextureUnit> &texture_unit);
   ~TextureBatch() = default;
 
+  bool fully_opaque();
+
   void add(
     float x, float y,
     float w, float h,
@@ -22,7 +24,7 @@ public:
   );
 
   void draw_opaque(float z_max, glm::mat4 projection) override;
-  void draw_alpha(float z_max, glm::mat4 projection) override;
+  void draw_alpha(float z_max, glm::mat4 projection, GLint first, GLsizei count) override;
 
 private:
   const std::unique_ptr<gl::TextureUnit> &texture_unit_;

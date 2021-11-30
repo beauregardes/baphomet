@@ -3,7 +3,7 @@
 namespace gl {
 
 TextureBatch::TextureBatch(GladGLContext *ctx, const std::unique_ptr<gl::TextureUnit> &texture_unit)
-  : Batch(ctx, 12), texture_unit_(texture_unit) {
+  : Batch(ctx, 12, BatchType::texture), texture_unit_(texture_unit) {
 
   shader_ = ShaderBuilder(ctx_, "TextureBatch")
             .vert_from_src(R"glsl(
@@ -59,6 +59,10 @@ void main() {
   y_px_unit_ = 1.0f / texture_unit_->height();
 }
 
+bool TextureBatch::fully_opaque() {
+  return texture_unit_->fully_opaque();
+}
+
 void TextureBatch::add(
   float x, float y,
   float w, float h,
@@ -68,7 +72,7 @@ void TextureBatch::add(
   float r, float g, float b, float a,
   float cx, float cy, float angle
 ) {
-  if (a < 1.0f || !texture_unit_->fully_opaque())
+  if (a < 1.0f || !fully_opaque())
     add_alpha_(x, y, w, h, tx, ty, tw, th, z, r, g, b, a, cx, cy, angle);
   else
     add_opaque_(x, y, w, h, tx, ty, tw, th, z, r, g, b, a, cx, cy, angle);
@@ -91,7 +95,7 @@ void TextureBatch::draw_opaque(float z_max, glm::mat4 projection) {
   }
 }
 
-void TextureBatch::draw_alpha(float z_max, glm::mat4 projection) {
+void TextureBatch::draw_alpha(float z_max, glm::mat4 projection, GLint first, GLsizei count) {
   if (!empty_alpha()) {
     alpha_vertices_->sync();
 
@@ -102,8 +106,8 @@ void TextureBatch::draw_alpha(float z_max, glm::mat4 projection) {
 
     alpha_vao_->draw_arrays(
       DrawMode::triangles,
-      alpha_vertices_->front() / floats_per_vertex_,
-      alpha_vertices_->size() / floats_per_vertex_
+      first / floats_per_vertex_,
+      count / floats_per_vertex_
     );
   }
 }
@@ -131,12 +135,12 @@ void TextureBatch::add_opaque_(
   }
 
   opaque_vertices_->add({
-    x,   y,   z, r, g, b, a, x_px_unit_ * tx,    y_px_unit_ * ty,    cx, cy, angle,
-    x + w, y,   z, r, g, b, a, x_px_unit_ * (tx + tw), y_px_unit_ * ty,    cx, cy, angle,
+    x,     y,     z, r, g, b, a, x_px_unit_ * tx,        y_px_unit_ * ty,        cx, cy, angle,
+    x + w, y,     z, r, g, b, a, x_px_unit_ * (tx + tw), y_px_unit_ * ty,        cx, cy, angle,
     x + w, y + h, z, r, g, b, a, x_px_unit_ * (tx + tw), y_px_unit_ * (ty + th), cx, cy, angle,
-    x,   y,   z, r, g, b, a, x_px_unit_ * tx,    y_px_unit_ * ty,    cx, cy, angle,
+    x,     y,     z, r, g, b, a, x_px_unit_ * tx,        y_px_unit_ * ty,        cx, cy, angle,
     x + w, y + h, z, r, g, b, a, x_px_unit_ * (tx + tw), y_px_unit_ * (ty + th), cx, cy, angle,
-    x,   y + h, z, r, g, b, a, x_px_unit_ * tx,    y_px_unit_ * (ty + th), cx, cy, angle
+    x,     y + h, z, r, g, b, a, x_px_unit_ * tx,        y_px_unit_ * (ty + th), cx, cy, angle
   });
 }
 
@@ -163,12 +167,12 @@ void TextureBatch::add_alpha_(
   }
 
   alpha_vertices_->add({
-    x,   y,   z, r, g, b, a, x_px_unit_ * tx,    y_px_unit_ * ty,    cx, cy, angle,
-    x + w, y,   z, r, g, b, a, x_px_unit_ * (tx + tw), y_px_unit_ * ty,    cx, cy, angle,
+    x,     y,     z, r, g, b, a, x_px_unit_ * tx,        y_px_unit_ * ty,        cx, cy, angle,
+    x + w, y,     z, r, g, b, a, x_px_unit_ * (tx + tw), y_px_unit_ * ty,        cx, cy, angle,
     x + w, y + h, z, r, g, b, a, x_px_unit_ * (tx + tw), y_px_unit_ * (ty + th), cx, cy, angle,
-    x,   y,   z, r, g, b, a, x_px_unit_ * tx,    y_px_unit_ * ty,    cx, cy, angle,
+    x,     y,     z, r, g, b, a, x_px_unit_ * tx,        y_px_unit_ * ty,        cx, cy, angle,
     x + w, y + h, z, r, g, b, a, x_px_unit_ * (tx + tw), y_px_unit_ * (ty + th), cx, cy, angle,
-    x,   y + h, z, r, g, b, a, x_px_unit_ * tx,    y_px_unit_ * (ty + th), cx, cy, angle
+    x,     y + h, z, r, g, b, a, x_px_unit_ * tx,        y_px_unit_ * (ty + th), cx, cy, angle
   });
 }
 

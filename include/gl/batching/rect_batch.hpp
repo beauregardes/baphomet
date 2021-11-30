@@ -19,7 +19,7 @@ public:
   );
 
   void draw_opaque(float z_max, glm::mat4 projection) override;
-  void draw_alpha(float z_max, glm::mat4 projection) override;
+  void draw_alpha(float z_max, glm::mat4 projection, GLint first, GLsizei count) override;
 
 private:
   void add_opaque_(

@@ -2,7 +2,7 @@
 
 namespace gl {
 
-TriBatch::TriBatch(GladGLContext *ctx) : Batch(ctx, 10) {
+TriBatch::TriBatch(GladGLContext *ctx) : Batch(ctx, 10, BatchType::tri) {
   shader_ = ShaderBuilder(ctx_, "TriBatch")
             .vert_from_src(R"glsl(
 #version 330 core
@@ -77,7 +77,7 @@ void TriBatch::draw_opaque(float z_max, glm::mat4 projection) {
   }
 }
 
-void TriBatch::draw_alpha(float z_max, glm::mat4 projection) {
+void TriBatch::draw_alpha(float z_max, glm::mat4 projection, GLint first, GLsizei count) {
   if (!empty_alpha()) {
     alpha_vertices_->sync();
 
@@ -87,8 +87,8 @@ void TriBatch::draw_alpha(float z_max, glm::mat4 projection) {
 
     alpha_vao_->draw_arrays(
       DrawMode::triangles,
-      alpha_vertices_->front() / floats_per_vertex_,
-      alpha_vertices_->size() / floats_per_vertex_
+      first / floats_per_vertex_,
+      count / floats_per_vertex_
     );
   }
 }

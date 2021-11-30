@@ -55,27 +55,11 @@ void GfxMgr::clear(gl::ClearMask mask) {
  */
 
 void GfxMgr::pixel(float x, float y, const hades::RGB &color) {
-  if (!batch_sets_[active_batch_]->pixels)
-    batch_sets_[active_batch_]->pixels = std::make_unique<gl::PixelBatch>(ctx_);
-
-  auto cv = color.vec4();
-  batch_sets_[active_batch_]->pixels->add(x + 0.5f, y + 0.5f, batch_sets_[active_batch_]->z_level, cv.r, cv.g, cv.b, cv.a);
-  batch_sets_[active_batch_]->z_level++;
+  batch_sets_[active_batch_]->add_pixel(x, y, color);
 }
 
 void GfxMgr::line(float x0, float y0, float x1, float y1, const hades::RGB &color, float cx, float cy, float angle) {
-  if (!batch_sets_[active_batch_]->lines)
-    batch_sets_[active_batch_]->lines = std::make_unique<gl::LineBatch>(ctx_);
-
-  auto cv = color.vec4();
-  batch_sets_[active_batch_]->lines->add(
-    x0 + 0.5f, y0 + 0.5f,
-    x1 + 0.5f, y1 + 0.5f,
-    batch_sets_[active_batch_]->z_level,
-    cv.r, cv.g, cv.b, cv.a,
-    cx, cy, glm::radians(angle)
-  );
-  batch_sets_[active_batch_]->z_level++;
+  batch_sets_[active_batch_]->add_line(x0, y0, x1, y1, color, cx, cy, angle);
 }
 
 void GfxMgr::line(float x0, float y0, float x1, float y1, const hades::RGB &color, float angle) {
@@ -87,19 +71,7 @@ void GfxMgr::line(float x0, float y0, float x1, float y1, const hades::RGB &colo
 }
 
 void GfxMgr::tri(float x0, float y0, float x1, float y1, float x2, float y2, const hades::RGB &color, float cx, float cy, float angle) {
-  if (!batch_sets_[active_batch_]->tris)
-    batch_sets_[active_batch_]->tris = std::make_unique<gl::TriBatch>(ctx_);
-
-  auto cv = color.vec4();
-  batch_sets_[active_batch_]->tris->add(
-    x0, y0,
-    x1, y1,
-    x2, y2,
-    batch_sets_[active_batch_]->z_level,
-    cv.r, cv.g, cv.b, cv.a,
-    cx, cy, glm::radians(angle)
-  );
-  batch_sets_[active_batch_]->z_level++;
+  batch_sets_[active_batch_]->add_tri(x0, y0, x1, y1, x2, y2, color, cx, cy, angle);
 }
 
 void GfxMgr::tri(float x0, float y0, float x1, float y1, float x2, float y2, const hades::RGB &color, float angle) {
@@ -131,18 +103,7 @@ void GfxMgr::tri(float x, float y, float radius, const hades::RGB &color) {
 }
 
 void GfxMgr::rect(float x, float y, float w, float h, const hades::RGB &color, float cx, float cy, float angle) {
-  if (!batch_sets_[active_batch_]->rects)
-    batch_sets_[active_batch_]->rects = std::make_unique<gl::RectBatch>(ctx_);
-
-  auto cv = color.vec4();
-  batch_sets_[active_batch_]->rects->add(
-    x, y,
-    w, h,
-    batch_sets_[active_batch_]->z_level,
-    cv.r, cv.g, cv.b, cv.a,
-    cx, cy, glm::radians(angle)
-  );
-  batch_sets_[active_batch_]->z_level++;
+  batch_sets_[active_batch_]->add_rect(x, y, w, h, color, cx, cy, angle);
 }
 
 void GfxMgr::rect(float x, float y, float w, float h, const hades::RGB &color, float angle) {
@@ -154,18 +115,7 @@ void GfxMgr::rect(float x, float y, float w, float h, const hades::RGB &color) {
 }
 
 void GfxMgr::oval(float x, float y, float x_radius, float y_radius, const hades::RGB &color, float cx, float cy, float angle) {
-  if (!batch_sets_[active_batch_]->ovals)
-    batch_sets_[active_batch_]->ovals = std::make_unique<gl::OvalBatch>(ctx_);
-
-  auto cv = color.vec4();
-  batch_sets_[active_batch_]->ovals->add(
-    x + 0.5f, y + 0.5f,
-    x_radius + 0.5f, y_radius + 0.5f,
-    batch_sets_[active_batch_]->z_level,
-    cv.r, cv.g, cv.b, cv.a,
-    cx + 0.5f, cy + 0.5f, glm::radians(angle)
-  );
-  batch_sets_[active_batch_]->z_level++;
+  batch_sets_[active_batch_]->add_oval(x, y, x_radius, y_radius, color, cx, cy, angle);
 }
 
 void GfxMgr::oval(float x, float y, float x_radius, float y_radius, const hades::RGB &color, float angle) {
@@ -197,17 +147,23 @@ std::unique_ptr<hades::Texture> GfxMgr::load_texture(const std::string &path, bo
   resource_loader->load_texture_unit(name, path, retro);
 
   auto &tex = resource_loader->get_texture_unit(name);
-  batch_sets_[active_batch_]->textures[name] = std::make_unique<gl::TextureBatch>(ctx_, tex);
+  batch_sets_[active_batch_]->create_texture_batch(name, tex);
 
   return std::make_unique<hades::Texture>(
-    batch_sets_[active_batch_]->textures[name],
-    tex->width(), tex->height(),
-    batch_sets_[active_batch_]->z_level
+    batch_sets_[active_batch_],
+    name,
+    tex->width(), tex->height()
   );
 }
 
 SpritesheetBuilder GfxMgr::load_spritesheet(const std::string &path, bool retro) {
-  return SpritesheetBuilder(load_texture(path, retro));
+  auto name = rnd::base58(11);
+  resource_loader->load_texture_unit(name, path, retro);
+
+  auto &tex = resource_loader->get_texture_unit(name);
+  batch_sets_[active_batch_]->create_texture_batch(name, tex);
+
+  return SpritesheetBuilder(batch_sets_[active_batch_], name);
 }
 
 std::unique_ptr<hades::CP437> GfxMgr::load_cp437(const std::string &path, int char_w, int char_h, bool retro) {
@@ -215,13 +171,13 @@ std::unique_ptr<hades::CP437> GfxMgr::load_cp437(const std::string &path, int ch
   resource_loader->load_texture_unit(name, path, retro);
 
   auto &tex = resource_loader->get_texture_unit(name);
-  batch_sets_[active_batch_]->textures[name] = std::make_unique<gl::TextureBatch>(ctx_, tex);
+  batch_sets_[active_batch_]->create_texture_batch(name, tex);
 
   return std::make_unique<hades::CP437>(
-    batch_sets_[active_batch_]->textures[name],
+    batch_sets_[active_batch_],
+    name,
     tex->width(), tex->height(),
-    char_w, char_h,
-    batch_sets_[active_batch_]->z_level
+    char_w, char_h
   );
 }
 
@@ -266,7 +222,7 @@ void GfxMgr::flush_() {
  */
 
 void GfxMgr::new_batch_set_(const std::string &name, bool switch_to) {
-  batch_sets_[name] = std::make_unique<BatchSet>();
+  batch_sets_[name] = std::make_unique<BatchSet>(ctx_);
 
   if (switch_to)
     switch_to_batch_set_(name);

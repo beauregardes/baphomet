@@ -12,9 +12,13 @@
 
 namespace gl {
 
+enum class BatchType { none, pixel, line, tri, rect, oval, texture };
+
 class Batch {
 public:
-  Batch(GladGLContext *ctx, std::size_t floats_per_vertex);
+  BatchType type{BatchType::none};
+
+  Batch(GladGLContext *ctx, std::size_t floats_per_vertex, BatchType type);
 
   virtual void clear();
 
@@ -25,7 +29,7 @@ public:
   std::size_t size_alpha();
 
   virtual void draw_opaque(float z_max, glm::mat4 projection) = 0;
-  virtual void draw_alpha(float z_max, glm::mat4 projection) = 0;
+  virtual void draw_alpha(float z_max, glm::mat4 projection, GLint first, GLsizei count) = 0;
 
 protected:
   GladGLContext *ctx_{nullptr};
