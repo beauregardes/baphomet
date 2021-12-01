@@ -9,11 +9,13 @@
 
 #include "hades/util/timermgr.hpp"
 
+#include <deque>
+
 namespace hades {
 
 struct DebugLogLine {
   bool should_show{true};
-  double timeout{5.0};
+  double timeout{2.5};
   int opacity{255};
 
   std::string msg{};
@@ -55,8 +57,7 @@ private:
     std::unique_ptr<hades::CP437> font{nullptr};
 
     struct {
-      std::vector<DebugLogLine> messages{};
-      std::size_t size_limit{1000};
+      std::deque<DebugLogLine> lines{};
     } log;
   } overlay_{};
 
@@ -64,9 +65,7 @@ private:
   void end_frame_();
 
   void draw_overlay_();
-
   void draw_debug_log_();
-  void draw_debug_log_line_(glm::vec2 &base_pos, std::size_t idx);
 
   void draw_overlay_text_with_bg_(glm::vec2 &base_pos, const std::string &text);
   void draw_overlay_skip_line_(glm::vec2 &base_pos);

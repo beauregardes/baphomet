@@ -24,9 +24,12 @@ A non-exhaustive list of existing/planned features (subject to change as Hades i
   - [ ] Generative palettes
   - [ ] Color adjustments (lighten, darken, invert, etc.)
 - [x] Textures, offers nearest neighbor or linear scaling to handle different types of games
-- [ ] Spritesheets
-  - [ ] Defined in code
+- [x] Spritesheets
+  - [x] Defined in code
   - [ ] Load from specialized INI format (see [docs (NYI)]())
+- [ ] Text rendering
+  - [x] Code Page 437 bitmaps
+  - [ ] TTF
 - [ ] Particle systems
 - [ ] Audio
 - [ ] GUI toolkit

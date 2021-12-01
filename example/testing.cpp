@@ -6,7 +6,7 @@ public:
   std::vector<std::vector<std::string>> sprite_names{};
 
   void initialize() override {
-    ss = gfx->load_spritesheet("example/resources/8squares.png")
+    ss = gfx->load_spritesheet("example/resources/8squares.png", true)
       .set_tiled(8, 8)
       .add_sprite("1", 0, 0)
       .add_sprite("2", 1, 0)
@@ -26,7 +26,7 @@ public:
     );
     randomize_tiles();  // initial setup
 
-    timer->every(0.5, [&]{ randomize_tiles(); });
+    timer->every(2.0, [&]{ randomize_tiles(); });
   }
 
   void randomize_tiles() {
@@ -45,7 +45,7 @@ public:
     if (input->pressed("2"))
       debug_log("You pressed 2");
 
-    if (input->pressed("mb_left"))
+    if (input->down("mb_left", 0.1))
       debug_log("Click: ({}, {})", input->mouse.x, input->mouse.y);
   }
 

@@ -34,7 +34,7 @@ void Application::end_frame_() {
 }
 
 void Application::draw_overlay_() { 
-  gfx->switch_to_batch_set_("__overlay");
+  gfx->switch_to_batch_set_("overlay");
   gfx->clear_batches_();
 
   glm::vec2 base_pos{1.0f, 1.0f};
@@ -73,38 +73,34 @@ void Application::draw_debug_log_() {
   double dt = frame_counter_.dt();
 
   glm::vec2 base_pos{1.0f, window->h() - 1};
-  for (int i = overlay_.log.messages.size() - 1; i >= 0; --i) {
-    auto &m = overlay_.log.messages[i];
-
-    if (m.timeout > 0) {
-      m.timeout -= dt;
-      if (m.timeout <= 0.0)
-        m.should_show = false;
-      else if (m.timeout > 0.0 && m.timeout < 1.0)
-        m.opacity = int(255.0 * m.timeout);
+  for (auto it = overlay_.log.lines.begin(); it != overlay_.log.lines.end(); it++) {
+    if (it->timeout > 0) {
+      it->timeout -= dt;
+      if (it->timeout <= 0.0)
+        it->should_show = false;
+      else if (it->timeout > 0.0 && it->timeout < 1.0)
+        it->opacity = int(255.0 * it->timeout);
     }
 
-    if (m.should_show)
-      draw_debug_log_line_(base_pos, i);
+    if (it->should_show) {
+      auto bounds = overlay_.font->calc_text_bounds(0.0f, 0.0f, it->msg);
+      base_pos.y -= bounds.h + 3;
+
+      gfx->rect(
+        base_pos.x, base_pos.y, bounds.w + 3, bounds.h + 3,
+        hades::rgba(0, 0, 0, 192 * (it->opacity / 255.0))
+      );
+
+      overlay_.font->render(
+        base_pos.x + 1, base_pos.y + 2, 
+        hades::rgba(255, 255, 255, it->opacity), 
+        it->msg
+      );
+    }
   }
-}
 
-void Application::draw_debug_log_line_(glm::vec2 &base_pos, std::size_t idx) {
-  auto &m = overlay_.log.messages[idx];
-
-  auto bounds = overlay_.font->calc_text_bounds(0.0f, 0.0f, m.msg);
-
-  base_pos.y -= bounds.h + 3;
-  gfx->rect(
-    base_pos.x, base_pos.y, bounds.w + 3, bounds.h + 3,
-    hades::rgba(0, 0, 0, 192 * (m.opacity / 255.0))
-  );
-
-  overlay_.font->render(
-    base_pos.x + 1, base_pos.y + 2, 
-    hades::rgba(255, 255, 255, m.opacity), 
-    m.msg
-  );
+  while (!overlay_.log.lines.empty() && !overlay_.log.lines.back().should_show)
+    overlay_.log.lines.pop_back();
 }
 
 void Application::draw_overlay_text_with_bg_(glm::vec2 &base_pos, const std::string &text) {
@@ -129,7 +125,7 @@ void Application::draw_overlay_skip_line_(glm::vec2 &base_pos) {
 
 void Application::debug_log_(fmt::string_view format, fmt::format_args args) {
   auto msg = fmt::vformat(format, args);
-  overlay_.log.messages.emplace_back(msg);
+  overlay_.log.lines.push_front(msg);
 }
 
 /******************
@@ -185,7 +181,7 @@ void Application::initgl_(glm::ivec2 glversion) {
     .renderbuffer(gl::RBufFormat::d32f)
     .check_complete();
 
-  gfx->new_batch_set_("__overlay", true);
+  gfx->new_batch_set_("overlay", true);
   overlay_.font = gfx->load_cp437(
     (hades::RESOURCE_PATH / "font" / "1px_6x8_no_bg.png").string(),
     6, 8,
