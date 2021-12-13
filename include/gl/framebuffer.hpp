@@ -178,15 +178,14 @@ public:
 
   void unbind();
 
-  void push(std::function<void(void)> &&block);
-
   void copy_to_default_framebuffer(bool retro = false);
   void copy_to_default_framebuffer(GLint window_width, GLint window_height, bool retro = false);
 
 private:
   GladGLContext *ctx_{nullptr};
 
-  std::unordered_map<std::string, GLuint> attachments_{};
+  std::unordered_map<std::string, GLuint> tex_attachments_{};
+  std::unordered_map<std::string, GLuint> rbo_attachments_{};
 
   void del_id_();
 };
@@ -217,7 +216,8 @@ private:
   GLuint id_{0};
   GLsizei width_{0}, height_{0};
 
-  std::unordered_map<std::string, GLuint> attachments_{};
+  std::unordered_map<std::string, GLuint> tex_attachments_{};
+  std::unordered_map<std::string, GLuint> rbo_attachments_{};
 
   void gen_id_();
 

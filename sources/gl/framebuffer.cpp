@@ -20,13 +20,15 @@ Framebuffer::Framebuffer(Framebuffer &&other) noexcept {
   width = other.width;
   height = other.height;
   ctx_ = other.ctx_;
-  attachments_ = std::move(other.attachments_);
+  tex_attachments_ = std::move(other.tex_attachments_);
+  rbo_attachments_ = std::move(other.rbo_attachments_);
 
   other.id = 0;
   other.width = 0;
   other.height = 0;
   other.ctx_ = nullptr;
-  other.attachments_.clear();
+  other.tex_attachments_.clear();
+  other.rbo_attachments_.clear();
 }
 
 Framebuffer &Framebuffer::operator=(Framebuffer &&other) noexcept {
@@ -37,13 +39,15 @@ Framebuffer &Framebuffer::operator=(Framebuffer &&other) noexcept {
     width = other.width;
     height = other.height;
     ctx_ = other.ctx_;
-    attachments_ = std::move(other.attachments_);
+    tex_attachments_ = std::move(other.tex_attachments_);
+    rbo_attachments_ = std::move(other.rbo_attachments_);
 
     other.id = 0;
     other.width = 0;
     other.height = 0;
     other.ctx_ = nullptr;
-    other.attachments_.clear();
+    other.tex_attachments_.clear();
+    other.rbo_attachments_.clear();
   }
   return *this;
 }
@@ -61,12 +65,6 @@ void Framebuffer::unbind() {
   ctx_->BindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Framebuffer::push(std::function<void(void)> &&block) {
-  bind();
-  block();
-  unbind();
-}
-
 void Framebuffer::copy_to_default_framebuffer(bool retro) {
   bind(FboTarget::read);
   ctx_->BindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -75,7 +73,8 @@ void Framebuffer::copy_to_default_framebuffer(bool retro) {
     0, 0, width, height,
     GL_COLOR_BUFFER_BIT, retro ? GL_NEAREST : GL_LINEAR
   );
-  unbind();
+  ctx_->BindFramebuffer(unwrap(FboTarget::read), 0);
+  ctx_->BindFramebuffer(unwrap(FboTarget::draw), 0);
 }
 
 void Framebuffer::copy_to_default_framebuffer(GLint window_width, GLint window_height, bool retro) {
@@ -86,19 +85,22 @@ void Framebuffer::copy_to_default_framebuffer(GLint window_width, GLint window_h
     0, 0, window_width, window_height,
     GL_COLOR_BUFFER_BIT, retro ? GL_NEAREST : GL_LINEAR
   );
-  unbind();
+  ctx_->BindFramebuffer(unwrap(FboTarget::read), 0);
+  ctx_->BindFramebuffer(unwrap(FboTarget::draw), 0);
 }
 
 void Framebuffer::del_id_() {
   if (ctx_) {
-    for (auto &p: attachments_) {
-      if (ctx_->IsTexture(p.second))
-        ctx_->DeleteTextures(1, &p.second);
-      else if (ctx_->IsRenderbuffer(p.second))
-        ctx_->DeleteRenderbuffers(1, &p.second);
+    spdlog::trace("Deleting framebuffer ({})", id);
+    for (auto &p : tex_attachments_) {
+      spdlog::trace("FBO/Deleting texture ({} / {})", p.second, id);
+      ctx_->DeleteTextures(1, &p.second);
+    }
+    for (auto &p : rbo_attachments_) {
+      spdlog::trace("FBO/Deleting renderbuffer ({} / {})", p.second, id);
+      ctx_->DeleteRenderbuffers(1, &p.second);
     }
     ctx_->DeleteFramebuffers(1, &id);
-    spdlog::trace("Deleted framebuffer ({})", id);
   }
 }
 
@@ -111,6 +113,8 @@ FramebufferBuilder::FramebufferBuilder(GladGLContext *ctx, GLsizei width, GLsize
 FramebufferBuilder &FramebufferBuilder::texture(const std::string &tag, TexFormat internalformat, bool retro) {
   GLuint tex;
   ctx_->GenTextures(1, &tex);
+  spdlog::trace("FBO/Generated texture ({})", tex);
+
   ctx_->BindTexture(GL_TEXTURE_2D, tex);
   ctx_->TexStorage2D(GL_TEXTURE_2D, 1, unwrap(internalformat), width_, height_);
   ctx_->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, retro ? GL_NEAREST : GL_LINEAR);
@@ -125,7 +129,7 @@ FramebufferBuilder &FramebufferBuilder::texture(const std::string &tag, TexForma
     0
   );
 
-  attachments_[tag] = tex;
+  tex_attachments_[tag] = tex;
 
   return *this;
 }
@@ -137,6 +141,8 @@ FramebufferBuilder &FramebufferBuilder::texture(TexFormat format) {
 FramebufferBuilder &FramebufferBuilder::renderbuffer(const std::string &tag, RBufFormat internalformat) {
   GLuint rbo;
   ctx_->GenRenderbuffers(1, &rbo);
+  spdlog::trace("FBO/Generated renderbuffer ({})", rbo);
+
   ctx_->BindRenderbuffer(GL_RENDERBUFFER, rbo);
   ctx_->RenderbufferStorage(GL_RENDERBUFFER, unwrap(internalformat), width_, height_);
   ctx_->BindRenderbuffer(GL_RENDERBUFFER, 0);
@@ -148,7 +154,7 @@ FramebufferBuilder &FramebufferBuilder::renderbuffer(const std::string &tag, RBu
     rbo
   );
 
-  attachments_[tag] = rbo;
+  rbo_attachments_[tag] = rbo;
 
   return *this;
 }
@@ -160,19 +166,23 @@ FramebufferBuilder &FramebufferBuilder::renderbuffer(RBufFormat internalformat) 
 std::unique_ptr<Framebuffer> FramebufferBuilder::check_complete() {
   if (ctx_->CheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     spdlog::error("Framebuffer is not complete");
+  else
+    spdlog::trace("Completed framebuffer ({})", id_);
   ctx_->BindFramebuffer(GL_FRAMEBUFFER, 0);
 
   auto f = std::make_unique<Framebuffer>(ctx_);
   f->id = id_;
   f->width = width_;
   f->height = height_;
-  f->attachments_ = std::move(attachments_);
+  f->tex_attachments_ = std::move(tex_attachments_);
+  f->rbo_attachments_ = std::move(rbo_attachments_);
 
   return f;
 }
 
 void FramebufferBuilder::gen_id_() {
   ctx_->GenFramebuffers(1, &id_);
+  spdlog::trace("Generated framebuffer ({})", id_);
 }
 
 GLenum FramebufferBuilder::get_texture_format(GLenum internalformat) {

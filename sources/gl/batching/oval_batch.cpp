@@ -130,20 +130,12 @@ void OvalBatch::add_opaque_(
 
   opaque_vertices_->add({
     x0, y0, z, r, g, b, a, cx, cy, angle,
-    x,  y,  z, r, g, b, a, cx, cy, angle,
     x1, y1, z, r, g, b, a, cx, cy, angle,
-
-    x1, y1, z, r, g, b, a, cx, cy, angle,
-    x,  y,  z, r, g, b, a, cx, cy, angle,
     x2, y2, z, r, g, b, a, cx, cy, angle,
 
+    x0, y0, z, r, g, b, a, cx, cy, angle,
     x2, y2, z, r, g, b, a, cx, cy, angle,
-    x,  y,  z, r, g, b, a, cx, cy, angle,
-    x3, y3, z, r, g, b, a, cx, cy, angle,
-
-    x3, y3, z, r, g, b, a, cx, cy, angle,
-    x,  y,  z, r, g, b, a, cx, cy, angle,
-    x0, y0, z, r, g, b, a, cx, cy, angle
+    x3, y3, z, r, g, b, a, cx, cy, angle
   });
 
   add_opaque_recurse_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x0, y0, a0, x1, y1, a1);
@@ -220,20 +212,12 @@ void OvalBatch::add_alpha_(
 
   alpha_vertices_->add({
     x0, y0, z, r, g, b, a, cx, cy, angle,
-    x,  y,  z, r, g, b, a, cx, cy, angle,
     x1, y1, z, r, g, b, a, cx, cy, angle,
-
-    x1, y1, z, r, g, b, a, cx, cy, angle,
-    x,  y,  z, r, g, b, a, cx, cy, angle,
     x2, y2, z, r, g, b, a, cx, cy, angle,
 
+    x0, y0, z, r, g, b, a, cx, cy, angle,
     x2, y2, z, r, g, b, a, cx, cy, angle,
-    x,  y,  z, r, g, b, a, cx, cy, angle,
-    x3, y3, z, r, g, b, a, cx, cy, angle,
-
-    x3, y3, z, r, g, b, a, cx, cy, angle,
-    x,  y,  z, r, g, b, a, cx, cy, angle,
-    x0, y0, z, r, g, b, a, cx, cy, angle
+    x3, y3, z, r, g, b, a, cx, cy, angle
   });
 
   add_alpha_recurse_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x0, y0, a0, x1, y1, a1);

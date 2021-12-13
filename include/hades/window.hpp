@@ -5,6 +5,8 @@
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
 
+#include "gl/framebuffer.hpp"
+
 #include "hades/gfxmgr.hpp"
 #include "hades/internal/bitmask_enum.hpp"
 #include "hades/util/framecounter.hpp"
@@ -30,7 +32,7 @@ enum class WFlags {
 struct WCfg {
   std::string title;
 
-  glm::ivec2 size{0, 0};
+  glm::ivec2 size{1, 1};
   glm::ivec2 position{0, 0};
 
   int monitor{0};
@@ -74,10 +76,16 @@ public:
   int x();
   int y();
 
+  void center(int monitor_num = 0);
+
   glm::mat4 projection();
 
 private:
   GLFWwindow *glfw_window_{nullptr};
+  GladGLContext *ctx_{nullptr};
+
+  std::unique_ptr<gl::Framebuffer> fbo_{nullptr};
+  void create_fbo_();
 
   struct {
     bool borderless{false};
@@ -87,7 +95,7 @@ private:
   void open_(const WCfg &cfg, glm::ivec2 glversion);
   void close_();
 
-  GLFWmonitor *get_monitor_(const WCfg &cfg);
+  GLFWmonitor *get_monitor_(int monitor_num);
   void open_fullscreen_windows_(const WCfg &cfg);
   void open_fullscreen_linux_(const WCfg &cfg);
   void open_windowed_(const WCfg &cfg);

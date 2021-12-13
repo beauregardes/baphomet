@@ -32,7 +32,10 @@ bool Window::resizable() {
 }
 
 void Window::set_visible(bool visible) {
-  glfwSetWindowAttrib(glfw_window_, GLFW_VISIBLE, visible ? GLFW_TRUE : GLFW_FALSE);
+  if (visible)
+    glfwShowWindow(glfw_window_);
+  else
+    glfwHideWindow(glfw_window_);
 }
 
 bool Window::visible() {
@@ -108,13 +111,33 @@ int Window::y() {
   return y;
 }
 
+void Window::center(int monitor_num) {
+  GLFWmonitor *monitor = get_monitor_(monitor_num);
+  const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+
+  int base_x, base_y;
+  glfwGetMonitorPos(monitor, &base_x, &base_y);
+  glfwSetWindowPos(
+      glfw_window_,
+      base_x + (mode->width - w()) / 2,
+      base_y + (mode->height - h()) / 2
+  );
+}
+
 glm::mat4 Window::projection() {
   auto s = size();
   return glm::ortho(
-    0.0f, static_cast<float>(s.x),
-    static_cast<float>(s.y), 0.0f,
-    0.0f, 1.0f
+      0.0f, static_cast<float>(s.x),
+      static_cast<float>(s.y), 0.0f,
+      0.0f, 1.0f
   );
+}
+
+void Window::create_fbo_() {
+  fbo_ = gl::FramebufferBuilder(ctx_, w(), h())
+      .renderbuffer(gl::RBufFormat::rgba8)
+      .renderbuffer(gl::RBufFormat::d32f)
+      .check_complete();
 }
 
 void Window::open_(const WCfg &cfg, glm::ivec2 glversion) {
@@ -137,23 +160,23 @@ void Window::close_() {
   glfwSetWindowShouldClose(glfw_window_, GLFW_TRUE);
 }
 
-GLFWmonitor *Window::get_monitor_(const WCfg &cfg) {
+GLFWmonitor *Window::get_monitor_(int monitor_num) {
   int monitor_count = 0;
   auto monitors = glfwGetMonitors(&monitor_count);
 
-  if (cfg.monitor >= monitor_count) {
+  if (monitor_num >= monitor_count) {
     spdlog::warn(
-      "Monitor {} out of range (only {} monitors available); defaulting to primary",
-      cfg.monitor,
-      monitor_count
+        "Monitor {} out of range (only {} monitors available); defaulting to primary",
+        monitor_num,
+        monitor_count
     );
     return monitors[0];
   }
-  return monitors[cfg.monitor];
+  return monitors[monitor_num];
 }
 
 void Window::open_fullscreen_windows_(const WCfg &cfg) {
-  GLFWmonitor *monitor = get_monitor_(cfg);
+  GLFWmonitor *monitor = get_monitor_(cfg.monitor);
   const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
 //  glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);  // Why is this necessary?
@@ -198,7 +221,7 @@ void Window::open_fullscreen_linux_(const WCfg &cfg) {
    * is the same size as the monitor only seems to work on Windows.
    */
 
-  GLFWmonitor *monitor = get_monitor_(cfg);
+  GLFWmonitor *monitor = get_monitor_(cfg.monitor);
   const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
   glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);  // Why is this necessary?
@@ -225,7 +248,7 @@ void Window::open_fullscreen_linux_(const WCfg &cfg) {
 }
 
 void Window::open_windowed_(const WCfg &cfg) {
-  GLFWmonitor *monitor = get_monitor_(cfg);
+  GLFWmonitor *monitor = get_monitor_(cfg.monitor);
   const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
   glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
@@ -245,15 +268,15 @@ void Window::open_windowed_(const WCfg &cfg) {
   glfwGetMonitorPos(monitor, &base_x, &base_y);
   if (set(cfg.flags, WFlags::centered))
     glfwSetWindowPos(
-      glfw_window_,
-      base_x + (mode->width - cfg.size.x) / 2,
-      base_y + (mode->height - cfg.size.y) / 2
-     );
+        glfw_window_,
+        base_x + (mode->width - cfg.size.x) / 2,
+        base_y + (mode->height - cfg.size.y) / 2
+    );
   else
     glfwSetWindowPos(
-      glfw_window_,
-      base_x + cfg.position.x,
-      base_y + cfg.position.y
+        glfw_window_,
+        base_x + cfg.position.x,
+        base_y + cfg.position.y
     );
 
   if (!set(cfg.flags, WFlags::hidden))

@@ -51,8 +51,6 @@ private:
 
   FrameCounter frame_counter_{};
 
-  std::unique_ptr<gl::Framebuffer> fbo_{nullptr};
-
   struct {
     std::unique_ptr<hades::CP437> font{nullptr};
 
@@ -78,6 +76,8 @@ private:
 
   void open_(const WCfg &cfg, glm::ivec2 glversion);
   void initgl_(glm::ivec2 glversion);
+
+  void create_fbo_();
 };
 
 template <typename S, typename... Args>

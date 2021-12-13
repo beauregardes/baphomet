@@ -94,7 +94,10 @@ void Runner::glfw_scroll_callback_(GLFWwindow *window, double xoffset, double yo
   runner->application_->input->glfw_scroll_event_(xoffset, yoffset);
 }
 
-void Runner::glfw_window_size_callback_(GLFWwindow *window, int width, int height) {}
+void Runner::glfw_window_size_callback_(GLFWwindow *window, int width, int height) {
+  auto runner = reinterpret_cast<Runner *>(glfwGetWindowUserPointer(window));
+  runner->application_->window->create_fbo_();
+}
 
 void Runner::glfw_window_pos_callback_(GLFWwindow *window, int xpos, int ypos) {}
 
