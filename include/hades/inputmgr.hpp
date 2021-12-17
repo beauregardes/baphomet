@@ -17,15 +17,19 @@ class InputMgr {
 
 public:
   struct {
-    double x {0}, y {0};
-    double dx {0}, dy {0};
-    double sx {0}, sy {0};
+    double x{0.0}, y{0.0};
+    double px{0.0}, py{0.0};
+    double dx{0.0}, dy{0.0};
+    double sx{0.0}, sy{0.0};
 
-    bool got_first_event {false};
+    bool moved{false};
+    bool entered{false};
 
-    bool locked {false};
-    bool hidden {false};
-    bool raw_motion {false};
+    bool got_first_event{false};
+
+    bool locked{false};
+    bool hidden{false};
+    bool raw_motion{false};
   } mouse;
 
   InputMgr(GLFWwindow *parent);

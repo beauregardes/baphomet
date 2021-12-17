@@ -74,10 +74,13 @@ void InputMgr::update_(double dt) {
   }
   state_updates_.unlock();
 
+  mouse.px = mouse.x;
+  mouse.py = mouse.y;
   mouse.dx = 0;
   mouse.dy = 0;
   mouse.sx = 0;
   mouse.sy = 0;
+  mouse.moved = false;
 
   for (auto &p : repeat_state_) {
     auto r = &p.second;
@@ -112,6 +115,7 @@ void InputMgr::glfw_cursor_position_event_(double xpos, double ypos) {
   mouse.dy += ypos - mouse.y;  // see previous comment
   mouse.x = xpos;
   mouse.y = ypos;
+  mouse.moved = true;
 
   if (!mouse.got_first_event) {
     mouse.got_first_event = true;
@@ -121,6 +125,7 @@ void InputMgr::glfw_cursor_position_event_(double xpos, double ypos) {
 }
 
 void InputMgr::glfw_cursor_enter_event_(int entered) {
+  mouse.entered = entered == 1;
 }
 
 void InputMgr::glfw_mouse_button_event_(int button, int action, int mods) {

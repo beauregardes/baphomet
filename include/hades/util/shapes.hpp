@@ -1,6 +1,10 @@
 #ifndef HADES_SHAPES_HPP
 #define HADES_SHAPES_HPP
 
+#include "glm/glm.hpp"
+
+#include <functional>
+
 namespace hades {
 
 struct Point {
@@ -33,6 +37,34 @@ struct Circle {
   float rad{0};
 };
 
+namespace helpers {
+
+void bezier(
+    glm::vec2 p0, glm::vec2 p1, glm::vec2 p3, int steps,
+    std::function<void(double x, double y)> f
+);
+
+void bezier(
+    glm::vec2 p0, glm::vec2 p1, glm::vec2 p3, int steps,
+    std::function<void(double x, double y, bool first_point)> f
+);
+
+void bezier(
+    glm::vec2 p0, glm::vec2 p1, glm::vec2 p2, glm::vec2 p3, int steps,
+    std::function<void(double x, double y)> f
+);
+
+void bezier(
+    glm::vec2 p0, glm::vec2 p1, glm::vec2 p2, glm::vec2 p3, int steps,
+    std::function<void(double x, double y, bool first_point)> f
+);
+
+void bresenham(
+    int x0, int y0, int x1, int y1,
+    std::function<void(int x, int y)> f
+);
+
+} // namespace helpers
 } // namespace hades
 
 #endif //HADES_SHAPES_HPP

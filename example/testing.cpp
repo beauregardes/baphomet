@@ -1,61 +1,45 @@
 #include "hades/hades.hpp"
 
+const auto FONT = "resources/font/phantasm_10x10_no_bg.png";
+const int CHAR_W = 10;
+const int CHAR_H = 10;
+
 class Testing : public hades::Application {
 public:
-  std::unique_ptr<hades::Spritesheet> ss;
-  std::vector<std::vector<std::string>> sprite_names{};
+  std::unique_ptr<hades::CP437> phantasm{nullptr};
+  std::string sample_text;
 
   void initialize() override {
-    ss = gfx->load_spritesheet("example/resources/8squares.png", true)
-        .set_tiled(8, 8)
-        .add_sprite("1", 0, 0)
-        .add_sprite("2", 1, 0)
-        .add_sprite("3", 2, 0)
-        .add_sprite("4", 3, 0)
-        .add_sprite("5", 0, 1)
-        .add_sprite("6", 1, 1)
-        .add_sprite("7", 2, 1)
-        .add_sprite("8", 3, 1)
-        .build();
+    phantasm = gfx->load_cp437(FONT, CHAR_W, CHAR_H, true);
 
-    sprite_names = std::vector<std::vector<std::string>>(
-        window->h() / ss->tile_h(),
-        std::vector<std::string>(
-            window->w() / ss->tile_w()
-        )
-    );
-    randomize_tiles();  // initial setup
+    for (int y = 0; y < 64; y++) {
+      for (int x = 0; x < 64; x++)
+        sample_text += "#";
+      if (y < 63)
+        sample_text += "\n";
+    }
 
-    timer->every(2.0, [&]{ randomize_tiles(); });
+    timer->every(1.0/1000.0, [&]{ corrupt_text(); });
   }
 
-  void randomize_tiles() {
-    for (int y = 0; y < sprite_names.size(); ++y)
-      for (int x = 0; x < sprite_names[y].size(); ++x)
-        sprite_names[y][x] = rnd::choose({"1", "2", "3", "4", "5", "6", "7", "8"});
+  void corrupt_text() {
+    int pos;
+    do {
+      pos = rnd::get<int>(sample_text.size() - 1);
+    } while (sample_text[pos] == '\n');
+    sample_text[pos] = rnd::get<char>(33, 126);
   }
 
   void update(double dt) override {
     if (input->pressed("escape"))
       shutdown();
-
-    if (input->pressed("1"))
-      debug_log("You pressed 1");
-
-    if (input->pressed("2"))
-      debug_log("You pressed 2");
-
-    if (input->down("mb_left", 0.1))
-      debug_log("Click: ({}, {})", input->mouse.x, input->mouse.y);
   }
 
   void draw() override {
-    gfx->clear_color(hades::rgb(0x181818));
+    gfx->clear_color(hades::rgb("black"));
     gfx->clear();
 
-    for (int y = 0; y < sprite_names.size(); ++y)
-      for (int x = 0; x < sprite_names[y].size(); ++x)
-        ss->draw(sprite_names[y][x], x * ss->tile_w(), y * ss->tile_h());
+    phantasm->render(0, 0, sample_text);
   }
 };
 
@@ -63,7 +47,7 @@ int main(int, char *[]) {
   hades::Runner()
     .open<Testing>({
         .title = "Testing",
-        .size = {512, 512},
+        .size = {CHAR_W*64, CHAR_H*64},
         .monitor = 1,
         .flags = hades::WFlags::centered
     })

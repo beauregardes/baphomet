@@ -44,12 +44,6 @@ void Application::draw_overlay_() {
     fps_str += " (vsync)";
   draw_overlay_text_with_bg_(base_pos, fps_str);
 
-  draw_overlay_text_with_bg_(base_pos, "Hello");
-  draw_overlay_text_with_bg_(base_pos, "World");
-  draw_overlay_text_with_bg_(base_pos, "Samples");
-  draw_overlay_text_with_bg_(base_pos, "asdgasdg");
-  draw_overlay_text_with_bg_(base_pos, "asdgioas0289340234");
-
   draw_debug_log_();
 
   gfx->draw_batches_(window->projection());

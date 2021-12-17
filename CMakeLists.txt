@@ -73,6 +73,7 @@ add_library(
     "include/hades/util/timermgr.hpp"
     "sources/hades/util/averagers.cpp"
     "sources/hades/util/framecounter.cpp"
+    "sources/hades/util/shapes.cpp"
     "sources/hades/util/random.cpp"
     "sources/hades/util/ticker.cpp"
     "sources/hades/util/timermgr.cpp"

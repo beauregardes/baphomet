@@ -8,9 +8,9 @@ public:
   const int WIN_PADW{CELL_SIZE * 2};
   const int WIN_PADH{CELL_SIZE * 2};
 
-  const hades::RGB BG_COLOR{hades::rgb(0x0f380f)};
-  const hades::RGB GRID_COLOR{hades::rgb(0x306230)};
-  const hades::RGB CELL_COLOR{hades::rgb(0x9bbc0f)};
+  const hades::RGB BG_COLOR{hades::rgb(0x040404)};
+  const hades::RGB GRID_COLOR{hades::rgb(0x101010)};
+  const hades::RGB CELL_COLOR{hades::rgb(0xeeeeee)};
 
   struct CellState {
     bool curr{false};
@@ -18,8 +18,8 @@ public:
   };
   std::vector<std::vector<CellState>> cells;
 
+  std::vector<int> stay{1, 2, 3, 4, 5};
   std::vector<int> born{3};
-  std::vector<int> stay{2, 3};
 
   void initialize() override {
     window->set_size(
@@ -53,10 +53,10 @@ public:
     if (input->pressed("t"))
       step_simulate();
 
-    if (input->down("mb_left"))
+    if (input->down("mb_left") && input->mouse.moved)
       set_cell(true);
 
-    if (input->down("mb_right"))
+    if (input->down("mb_right") && input->mouse.moved)
       set_cell(false);
   }
 
@@ -66,6 +66,11 @@ public:
 
     draw_grid();
     draw_cells();
+
+    if (is_in_grid(input->mouse.x, input->mouse.y)) {
+      auto cell_pos = mouse_pos_to_cell_pos(input->mouse.x, input->mouse.y);
+      draw_cell(cell_pos.y, cell_pos.x, hades::rgba(CELL_COLOR.r, CELL_COLOR.g, CELL_COLOR.b, 128));
+    }
   }
 
   void reset_cells() {
@@ -74,13 +79,33 @@ public:
         cells[r][c].curr = false;
   }
 
-  void set_cell(bool state) {
-    double mouse_x = input->mouse.x - WIN_PADW;
-    double mouse_y = input->mouse.y - WIN_PADH;
+  bool is_in_grid(int x, int y) {
+    return x >= WIN_PADW &&
+           y >= WIN_PADH &&
+           x < window->w() - WIN_PADW &&
+           y < window->h() - WIN_PADH;
+  }
+
+  glm::ivec2 mouse_pos_to_cell_pos(int mouse_x, int mouse_y) {
+    mouse_x -= WIN_PADW;
+    mouse_y -= WIN_PADH;
     auto cell_col = static_cast<int>(mouse_x / (CELL_SIZE + 1));
     auto cell_row = static_cast<int>(mouse_y / (CELL_SIZE + 1));
-    if (cell_row >= 0 && cell_row < cells.size() && cell_col >= 0 && cell_col < cells[cell_row].size())
-      cells[cell_row][cell_col].curr = state;
+    return {cell_col, cell_row};
+  }
+
+  void set_cell(bool state) {
+    if (is_in_grid(input->mouse.px, input->mouse.py) && is_in_grid(input->mouse.x, input->mouse.y)) {
+      auto start_cell = mouse_pos_to_cell_pos(input->mouse.px, input->mouse.py);
+      auto end_cell = mouse_pos_to_cell_pos(input->mouse.x, input->mouse.y);
+      hades::helpers::bresenham(
+          start_cell.x, start_cell.y,
+          end_cell.x, end_cell.y,
+          [&](int x, int y) {
+            cells[y][x].curr = state;
+          }
+      );
+    }
   }
 
   int count_neighbors(int r, int c) {
@@ -135,17 +160,21 @@ public:
       );
   }
 
+  void draw_cell(int r, int c, const hades::RGB &color) {
+    gfx->rect(
+        WIN_PADH + c * CELL_SIZE + c + 1,
+        WIN_PADW + r * CELL_SIZE + r + 1,
+        CELL_SIZE,
+        CELL_SIZE,
+        color
+    );
+  }
+
   void draw_cells() {
     for (int r = 0; r < CELL_ROWS; ++r)
       for (int c = 0; c < CELL_COLS; ++c)
         if (cells[r][c].curr)
-          gfx->rect(
-              WIN_PADH + c * CELL_SIZE + c + 1,
-              WIN_PADW + r * CELL_SIZE + r + 1,
-              CELL_SIZE,
-              CELL_SIZE,
-              CELL_COLOR
-          );
+          draw_cell(r, c, CELL_COLOR);
   }
 };
 
