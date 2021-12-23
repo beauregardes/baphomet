@@ -4,6 +4,16 @@
 
 #include "glm/gtc/matrix_transform.hpp"
 #include "spdlog/spdlog.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
+#if defined(HADES_PLATFORM_WINDOWS)
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include "GLFW/glfw3native.h"
+#include <dwmapi.h>
+#endif
 
 namespace hades {
 
@@ -57,6 +67,23 @@ void Window::set_vsync(bool vsync) {
 
 bool Window::vsync() {
   return wm_info_.vsync;
+}
+
+void Window::set_window_icon(const std::vector<std::string> &paths) {
+  std::vector<GLFWimage> images{};
+  for (const auto &p : paths) {
+    images.emplace_back();
+    images.back().pixels = stbi_load(p.c_str(), &images.back().width, &images.back().height, 0, 4);
+  }
+  glfwSetWindowIcon(glfw_window_, images.size(), &images[0]);
+
+  for (auto &i : images)
+    stbi_image_free(i.pixels);
+}
+
+void Window::set_window_icon(const std::string &path) {
+  std::vector<std::string> paths = {path};
+  set_window_icon(paths);
 }
 
 void Window::set_size(int width, int height) {
@@ -124,6 +151,28 @@ void Window::center(int monitor_num) {
   );
 }
 
+void Window::screenshot(const std::string &path) {
+  auto window_size = size();
+
+  ctx_->BindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  auto pixels = std::vector<std::uint8_t>(window_size.x * (4 * window_size.y));
+  ctx_->ReadPixels(
+      0, 0,
+      window_size.x, window_size.y,
+      GL_RGBA, GL_UNSIGNED_BYTE,
+      (void *)(&pixels[0])
+  );
+
+  stbi_flip_vertically_on_write(true);
+  stbi_write_png(
+      path.c_str(),
+      window_size.x, window_size.y, 4,
+      &pixels[0],
+      window_size.x * 4
+  );
+}
+
 glm::mat4 Window::projection() {
   auto s = size();
   return glm::ortho(
@@ -154,6 +203,26 @@ void Window::open_(const WCfg &cfg, glm::ivec2 glversion) {
 #endif
   } else
     open_windowed_(cfg);
+
+  set_window_icon({
+      (RESOURCE_PATH / "icon" / "16x16.png").string(),
+      (RESOURCE_PATH / "icon" / "32x32.png").string(),
+      (RESOURCE_PATH / "icon" / "48x48.png").string(),
+  });
+
+#if defined(HADES_PLATFORM_WINDOWS)
+  win32_hwnd_ = glfwGetWin32Window(glfw_window_);
+  win32_saved_WndProc_ = (WNDPROC)GetWindowLongPtr(win32_hwnd_, GWLP_WNDPROC);
+  win32_force_light_mode_ = cfg.win32_force_light_mode;
+  win32_force_dark_mode_ = cfg.win32_force_dark_mode;
+
+  // Set up our Win32 pointers for callbacks
+  SetWindowLongPtr(win32_hwnd_, GWLP_USERDATA, (LONG_PTR)this);
+  SetWindowLongPtr(win32_hwnd_, GWLP_WNDPROC, (LONG_PTR)WndProc_);
+
+//  if (win32_force_dark_mode_ || win32_force_light_mode_)
+  set_win32_titlebar_color_(win32_hwnd_);
+#endif
 }
 
 void Window::close_() {
@@ -282,5 +351,53 @@ void Window::open_windowed_(const WCfg &cfg) {
   if (!set(cfg.flags, WFlags::hidden))
     glfwShowWindow(glfw_window_);
 }
+
+/*******************************************************************************
+ * This code is specifically for setting the titlebar to the dark mode in
+ * Windows. It is based on some currently undocumented behavior including
+ * a magic constant (I gave it a name that seems to be common online. This
+ * does seem to be consistent and stable, so I'm okay relying on it for now
+ * even though using behavior that is totally undocumented is a little sketch
+ */
+#if defined(HADES_PLATFORM_WINDOWS)
+void Window::set_win32_titlebar_color_(HWND hwnd) {
+  const int DWM_USE_IMMERSIVE_DARK_MODE = 20;
+  const BOOL use_light_mode = 0;
+  const BOOL use_dark_mode = 1;
+
+  auto hades_window = reinterpret_cast<Window *>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+
+  DWORD should_use_light_theme{};
+  DWORD should_use_light_theme_size = sizeof(should_use_light_theme);
+  LONG code = RegGetValue(
+      HKEY_CURRENT_USER,
+      R"(Software\Microsoft\Windows\CurrentVersion\Themes\Personalize)",
+      "AppsUseLightTheme",
+      RRF_RT_REG_DWORD,
+      nullptr,
+      &should_use_light_theme,
+      &should_use_light_theme_size
+  );
+
+  if (code != ERROR_SUCCESS)
+    throw std::runtime_error(fmt::format("Cannot read DWORD from registry. {}", code));
+
+  // Incredibly cursed undocumented Win32 API bullshit
+  // https://stackoverflow.com/questions/57124243/winforms-dark-title-bar-on-windows-10
+  if ((should_use_light_theme || hades_window->win32_force_light_mode_) && !hades_window->win32_force_dark_mode_)
+    DwmSetWindowAttribute(hwnd, DWM_USE_IMMERSIVE_DARK_MODE, &use_light_mode, sizeof(use_light_mode));
+  else if ((!should_use_light_theme || hades_window->win32_force_dark_mode_) && !hades_window->win32_force_light_mode_)
+    DwmSetWindowAttribute(hwnd, DWM_USE_IMMERSIVE_DARK_MODE, &use_dark_mode, sizeof(use_dark_mode));
+}
+
+LRESULT CALLBACK Window::WndProc_(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+  auto hades_window = reinterpret_cast<Window *>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+
+  if (message == WM_SETTINGCHANGE && hwnd == hades_window->win32_hwnd_)
+    set_win32_titlebar_color_(hwnd);
+
+  return CallWindowProc(hades_window->win32_saved_WndProc_, hwnd, message, wParam, lParam);
+}
+#endif
 
 } // namespace hades

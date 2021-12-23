@@ -9,6 +9,8 @@ cmake_minimum_required(VERSION 3.16)
 
 option(HADES_BUILD_EXAMPLES "Build the hades example programs" ON)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_helpers")
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
@@ -66,6 +68,7 @@ add_library(
 
     "include/hades/util/averagers.hpp"
     "include/hades/util/framecounter.hpp"
+    "include/hades/util/memusage.hpp"
     "include/hades/util/random.hpp"
     "include/hades/util/shapes.hpp"
     "include/hades/util/ticker.hpp"
@@ -73,8 +76,9 @@ add_library(
     "include/hades/util/timermgr.hpp"
     "sources/hades/util/averagers.cpp"
     "sources/hades/util/framecounter.cpp"
-    "sources/hades/util/shapes.cpp"
+    "sources/hades/util/memusage.cpp"
     "sources/hades/util/random.cpp"
+    "sources/hades/util/shapes.cpp"
     "sources/hades/util/ticker.cpp"
     "sources/hades/util/timermgr.cpp"
 
@@ -109,6 +113,11 @@ add_subdirectory("thirdparty/glm")
 
 set(SPDLOG_FMT_EXTERNAL ON CACHE BOOL "" FORCE)
 add_subdirectory("thirdparty/spdlog")
+
+# We need this to set the title bar color to match the current windows theme
+if (WIN32)
+    target_link_libraries(${PROJECT_NAME} PUBLIC imm32.lib Dwmapi.lib)
+endif (WIN32)
 
 target_link_libraries(
     ${PROJECT_NAME}

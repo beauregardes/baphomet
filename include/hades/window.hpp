@@ -10,9 +10,15 @@
 #include "hades/gfxmgr.hpp"
 #include "hades/internal/bitmask_enum.hpp"
 #include "hades/util/framecounter.hpp"
+#include "hades/util/platform.hpp"
 #include "hades/util/ticker.hpp"
 #include "hades/util/timermgr.hpp"
 #include "hades/inputmgr.hpp"
+
+#if defined(HADES_PLATFORM_WINDOWS)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
 #include <memory>
 #include <string>
@@ -38,6 +44,9 @@ struct WCfg {
   int monitor{0};
 
   WFlags flags{WFlags::none};
+
+  bool win32_force_light_mode{false};
+  bool win32_force_dark_mode{false};
 };
 
 class Window {
@@ -63,6 +72,9 @@ public:
   void set_vsync(bool vsync);
   bool vsync();
 
+  void set_window_icon(const std::vector<std::string> &paths);
+  void set_window_icon(const std::string &path);
+
   void set_size(int width, int height);
   glm::ivec2 size();
   int w();
@@ -77,6 +89,8 @@ public:
   int y();
 
   void center(int monitor_num = 0);
+
+  void screenshot(const std::string &path);
 
   glm::mat4 projection();
 
@@ -99,6 +113,16 @@ private:
   void open_fullscreen_windows_(const WCfg &cfg);
   void open_fullscreen_linux_(const WCfg &cfg);
   void open_windowed_(const WCfg &cfg);
+
+#if defined(HADES_PLATFORM_WINDOWS)
+  HWND win32_hwnd_{nullptr};
+  WNDPROC win32_saved_WndProc_{nullptr};
+  bool win32_force_light_mode_{false};
+  bool win32_force_dark_mode_{false};
+
+  static void set_win32_titlebar_color_(HWND hwnd);
+  static LRESULT CALLBACK WndProc_(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+#endif
 };
 
 } // namespace hades

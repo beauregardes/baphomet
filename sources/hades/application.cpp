@@ -1,5 +1,7 @@
 #include "hades/application.hpp"
 
+#include "hades/util/memusage.hpp"
+
 namespace hades {
 
 void Application::initialize() {}
@@ -39,10 +41,11 @@ void Application::draw_overlay_() {
 
   glm::vec2 base_pos{1.0f, 1.0f};
 
-  auto fps_str = fmt::format("{:.2f} FPS", frame_counter_.fps());
+  auto stat_str = fmt::format("{:.2f} FPS", frame_counter_.fps());
   if (window->vsync())
-    fps_str += " (vsync)";
-  draw_overlay_text_with_bg_(base_pos, fps_str);
+    stat_str += " (vsync)";
+  stat_str += fmt::format(" | {:.2f} MB", hades::get_memusage_mb());
+  draw_overlay_text_with_bg_(base_pos, stat_str);
 
   draw_debug_log_();
 
@@ -68,7 +71,7 @@ void Application::draw_debug_log_() {
 
       gfx->rect(
         base_pos.x, base_pos.y, bounds.w + 2, bounds.h + 2,
-        hades::rgba(0, 0, 0, 192 * (it->opacity / 255.0))
+        hades::rgba(0, 0, 0, 217 * (it->opacity / 255.0))
       );
 
       overlay_.font->render(
@@ -87,7 +90,7 @@ void Application::draw_overlay_text_with_bg_(glm::vec2 &base_pos, const std::str
   auto bounds = overlay_.font->calc_text_bounds(base_pos.x, base_pos.y, text);
   gfx->rect(
     bounds.x, bounds.y, bounds.w + 2, bounds.h + 2,
-    hades::rgba(0, 0, 0, 192)
+    hades::rgba(0, 0, 0, 217)
   );
   
   overlay_.font->render(
