@@ -18,7 +18,7 @@ public:
   };
   std::vector<std::vector<CellState>> cells;
 
-  std::vector<int> stay{1, 2, 3, 4, 5};
+  std::vector<int> stay{2, 3};
   std::vector<int> born{3};
 
   void initialize() override {
@@ -53,8 +53,14 @@ public:
     if (input->pressed("t"))
       step_simulate();
 
+    if (input->pressed("mb_left"))
+      set_single_cell(true);
+
     if (input->down("mb_left") && input->mouse.moved)
       set_cell(true);
+
+    if (input->pressed("mb_right"))
+      set_single_cell(false);
 
     if (input->down("mb_right") && input->mouse.moved)
       set_cell(false);
@@ -105,6 +111,13 @@ public:
             cells[y][x].curr = state;
           }
       );
+    }
+  }
+
+  void set_single_cell(bool state) {
+    if (is_in_grid(input->mouse.x, input->mouse.y)) {
+      auto cell_pos = mouse_pos_to_cell_pos(input->mouse.x, input->mouse.y);
+      cells[cell_pos.y][cell_pos.x].curr = state;
     }
   }
 
