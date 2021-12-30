@@ -6,6 +6,7 @@
 #include <Windows.h>
 #include <psapi.h>
 #elif defined(HADES_PLATFORM_LINUX)
+#include <cstdio>
 #include <unistd.h>
 #include <sys/resource.h>
 #endif

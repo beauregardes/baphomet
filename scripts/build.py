@@ -27,13 +27,13 @@ def main():
 
   os.makedirs(build_dir, exist_ok=True)
   os.chdir(build_dir)
-  subprocess.call(f"cmake {cmake_args} ..")
-  subprocess.call(f"cmake --build . -j {args.cores}")
+  subprocess.call(f"cmake {cmake_args} ..", shell=True)
+  subprocess.call(f"cmake --build . -j {args.cores}", shell=True)
   print('\x1b[0m', end='')  # color reset b/c mingw32-make on Windows is bad
   os.chdir('..')
 
   if args.program is not None:
-    subprocess.call(f"./{build_dir}/{args.program}")
+    subprocess.call(f"./{build_dir}/{args.program}", shell=True)
 
 
 if __name__ == '__main__':
