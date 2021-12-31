@@ -7,5 +7,8 @@ target_link_libraries(gameoflife PRIVATE hades)
 add_executable(spinning_ovals spinning_ovals.cpp)
 target_link_libraries(spinning_ovals PRIVATE hades)
 
+add_executable(font_corrupt font_corrupt.cpp)
+target_link_libraries(font_corrupt PRIVATE hades)
+
 add_executable(testing testing.cpp)
 target_link_libraries(testing PRIVATE hades)
