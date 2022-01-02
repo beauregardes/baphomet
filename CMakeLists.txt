@@ -7,6 +7,7 @@ project(
 )
 cmake_minimum_required(VERSION 3.16)
 
+option(HADES_BUILD_PROTO "Build the hades prototypes" ON)
 option(HADES_BUILD_EXAMPLES "Build the hades example programs" ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_helpers")
@@ -139,6 +140,10 @@ target_include_directories(
 
     "include"
 )
+
+if (HADES_BUILD_PROTO)
+    add_subdirectory("proto")
+endif ()
 
 if (HADES_BUILD_EXAMPLES)
     add_subdirectory("example")
