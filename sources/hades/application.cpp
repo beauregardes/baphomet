@@ -1,8 +1,20 @@
 #include "hades/application.hpp"
 
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #include "hades/util/memusage.hpp"
+#include "hades/hades.hpp"
 
 namespace hades {
+
+Application::~Application() {
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext(imgui_state_.ctx);
+
+  imgui_state_.ctx = nullptr;
+}
 
 void Application::initialize() {}
 void Application::update(double dt) {}
@@ -12,6 +24,30 @@ void Application::shutdown() {
   window->close_();
 }
 
+void Application::imgui_startframe_() {
+  ImGui_ImplOpenGL3_NewFrame();
+  ImGui_ImplGlfw_NewFrame();
+  ImGui::NewFrame();
+
+  imgui_state_.newframe_called = true;
+}
+
+void Application::imgui_endframe_() {
+  ImGui::Render();
+  ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+  if (imgui_state_.io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+    GLFWwindow* backup_current_context = glfwGetCurrentContext();
+
+    ImGui::UpdatePlatformWindows();
+    ImGui::RenderPlatformWindowsDefault();
+
+    glfwMakeContextCurrent(backup_current_context);
+  }
+
+  imgui_state_.newframe_called = false;
+}
+
 void Application::start_frame_() {
   window->fbo_->bind();
 
@@ -19,10 +55,14 @@ void Application::start_frame_() {
   gfx->clear_batches_();
 
   gfx->clear(gl::ClearMask::depth);
+
+  imgui_startframe_();
 }
 
 void Application::end_frame_() {
   gfx->draw_batches_(window->projection());
+
+  imgui_endframe_();
 
   window->fbo_->unbind();
 
@@ -56,34 +96,38 @@ void Application::draw_debug_log_() {
   double dt = frame_counter_.dt();
 
   glm::vec2 base_pos{1.0f, window->h() - 1};
-  for (auto it = overlay_.log.lines.begin(); it != overlay_.log.lines.end(); it++) {
-    if (it->timeout > 0) {
-      it->timeout -= dt;
-      if (it->timeout <= 0.0)
-        it->should_show = false;
-      else if (it->timeout > 0.0 && it->timeout < 1.0)
-        it->opacity = int(255.0 * it->timeout);
+
+  overlay_.log.lines.lock();
+  for (auto & line : overlay_.log.lines) {
+    if (line.timeout > 0) {
+      line.timeout -= dt;
+      if (line.timeout <= 0.0)
+        line.should_show = false;
+      else if (line.timeout > 0.0 && line.timeout < 1.0)
+        line.opacity = int(255.0 * line.timeout);
     }
 
-    if (it->should_show) {
-      auto bounds = overlay_.font->calc_text_bounds(0.0f, 0.0f, it->msg);
+    if (line.should_show) {
+      auto bounds = overlay_.font->calc_text_bounds(0.0f, 0.0f, line.msg);
       base_pos.y -= bounds.h + 2;
 
       gfx->rect(
         base_pos.x, base_pos.y, bounds.w + 2, bounds.h + 2,
-        hades::rgba(0, 0, 0, 217 * (it->opacity / 255.0))
+        hades::rgba(0, 0, 0, 217 * (line.opacity / 255.0))
       );
 
       overlay_.font->render(
         base_pos.x + 1, base_pos.y + 1,
-        hades::rgba(255, 255, 255, it->opacity), 
-        it->msg
+        hades::rgba(255, 255, 255, line.opacity),
+        line.msg
       );
     }
   }
 
   while (!overlay_.log.lines.empty() && !overlay_.log.lines.back().should_show)
     overlay_.log.lines.pop_back();
+
+  overlay_.log.lines.unlock();
 }
 
 void Application::draw_overlay_text_with_bg_(glm::vec2 &base_pos, const std::string &text) {
@@ -108,7 +152,7 @@ void Application::draw_overlay_skip_line_(glm::vec2 &base_pos) {
 
 void Application::debug_log_(fmt::string_view format, fmt::format_args args) {
   auto msg = fmt::vformat(format, args);
-  overlay_.log.lines.push_front(msg);
+  overlay_.log.lines.ts_push_front(msg);
 }
 
 /******************
@@ -124,7 +168,7 @@ void Application::open_(const WCfg &cfg, glm::ivec2 glversion) {
   timer = std::make_unique<TimerMgr>();
 }
 
-void Application::initgl_(glm::ivec2 glversion) {
+void Application::init_gl_(glm::ivec2 glversion) {
   glfwMakeContextCurrent(window->glfw_window_);
 
   ctx_ = new GladGLContext();
@@ -169,6 +213,29 @@ void Application::initgl_(glm::ivec2 glversion) {
       true
   );
   gfx->switch_to_batch_set_("default");
+}
+
+void Application::init_imgui_(glm::ivec2 glversion) {
+  // Setup ImGui
+  IMGUI_CHECKVERSION();
+  imgui_state_.ctx = ImGui::CreateContext();
+  imgui_state_.io = &ImGui::GetIO(); (void)imgui_state_.io;
+//  imgui_state_.io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+  imgui_state_.io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+  imgui_state_.io->IniFilename = nullptr;
+
+  ImGui_ImplGlfw_InitForOpenGL(window->glfw_window_, true);
+  std::string glsl_version;
+  if      (glversion == glm::ivec2{2, 0}) glsl_version = "#version 110";
+  else if (glversion == glm::ivec2{2, 1}) glsl_version = "#version 120";
+  else if (glversion == glm::ivec2{3, 0}) glsl_version = "#version 130";
+  else if (glversion == glm::ivec2{3, 1}) glsl_version = "#version 140";
+  else if (glversion == glm::ivec2{3, 2}) glsl_version = "#version 150";
+  else
+    glsl_version = fmt::format("#version {}{}0", glversion.x, glversion.y);
+  ImGui_ImplOpenGL3_Init(glsl_version.c_str());
+
+  spdlog::debug("Initialized ImGui");
 }
 
 } // namespace hades

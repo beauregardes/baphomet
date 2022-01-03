@@ -66,11 +66,11 @@ public:
 int main(int, char *[]) {
   hades::Runner()
       .open<Testing>({
-          .title = "Testing",
-          .size = {800, 800},
-          .monitor = 1,
-          .flags = hades::WFlags::centered
-      })
-      .initgl()
+                         .title = "Testing",
+                         .size = {800, 800},
+                         .monitor = 1,
+                         .flags = hades::WFlags::centered
+                     })
+      .init_gl()
       .start();
 }

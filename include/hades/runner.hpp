@@ -22,7 +22,7 @@ public:
   template<DerivesHadesApplication T>
   Runner &open(const WCfg &cfg);
 
-  Runner &initgl(glm::ivec2 glversion = {3, 3});
+  Runner &init_gl(glm::ivec2 glversion = {3, 3});
 
   void start();
 

@@ -45,12 +45,12 @@ public:
 
 int main(int, char *[]) {
   hades::Runner()
-    .open<Testing>({
-        .title = "Testing",
-        .size = {CHAR_W*64, CHAR_H*64},
-        .monitor = 1,
-        .flags = hades::WFlags::centered
-    })
-    .initgl()
+      .open<Testing>({
+                         .title = "Testing",
+                         .size = {CHAR_W * 64, CHAR_H * 64},
+                         .monitor = 1,
+                         .flags = hades::WFlags::centered
+                     })
+      .init_gl()
     .start();
 }

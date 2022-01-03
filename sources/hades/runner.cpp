@@ -22,7 +22,7 @@ Runner::~Runner() {
   glfwTerminate();
 }
 
-Runner &Runner::initgl(glm::ivec2 glversion) {
+Runner &Runner::init_gl(glm::ivec2 glversion) {
   open_params_.glversion = glversion;
   return *this;
 }
@@ -30,8 +30,9 @@ Runner &Runner::initgl(glm::ivec2 glversion) {
 void Runner::start() {
   application_->open_(open_params_.cfg, open_params_.glversion);
   register_glfw_callbacks_();
-  
-  application_->initgl_(open_params_.glversion);
+
+  application_->init_gl_(open_params_.glversion);
+  application_->init_imgui_(open_params_.glversion);
 
   application_->initialize();
   

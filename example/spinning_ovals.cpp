@@ -62,12 +62,12 @@ public:
 
 int main(int, char *[]) {
   hades::Runner()
-    .open<SpinningOvals>({
-      .title = "Spinning Ovals",
-      .monitor = 1,
-      .flags = hades::WFlags::borderless
-    })
-    .initgl()
+      .open<SpinningOvals>({
+                               .title = "Spinning Ovals",
+                               .monitor = 1,
+                               .flags = hades::WFlags::borderless
+                           })
+      .init_gl()
     .start();
 }
 

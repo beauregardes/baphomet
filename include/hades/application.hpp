@@ -1,11 +1,15 @@
 #ifndef HADES_APPLICATION_HPP
 #define HADES_APPLICATION_HPP
 
+#include "imgui.h"
+
 #include "gl/framebuffer.hpp"
 
 #include "hades/gfxmgr.hpp"
 #include "hades/inputmgr.hpp"
 #include "hades/window.hpp"
+
+#include "hades/internal/ts_deque.hpp"
 
 #include "hades/util/timermgr.hpp"
 
@@ -28,7 +32,7 @@ class Application {
   friend class Runner;
 
 public:
-  virtual ~Application() = default;
+  virtual ~Application();
 
 protected:
   std::unique_ptr<Window> window{nullptr};
@@ -55,9 +59,18 @@ private:
     std::unique_ptr<hades::CP437> font{nullptr};
 
     struct {
-      std::deque<DebugLogLine> lines{};
+      TSDeque<DebugLogLine> lines{};
     } log;
   } overlay_{};
+
+  struct {
+    ImGuiContext *ctx{nullptr};
+    ImGuiIO *io{nullptr};
+    bool newframe_called{false};
+  } imgui_state_;
+
+  void imgui_startframe_();
+  void imgui_endframe_();
 
   void start_frame_();
   void end_frame_();
@@ -75,9 +88,8 @@ private:
    ******************/
 
   void open_(const WCfg &cfg, glm::ivec2 glversion);
-  void initgl_(glm::ivec2 glversion);
-
-  void create_fbo_();
+  void init_gl_(glm::ivec2 glversion);
+  void init_imgui_(glm::ivec2 glversion);
 };
 
 template <typename S, typename... Args>

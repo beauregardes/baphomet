@@ -194,9 +194,9 @@ public:
 int main(int, char *[]) {
   hades::Runner()
       .open<GameOfLife>({
-          .title = "Game Of Life",
-          .flags = hades::WFlags::hidden
-      })
-      .initgl()
+                            .title = "Game Of Life",
+                            .flags = hades::WFlags::hidden
+                        })
+      .init_gl()
       .start();
 }
