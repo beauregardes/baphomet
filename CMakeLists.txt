@@ -96,6 +96,7 @@ add_library(
     "include/hades/util/memusage.hpp"
     "include/hades/util/random.hpp"
     "include/hades/util/shapes.hpp"
+    "include/hades/util/thread_pool.hpp"
     "include/hades/util/ticker.hpp"
     "include/hades/util/time.hpp"
     "include/hades/util/timermgr.hpp"
@@ -104,6 +105,7 @@ add_library(
     "sources/hades/util/memusage.cpp"
     "sources/hades/util/random.cpp"
     "sources/hades/util/shapes.cpp"
+    "sources/hades/util/thread_pool.cpp"
     "sources/hades/util/ticker.cpp"
     "sources/hades/util/timermgr.cpp"
 

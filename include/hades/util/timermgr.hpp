@@ -2,6 +2,7 @@
 #define HADES_UTIL_TIMERMGR_HPP
 
 #include "hades/util/random.hpp"
+#include "hades/util/thread_pool.hpp"
 
 #include <concepts>
 #include <memory>
@@ -218,6 +219,16 @@ public:
 
   // ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
 
+  template<typename T>
+  std::string script(T &&f);
+
+  template<typename T>
+  std::string script(const std::string &tag, T &&f);
+
+  void initialize_script_pool(std::size_t num_threads);
+
+  // ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
+
   void update(double dt);
 
   void toggle(const std::string &tag);
@@ -392,7 +403,24 @@ private:
   };
 
   std::unordered_map<std::string, std::unique_ptr<Timer>> timers_{};
+  std::unique_ptr<ThreadPool> script_pool_{nullptr};
+
+  void initialize_script_pool_();
 };
+
+template<typename T>
+std::string TimerMgr::script(T &&f) {
+  if (!script_pool_)
+    initialize_script_pool_();
+  return script_pool_->add_job(f);
+}
+
+template<typename T>
+std::string TimerMgr::script(const std::string &tag, T &&f) {
+  if (!script_pool_)
+    initialize_script_pool_();
+  return script_pool_->add_job(tag, f);
+}
 
 } // namespace hades
 

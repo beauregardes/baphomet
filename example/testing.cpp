@@ -1,16 +1,12 @@
-#include "hades/hades.hpp"
-
 #include "testing.hpp"
 
 using namespace std::chrono_literals;
 
 class Testing : public hades::Application {
 public:
-  std::unique_ptr<ThreadPool> t{nullptr};
   std::queue<std::string> tags{};
 
   void initialize() override {
-    t = std::make_unique<ThreadPool>(20);
   }
 
   void update(double dt) override {
@@ -24,7 +20,7 @@ public:
 
     if (ImGui::Begin("Test")) {
       if (ImGui::Button("Count")) {
-        auto tag = t->add_job([&](auto &&wait) {
+        auto tag = timer->script([&](auto &&wait) {
           debug_log("Counting to 10...");
           for (int i = 1; i <= 10; ++i) {
             wait(1s);
@@ -35,26 +31,31 @@ public:
         tags.emplace(tag);
       }
 
+      if (ImGui::Button("Count 5")) {
+        for (int j = 0; j < 5; ++j) {
+          auto tag = timer->script([&](auto &&wait) {
+            debug_log("Counting to 10...");
+            for (int i = 1; i <= 10; ++i) {
+              wait(1s);
+              debug_log("{}!", i);
+            }
+            debug_log("Done counting!");
+          });
+          tags.emplace(tag);
+        }
+      }
+
       if (ImGui::Button("Cancel")) {
         if (!tags.empty()) {
           auto tag = tags.front();
           tags.pop();
-          t->cancel_job(tag);
+          timer->cancel(tag);
           debug_log("Cancelled job {}", tag);
         }
       }
 
       if (ImGui::Button("Cancel All")) {
-        while (!tags.empty()) {
-          auto tag = tags.front();
-          tags.pop();
-          t->cancel_job(tag);
-          debug_log("Cancelled job {}", tag);
-        }
-      }
-
-      if (ImGui::Button("Shutdown")) {
-        t->shutdown();
+        timer->cancel_all();
       }
     }
     ImGui::End();

@@ -2,6 +2,11 @@
 
 namespace hades {
 
+void TimerMgr::initialize_script_pool(std::size_t num_threads) {
+  if (!script_pool_)
+    script_pool_ = std::make_unique<ThreadPool>(num_threads);
+}
+
 void TimerMgr::update(double dt) {
   auto it = timers_.begin();
   while (it != timers_.end()) {
@@ -43,10 +48,17 @@ void TimerMgr::cancel(const std::string &tag) {
   auto it = timers_.find(tag);
   if (it != timers_.end())
     timers_.erase(it);
+  else
+    script_pool_->cancel_job(tag);
 }
 
 void TimerMgr::cancel_all() {
   timers_.clear();
+  script_pool_->cancel_all();
+}
+
+void TimerMgr::initialize_script_pool_() {
+  script_pool_ = std::make_unique<ThreadPool>();
 }
 
 } // namespace hades
