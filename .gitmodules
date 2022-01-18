@@ -13,3 +13,6 @@
 [submodule "thirdparty/pcg-cpp"]
 	path = thirdparty/pcg-cpp
 	url = https://github.com/imneme/pcg-cpp
+[submodule "thirdparty/openal-soft"]
+	path = thirdparty/openal-soft
+	url = https://github.com/kcat/openal-soft
