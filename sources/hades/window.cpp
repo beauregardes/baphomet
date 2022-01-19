@@ -17,6 +17,12 @@
 
 namespace hades {
 
+Window::~Window() {
+#if defined(HADES_PLATFORM_WINDOWS)
+  restore_saved_win32_WndProc_();
+#endif
+}
+
 void Window::set_auto_iconify(bool auto_iconify) {
   glfwSetWindowAttrib(glfw_window_, GLFW_AUTO_ICONIFY, auto_iconify ? GLFW_TRUE : GLFW_FALSE);
 }
@@ -67,6 +73,14 @@ void Window::set_vsync(bool vsync) {
 
 bool Window::vsync() {
   return wm_info_.vsync;
+}
+
+void Window::set_opacity(float opacity) {
+  glfwSetWindowOpacity(glfw_window_, opacity);
+}
+
+float Window::opacity() {
+  return glfwGetWindowOpacity(glfw_window_);
 }
 
 void Window::set_window_icon(const std::vector<std::string> &paths) {
@@ -182,6 +196,20 @@ glm::mat4 Window::projection() {
   );
 }
 
+#if defined(HADES_PLATFORM_WINDOWS)
+void Window::force_light_mode() {
+  win32_force_light_mode_ = true;
+  win32_force_dark_mode_ = false;
+  set_win32_titlebar_color_(win32_hwnd_);
+}
+
+void Window::force_dark_mode() {
+  win32_force_light_mode_ = false;
+  win32_force_dark_mode_ = true;
+  set_win32_titlebar_color_(win32_hwnd_);
+}
+#endif
+
 void Window::create_fbo_() {
   fbo_ = gl::FramebufferBuilder(ctx_, w(), h())
       .renderbuffer(gl::RBufFormat::rgba8)
@@ -223,6 +251,9 @@ void Window::open_(const WCfg &cfg, glm::ivec2 glversion) {
 //  if (win32_force_dark_mode_ || win32_force_light_mode_)
   set_win32_titlebar_color_(win32_hwnd_);
 #endif
+
+  if (!set(cfg.flags, WFlags::fullscreen) && !set(cfg.flags, WFlags::borderless) && !set(cfg.flags, WFlags::hidden))
+    glfwShowWindow(glfw_window_);
 }
 
 void Window::close_() {
@@ -347,23 +378,20 @@ void Window::open_windowed_(const WCfg &cfg) {
         base_x + cfg.position.x,
         base_y + cfg.position.y
     );
-
-  if (!set(cfg.flags, WFlags::hidden))
-    glfwShowWindow(glfw_window_);
 }
 
 /*******************************************************************************
  * This code is specifically for setting the titlebar to the dark mode in
  * Windows. It is based on some currently undocumented behavior including
- * a magic constant (I gave it a name that seems to be common online. This
+ * a magic constant (I gave it a name that seems to be common online). This
  * does seem to be consistent and stable, so I'm okay relying on it for now
  * even though using behavior that is totally undocumented is a little sketch
  */
 #if defined(HADES_PLATFORM_WINDOWS)
 void Window::set_win32_titlebar_color_(HWND hwnd) {
   const int DWM_USE_IMMERSIVE_DARK_MODE = 20;
-  const BOOL use_light_mode = 0;
-  const BOOL use_dark_mode = 1;
+  const BOOL use_light_mode = FALSE;
+  const BOOL use_dark_mode = TRUE;
 
   auto hades_window = reinterpret_cast<Window *>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
 
@@ -384,10 +412,28 @@ void Window::set_win32_titlebar_color_(HWND hwnd) {
 
   // Incredibly cursed undocumented Win32 API bullshit
   // https://stackoverflow.com/questions/57124243/winforms-dark-title-bar-on-windows-10
-  if ((should_use_light_theme || hades_window->win32_force_light_mode_) && !hades_window->win32_force_dark_mode_)
-    DwmSetWindowAttribute(hwnd, DWM_USE_IMMERSIVE_DARK_MODE, &use_light_mode, sizeof(use_light_mode));
-  else if ((!should_use_light_theme || hades_window->win32_force_dark_mode_) && !hades_window->win32_force_light_mode_)
-    DwmSetWindowAttribute(hwnd, DWM_USE_IMMERSIVE_DARK_MODE, &use_dark_mode, sizeof(use_dark_mode));
+  if ((should_use_light_theme || hades_window->win32_force_light_mode_) && !hades_window->win32_force_dark_mode_) {
+    const bool ok = SUCCEEDED(DwmSetWindowAttribute(hwnd, DWM_USE_IMMERSIVE_DARK_MODE, &use_light_mode, sizeof(use_light_mode)));
+    if (!ok)
+      spdlog::warn("Failed to set win32 titlebar to light mode");
+
+  } else if ((!should_use_light_theme || hades_window->win32_force_dark_mode_) && !hades_window->win32_force_light_mode_) {
+    const bool ok = SUCCEEDED(DwmSetWindowAttribute(hwnd, DWM_USE_IMMERSIVE_DARK_MODE, &use_dark_mode, sizeof(use_dark_mode)));
+    if (!ok)
+      spdlog::warn("Failed to set win32 titlebar to dark mode");
+  }
+
+  // This is a hack to force Windows to redraw the frame of the window--otherwise it won't
+  // specifically when the user forces it without a system-wide change...
+  //
+  // Could be a problem on systems that don't support window opacity?
+  //
+  // There is a "solution" that is supposed to use:
+  //   SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_DRAWFRAME|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_NOZORDER)
+  // But it has not worked for me at all on Windows 10 21H1
+  float saved_opacity = hades_window->opacity();
+  hades_window->set_opacity(saved_opacity - 0.000001f);
+  hades_window->set_opacity(saved_opacity);
 }
 
 LRESULT CALLBACK Window::WndProc_(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -398,6 +444,11 @@ LRESULT CALLBACK Window::WndProc_(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
   return CallWindowProc(hades_window->win32_saved_WndProc_, hwnd, message, wParam, lParam);
 }
+
+void Window::restore_saved_win32_WndProc_() {
+  SetWindowLongPtr(win32_hwnd_, GWLP_WNDPROC, (LONG_PTR)win32_saved_WndProc_);
+}
+
 #endif
 
 } // namespace hades

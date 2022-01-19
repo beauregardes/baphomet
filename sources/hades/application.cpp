@@ -208,7 +208,7 @@ void Application::init_gl_(glm::ivec2 glversion) {
 
   gfx->new_batch_set_("overlay", true);
   overlay_.font = gfx->load_cp437(
-      (hades::RESOURCE_PATH / "font" / "1px_redux_7x9_no_bg.png").string(),
+      (hades::RESOURCE_PATH / "fonts" / "no-bg" / "1px_7x9.png").string(),
       7, 9,
       true
   );

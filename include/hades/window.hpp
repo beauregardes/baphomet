@@ -17,6 +17,7 @@
 
 #if defined(HADES_PLATFORM_WINDOWS)
 #define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
 #endif
 
@@ -54,6 +55,8 @@ class Window {
   friend class Runner;
 
 public:
+  ~Window();
+
   void set_auto_iconify(bool auto_iconify);
   bool auto_iconify();
 
@@ -71,6 +74,9 @@ public:
 
   void set_vsync(bool vsync);
   bool vsync();
+
+  void set_opacity(float opacity);
+  float opacity();
 
   void set_window_icon(const std::vector<std::string> &paths);
   void set_window_icon(const std::string &path);
@@ -93,6 +99,11 @@ public:
   void screenshot(const std::string &path);
 
   glm::mat4 projection();
+
+#if defined(HADES_PLATFORM_WINDOWS)
+  void force_light_mode();
+  void force_dark_mode();
+#endif
 
 private:
   GLFWwindow *glfw_window_{nullptr};
@@ -122,6 +133,8 @@ private:
 
   static void set_win32_titlebar_color_(HWND hwnd);
   static LRESULT CALLBACK WndProc_(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+  void restore_saved_win32_WndProc_();
 #endif
 };
 

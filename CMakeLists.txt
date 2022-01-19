@@ -12,8 +12,13 @@ option(HADES_BUILD_EXAMPLES "Build the hades example programs" ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_helpers")
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+if (MSVC)
+    set(CMAKE_CXX_STANDARD 23)
+    set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+else ()
+    set(CMAKE_CXX_STANDARD 20)
+    set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+endif (MSVC)
 
 add_library(
     ${PROJECT_NAME}
@@ -141,6 +146,9 @@ add_subdirectory("thirdparty/glm")
 set(SPDLOG_FMT_EXTERNAL ON CACHE BOOL "" FORCE)
 add_subdirectory("thirdparty/spdlog")
 
+add_subdirectory("thirdparty/libnyquist")
+add_subdirectory("thirdparty/openal-soft")
+
 # We need this to set the title bar color to match the current windows theme
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} PUBLIC imm32.lib Dwmapi.lib)
@@ -154,6 +162,8 @@ target_link_libraries(
     glm
     fmt
     spdlog
+    libnyquist
+    OpenAL
 )
 
 target_include_directories(
@@ -176,5 +186,12 @@ endif ()
 
 if (HADES_BUILD_EXAMPLES)
     add_subdirectory("example")
+
+    # Copy the OpenAL dll over to the example directory
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_BINARY_DIR}/thirdparty/openal-soft/OpenAL32.dll"
+            "${CMAKE_BINARY_DIR}/example"
+    )
 endif ()
 

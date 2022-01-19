@@ -13,4 +13,12 @@
 #include "hades/application.hpp"
 #include "hades/runner.hpp"
 
+#ifndef HADES_NO_CHRONO_LITERALS
+using namespace std::chrono_literals;
+#endif
+
+#ifndef HADES_NO_NAMESPACE_FS
+namespace fs = std::filesystem;
+#endif
+
 #endif //HADES_HADES_HPP

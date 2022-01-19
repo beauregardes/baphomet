@@ -4,6 +4,7 @@
 #include "hades/util/random.hpp"
 
 #include <condition_variable>
+#include <functional>
 #include <mutex>
 #include <queue>
 #include <string>

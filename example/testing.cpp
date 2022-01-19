@@ -1,64 +1,54 @@
 #include "testing.hpp"
 
-using namespace std::chrono_literals;
+#include <cmath>
+
+const auto RESOURCES = fs::path(__FILE__).parent_path() / "resources";
 
 class Testing : public hades::Application {
 public:
-  std::queue<std::string> tags{};
+  std::unique_ptr<hades::AudioMgr> audio{nullptr};
+  std::vector<std::string> notes = {"c", "e", "g"};
+  float volume = 1.0f;
 
   void initialize() override {
+    audio = std::make_unique<hades::AudioMgr>();
+    audio->open_device();
+    audio->open_context();
+    audio->make_current();
+
+    for (const auto &n : notes)
+      audio->load(n, (RESOURCES / "wav" / (n + ".wav")).string());
+
+    timer->every({0.1}, [&]{
+      auto note = rnd::choose(notes);
+      audio->play(note, {.volume = volume});
+      debug_log(note);
+    });
   }
 
   void update(double dt) override {
+    volume = std::abs(std::sin(glfwGetTime()));
+
+    audio->update();
+
     if (input->pressed("escape"))
       shutdown();
+
+    if (input->pressed("1"))
+      audio->reopen_device();
   }
 
   void draw() override {
     gfx->clear_color(hades::rgb("black"));
     gfx->clear();
 
-    if (ImGui::Begin("Test")) {
-      if (ImGui::Button("Count")) {
-        auto tag = timer->script([&](auto &&wait) {
-          debug_log("Counting to 10...");
-          for (int i = 1; i <= 10; ++i) {
-            wait(1s);
-            debug_log("{}!", i);
-          }
-          debug_log("Done counting!");
-        });
-        tags.emplace(tag);
-      }
-
-      if (ImGui::Button("Count 5")) {
-        for (int j = 0; j < 5; ++j) {
-          auto tag = timer->script([&](auto &&wait) {
-            debug_log("Counting to 10...");
-            for (int i = 1; i <= 10; ++i) {
-              wait(1s);
-              debug_log("{}!", i);
-            }
-            debug_log("Done counting!");
-          });
-          tags.emplace(tag);
-        }
-      }
-
-      if (ImGui::Button("Cancel")) {
-        if (!tags.empty()) {
-          auto tag = tags.front();
-          tags.pop();
-          timer->cancel(tag);
-          debug_log("Cancelled job {}", tag);
-        }
-      }
-
-      if (ImGui::Button("Cancel All")) {
-        timer->cancel_all();
-      }
-    }
-    ImGui::End();
+    gfx->oval(
+        window->w() / 2,
+        window->h() - (window->h() * volume),
+        20, 10,
+        hades::rgb(0xffffff),
+        volume * 360
+    );
   }
 };
 
@@ -66,7 +56,7 @@ int main(int, char *[]) {
   hades::Runner()
     .open<Testing>({
         .title = "Testing",
-        .size = {800, 800},
+        .size = {400, 400},
         .monitor = 1,
         .flags = hades::WFlags::centered
     })
