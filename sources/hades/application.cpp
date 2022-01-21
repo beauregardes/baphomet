@@ -165,7 +165,14 @@ void Application::open_(const WCfg &cfg, glm::ivec2 glversion) {
   window->wm_info_.vsync = set(cfg.flags, WFlags::vsync);
 
   input = std::make_unique<InputMgr>(window->glfw_window_);
+
+  audio = std::make_unique<hades::AudioMgr>();
+  audio->open_device();
+  audio->open_context();
+  audio->make_current();
+
   timer = std::make_unique<TimerMgr>();
+  tween = std::make_unique<TweenMgr>();
 }
 
 void Application::init_gl_(glm::ivec2 glversion) {

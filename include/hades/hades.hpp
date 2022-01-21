@@ -3,6 +3,7 @@
 
 #include "hades/util/averagers.hpp"
 #include "hades/util/random.hpp"
+#include "hades/util/strfuncs.hpp"
 #include "hades/util/ticker.hpp"
 #include "hades/util/time.hpp"
 

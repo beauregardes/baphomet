@@ -5,6 +5,7 @@
 #include "hades/util/thread_pool.hpp"
 
 #include <concepts>
+#include <optional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -21,6 +22,11 @@ concept EveryCallable = requires(T t) { t(); };
 template<typename T>
 concept UntilCallable = requires(T t) {
   { t() } -> std::convertible_to<bool>;
+};
+
+template<typename T>
+concept CustomCallable = requires(T t) {
+  { t() } -> std::convertible_to<std::optional<double>>;
 };
 
 class TimerMgr {
@@ -219,6 +225,32 @@ public:
 
   // ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
 
+  template<CustomCallable Func>
+  std::string custom(const std::string &tag, double initial_delay, Func action) {
+    timers_[tag] = std::unique_ptr<Timer>(new CustomTimer(initial_delay, action));
+    return tag;
+  }
+
+  template<CustomCallable Func>
+  std::string custom(const std::string &tag, Func action) {
+    timers_[tag] = std::unique_ptr<Timer>(new CustomTimer(0.0, action));
+    return tag;
+  }
+
+  template<CustomCallable Func>
+  std::string custom(double initial_delay, Func action) {
+    auto tag = rnd::base58(11);
+    return custom(tag, initial_delay, action);
+  }
+
+  template<CustomCallable Func>
+  std::string custom(Func action) {
+    auto tag = rnd::base58(11);
+    return custom(tag, action);
+  }
+
+  // ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
+
   template<typename T>
   std::string script(T &&f);
 
@@ -400,6 +432,33 @@ private:
     Func action_;
     std::vector<double> intervals_;
     int count_;
+  };
+
+  template<CustomCallable Func>
+  class CustomTimer : public Timer {
+  public:
+    CustomTimer(double initial_interval, Func action)
+      : Timer(initial_interval), action_(action) {}
+
+    void update(double dt) override {
+      acc_ += dt;
+      if (acc_ >= interval_)
+        triggered = true;
+    }
+
+    void fire() override {
+      if (auto new_delay = action_()) {
+        acc_ -= interval_;
+        interval_ = *new_delay;
+
+      } else
+        expired = true;
+
+      triggered = false;
+    }
+
+  private:
+    Func action_;
   };
 
   std::unordered_map<std::string, std::unique_ptr<Timer>> timers_{};

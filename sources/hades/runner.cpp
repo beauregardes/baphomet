@@ -48,6 +48,8 @@ void Runner::start() {
 
     application_->input->update_(dt);
     application_->timer->update(dt);
+    application_->tween->update(dt);
+    application_->audio->update();
 
     glfwPollEvents();
   } while (!glfwWindowShouldClose(application_->window->glfw_window_));

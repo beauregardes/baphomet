@@ -1,54 +1,68 @@
 #include "testing.hpp"
 
-#include <cmath>
-
 const auto RESOURCES = fs::path(__FILE__).parent_path() / "resources";
+
+class Score {
+public:
+  Score(const std::string &path) {
+    std::ifstream ifs(path);
+    if (ifs.is_open()) {
+      std::string line;
+      while (std::getline(ifs, line)) {
+        auto comp = hades::split(line, " | ");
+        notes_.emplace_back(
+            hades::split(comp[0]),
+            std::stod(comp[1])
+        );
+      }
+    } else
+      spdlog::error("Failed to open score: '{}'", path);
+  }
+
+  std::optional<std::pair<std::vector<std::string>, double>> step() {
+    if (curr_note < notes_.size()) {
+      return notes_[curr_note++];
+    }
+    return std::nullopt;
+  }
+
+private:
+  std::vector<std::pair<std::vector<std::string>, double>> notes_{};
+  std::size_t curr_note{0};
+};
 
 class Testing : public hades::Application {
 public:
-  std::unique_ptr<hades::AudioMgr> audio{nullptr};
-  std::vector<std::string> notes = {"c", "e", "g"};
-  float volume = 1.0f;
+  std::vector<std::string> notes =
+      {"b3", "c4", "d4", "e4", "f4", "g4", "a4", "b4", "c5", "d5"};
+  std::unique_ptr<Score> score{nullptr};
 
   void initialize() override {
-    audio = std::make_unique<hades::AudioMgr>();
-    audio->open_device();
-    audio->open_context();
-    audio->make_current();
-
     for (const auto &n : notes)
       audio->load(n, (RESOURCES / "wav" / (n + ".wav")).string());
 
-    timer->every({0.1}, [&]{
-      auto note = rnd::choose(notes);
-      audio->play(note, {.volume = volume});
-      debug_log(note);
-    });
+    score = std::make_unique<Score>((RESOURCES / "scores" / "marchin_in.txt").string());
   }
 
   void update(double dt) override {
-    volume = std::abs(std::sin(glfwGetTime()));
-
-    audio->update();
-
     if (input->pressed("escape"))
       shutdown();
 
     if (input->pressed("1"))
-      audio->reopen_device();
+      timer->custom([&]() -> std::optional<double> {
+        if (auto p = score->step()) {
+          for (const auto &n : p->first)
+            audio->play(n);
+          debug_log(hades::join(" ", p->first));
+          return p->second;
+        }
+        return std::nullopt;
+      });
   }
 
   void draw() override {
     gfx->clear_color(hades::rgb("black"));
     gfx->clear();
-
-    gfx->oval(
-        window->w() / 2,
-        window->h() - (window->h() * volume),
-        20, 10,
-        hades::rgb(0xffffff),
-        volume * 360
-    );
   }
 };
 

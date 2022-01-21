@@ -11,7 +11,9 @@
 
 #include "hades/internal/ts_deque.hpp"
 
+#include "hades/util/audiomgr.hpp"
 #include "hades/util/timermgr.hpp"
+#include "hades/util/tweenmgr.hpp"
 
 #include <deque>
 
@@ -39,7 +41,9 @@ protected:
   std::unique_ptr<InputMgr> input{nullptr};
   std::unique_ptr<GfxMgr> gfx{nullptr};
 
+  std::unique_ptr<AudioMgr> audio{nullptr};
   std::unique_ptr<TimerMgr> timer{nullptr};
+  std::unique_ptr<TweenMgr> tween{nullptr};
 
   virtual void initialize();
   virtual void update(double dt);
