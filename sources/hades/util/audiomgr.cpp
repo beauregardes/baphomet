@@ -1,11 +1,28 @@
 #include "hades/util/audiomgr.hpp"
 
 #include "spdlog/spdlog.h"
+#include <comdef.h>
 
 namespace hades {
 
 AudioMgr::AudioMgr() {
-
+#if defined(HADES_PLATFORM_WINDOWS)
+const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
+const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
+const HRESULT ok = CoCreateInstance(
+    CLSID_MMDeviceEnumerator, NULL,
+    CLSCTX_ALL, IID_IMMDeviceEnumerator,
+    (void **)&win32_dev_enumerator_
+);
+if (ok != S_OK) {
+  _com_error err(ok);
+  spdlog::error("Failed to create IMMDeviceEnumerator: {}", err.ErrorMessage());
+  spdlog::warn("Audio device changes will not happen automatically");
+} else {
+  win32_notif_client_ = new CMMNotificationClient();
+  win32_dev_enumerator_->RegisterEndpointNotificationCallback(win32_notif_client_);
+}
+#endif
 }
 
 AudioMgr::~AudioMgr() {
@@ -234,6 +251,51 @@ bool AudioMgr::check_alc_errors(ALCdevice *device) {
 
 bool AudioMgr::check_alc_errors() {
   return check_alc_errors(device_);
+}
+
+// Given an endpoint ID string, print the friendly device name.
+HRESULT CMMNotificationClient::PrintDeviceName(LPCWSTR pwstrId)
+{
+  HRESULT hr = S_OK;
+  IMMDevice *pDevice = NULL;
+  IPropertyStore *pProps = NULL;
+  PROPVARIANT varString;
+
+  CoInitialize(NULL);
+  PropVariantInit(&varString);
+
+  if (_pEnumerator == NULL)
+  {
+    // Get enumerator for audio endpoint devices.
+    hr = CoCreateInstance(__uuidof(MMDeviceEnumerator),
+                          NULL, CLSCTX_INPROC_SERVER,
+                          __uuidof(IMMDeviceEnumerator),
+                          (void**)&_pEnumerator);
+  }
+  if (hr == S_OK)
+  {
+    hr = _pEnumerator->GetDevice(pwstrId, &pDevice);
+  }
+  if (hr == S_OK)
+  {
+    hr = pDevice->OpenPropertyStore(STGM_READ, &pProps);
+  }
+  if (hr == S_OK)
+  {
+    // Get the endpoint device's friendly-name property.
+    hr = pProps->GetValue(PKEY_Device_FriendlyName, &varString);
+  }
+  printf("----------------------\nDevice name: \"%S\"\n"
+         "  Endpoint ID string: \"%S\"\n",
+         (hr == S_OK) ? varString.pwszVal : L"null device",
+         (pwstrId != NULL) ? pwstrId : L"null ID");
+
+  PropVariantClear(&varString);
+
+  SAFE_RELEASE(pProps)
+  SAFE_RELEASE(pDevice)
+  CoUninitialize();
+  return hr;
 }
 
 } // namespace hades

@@ -19,3 +19,6 @@
 [submodule "resources/fonts"]
 	path = resources/fonts
 	url = https://github.com/beauregardes/fonts.git
+[submodule "thirdparty/libnyquist"]
+	path = thirdparty/libnyquist
+	url = https://github.com/ddiakopoulos/libnyquist
