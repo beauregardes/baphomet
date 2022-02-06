@@ -1,3 +1,5 @@
+[![build](https://github.com/beauregardes/hades/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/beauregardes/hades/actions/workflows/c-cpp.yml)
+
 ![Hades](resources/logo/large.png)
 
 → [Read my devblog!](https://peachesandplums.blog/category/hades/) ←
