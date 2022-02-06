@@ -1,7 +1,10 @@
 #include "hades/util/audiomgr.hpp"
 
 #include "spdlog/spdlog.h"
+
+#if defined(HADES_PLATFORM_WINDOWS)
 #include <comdef.h>
+#endif
 
 namespace hades {
 
