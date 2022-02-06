@@ -26,6 +26,7 @@
 
 namespace hades {
 
+#if defined(HADES_PLATFORM_WINDOWS)
 //-----------------------------------------------------------
 // Example implementation of IMMNotificationClient interface.
 // When the status of audio endpoint devices change, the
@@ -165,6 +166,7 @@ public:
     return S_OK;
   }
 };
+#endif
 
 struct PlayOptions {
   float pitch{1.0f};    // valid range: 0.5 - 2.0
