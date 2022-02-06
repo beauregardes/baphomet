@@ -193,11 +193,13 @@ endif ()
 if (HADES_BUILD_EXAMPLES)
     add_subdirectory("example")
 
-    # Copy the OpenAL dll over to the example directory
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_BINARY_DIR}/thirdparty/openal-soft/OpenAL32.dll"
-            "${CMAKE_BINARY_DIR}/example"
-    )
+    if (WIN32)
+        # Copy the OpenAL dll over to the example directory
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${CMAKE_BINARY_DIR}/thirdparty/openal-soft/OpenAL32.dll"
+                "${CMAKE_BINARY_DIR}/example"
+        )
+    endif (WIN32)
 endif ()
 
