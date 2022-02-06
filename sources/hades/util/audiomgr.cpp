@@ -256,6 +256,7 @@ bool AudioMgr::check_alc_errors() {
   return check_alc_errors(device_);
 }
 
+#if defined(HADES_PLATFORM_WINDOWS)
 // Given an endpoint ID string, print the friendly device name.
 HRESULT CMMNotificationClient::PrintDeviceName(LPCWSTR pwstrId)
 {
@@ -300,5 +301,6 @@ HRESULT CMMNotificationClient::PrintDeviceName(LPCWSTR pwstrId)
   CoUninitialize();
   return hr;
 }
+#endif
 
 } // namespace hades
