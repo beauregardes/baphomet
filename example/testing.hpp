@@ -1,10 +1,7 @@
-#ifndef HADES_EXAMPLE_TESTING_HPP
-#define HADES_EXAMPLE_TESTING_HPP
+#pragma once
 
-#include "hades/hades.hpp"
+#include "baphomet/baphomet.hpp"
 
-namespace hades {
+namespace baphomet {
 
-} // namespace hades
-
-#endif //HADES_EXAMPLE_TESTING_HPP
+} // namespace baphomet

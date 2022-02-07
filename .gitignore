@@ -1,6 +1,2 @@
 .idea/
-_scratch/
-cmake-build*/
-.build*/
-.vscode/
-venv/
+build/
