@@ -102,10 +102,10 @@ target_include_directories(baphomet PUBLIC
     thirdparty/imgui/include
     thirdparty/imgui/include/backends
     thirdparty/stb)
+)
 
-
-if (BAPHOMET_BUILD_EXAMPLES)
-    add_subdirectory(example)
+if (HADES_BUILD_EXAMPLES)
+    add_subdirectory("example")
 
     if (WIN32)
         # Copy the OpenAL dll over to the example directory
