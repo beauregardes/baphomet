@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 project(baphomet)
 
-
 ###########
 # OPTIONS #
 ###########
@@ -101,7 +100,7 @@ target_include_directories(baphomet PUBLIC
     thirdparty/glad/include
     thirdparty/imgui/include
     thirdparty/imgui/include/backends
-    thirdparty/stb)
+    thirdparty/stb
 )
 
 if (HADES_BUILD_EXAMPLES)
