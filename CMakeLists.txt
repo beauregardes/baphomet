@@ -103,7 +103,7 @@ target_include_directories(baphomet PUBLIC
     thirdparty/stb
 )
 
-if (HADES_BUILD_EXAMPLES)
+if (BAPHOMET_BUILD_EXAMPLES)
     add_subdirectory("example")
 
     if (WIN32)
