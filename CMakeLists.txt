@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.21)
 project(baphomet)
 
+
+###########
+# OPTIONS #
+###########
+
+option(BAPHOMET_BUILD_EXAMPLES "Build the baphomet example programs" ON)
+
 ################
 # DEPENDENCIES #
 ################
@@ -57,7 +64,9 @@ CPMAddPackage(
 CPMAddPackage(
     NAME spdlog
     GITHUB_REPOSITORY gabime/spdlog
-    VERSION 1.9.2)
+    VERSION 1.9.2
+    OPTIONS
+      "SPDLOG_FMT_EXTERNAL ON")
 
 #################
 # LIBRARY FILES #
@@ -72,7 +81,11 @@ add_library(baphomet STATIC ${headers} ${srcs})
 # CONFIGURATION #
 #################
 
-target_compile_features(baphomet PUBLIC cxx_std_20)
+if (MSVC)
+    target_compile_features(baphomet PUBLIC cxx_std_23)
+else ()
+    target_compile_features(baphomet PUBLIC cxx_std_20)
+endif (MSVC)
 
 target_link_libraries(baphomet PUBLIC
     fmt
@@ -90,4 +103,16 @@ target_include_directories(baphomet PUBLIC
     thirdparty/imgui/include/backends
     thirdparty/stb)
 
-add_subdirectory(example)
+
+if (BAPHOMET_BUILD_EXAMPLES)
+    add_subdirectory(example)
+
+    if (WIN32)
+        # Copy the OpenAL dll over to the example directory
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${OpenAL_BINARY_DIR}/OpenAL32.dll"
+                "${CMAKE_BINARY_DIR}/example"
+                )
+    endif (WIN32)
+endif (BAPHOMET_BUILD_EXAMPLES)

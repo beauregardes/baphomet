@@ -1,7 +1,7 @@
 #pragma once
 
-#include "baphomet/baphomet.hpp"
-
 namespace baphomet {
+
+double get_memusage_mb();
 
 } // namespace baphomet
