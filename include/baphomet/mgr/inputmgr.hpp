@@ -1,5 +1,7 @@
 #pragma once
 
+#include "baphomet/util/time/time.hpp"
+
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 
@@ -38,15 +40,15 @@ public:
 
   bool pressed(const std::string &action);
   bool released(const std::string &action);
-  bool down(const std::string &action, double interval = 0.0, double delay = 0.0);
+  bool down(const std::string &action, Duration interval = Duration(0), Duration delay = Duration(0));
 
 private:
   GLFWwindow *parent_ {nullptr};
 
   struct RepeatState {
-    double time;
-    double interval;
-    double delay {0.0};
+    Duration time{0};
+    Duration interval{0};
+    Duration delay{0};
     bool delay_stage {false};
     bool pressed {false};
   };
@@ -55,7 +57,7 @@ private:
   std::unordered_map<std::string, bool> prev_state_ {};
   std::unordered_map<std::string, RepeatState> repeat_state_ {};
 
-  void update_(double dt);
+  void update_(Duration dt);
 
   void glfw_key_event_(int key, int scancode, int action, int mods);
   void glfw_cursor_position_event_(double xpos, double ypos);

@@ -1,8 +1,10 @@
 #pragma once
 
+#include "baphomet/util/time/time.hpp"
 #include "baphomet/util/random.hpp"
 
 #include <functional>
+#include <memory>
 #include <numbers>
 #include <string>
 #include <unordered_map>
@@ -50,17 +52,21 @@ public:
   ~TweenMgr() = default;
 
   template <typename T>
-  std::string tween(T &val, T start, T end, double duration, Easing easing) {
+  std::string tween(T &val, T start, T end, Duration duration, Easing easing) {
     return tween(rnd::base58(11), val, start, end, duration, easing);
   }
 
   template <typename T>
-  std::string tween(std::string const &tag, T &val, T start, T end, double duration, Easing easing) {
-    tweens_[tag] = new Tween_<T>(val, start, end, duration, easing);
+  std::string tween(std::string const &tag, T &val, T start, T end, Duration duration, Easing easing) {
+    tweens_[tag] = std::make_unique<Tween_<T>>(val, start, end, duration, easing);
     return tag;
   }
 
-  void update(double dt);
+  void pause(const std::string &tag);
+  void resume(const std::string &tag);
+  void toggle(const std::string &tag);
+
+  void update(Duration dt);
 
 private:
   class TweenI_ {
@@ -77,18 +83,18 @@ private:
     static std::unordered_map<Easing, std::function<double(double)>> easing_funcs_;
     Easing easing_;
 
-    double duration_;
-    double acc_;
+    Duration duration_{0};
+    Duration acc_{0};
 
   public:
     bool paused;
 
-    TweenI_(double duration, Easing easing)
-        : duration_(duration), acc_(0.0), easing_(easing), paused(false) {}
+    TweenI_(Duration duration, Easing easing)
+        : duration_(duration), easing_(easing), paused(false) {}
 
     virtual ~TweenI_() = default;
 
-    virtual bool advance(double dt) = 0;
+    virtual bool advance(Duration dt) = 0;
   };
 
   template<typename T>
@@ -99,12 +105,12 @@ private:
     T end_;
 
   public:
-    Tween_(T &val, T start, T end, double duration, Easing easing)
+    Tween_(T &val, T start, T end, Duration duration, Easing easing)
         : TweenI_(duration, easing), val_(val), start_(start), end_(end) {
       val = start;
     }
 
-    bool advance(double dt) override {
+    bool advance(Duration dt) override {
       acc_ += dt;
       double progress = acc_ / duration_;
 
@@ -118,7 +124,7 @@ private:
     }
   };
 
-  std::unordered_map<std::string, TweenI_ *> tweens_{};
+  std::unordered_map<std::string, std::unique_ptr<TweenI_>> tweens_{};
 };
 
 } // namespace baphomet

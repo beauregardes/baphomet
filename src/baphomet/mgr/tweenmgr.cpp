@@ -2,19 +2,36 @@
 
 namespace baphomet {
 
-void TweenMgr::update(double dt) {
+void TweenMgr::update(Duration dt) {
   for (auto it = tweens_.begin(); it != tweens_.end(); ) {
     auto &tween = it->second;
 
     if (!tween->paused)
       if (tween->advance(dt)) {
-        delete tween;
         it = tweens_.erase(it);
         continue;
       }
 
     it++;
   }
+}
+
+void TweenMgr::pause(const std::string &tag) {
+  auto it = tweens_.find(tag);
+  if (it != tweens_.end())
+    it->second->paused = true;
+}
+
+void TweenMgr::resume(const std::string &tag) {
+  auto it = tweens_.find(tag);
+  if (it != tweens_.end())
+    it->second->paused = false;
+}
+
+void TweenMgr::toggle(const std::string &tag) {
+  auto it = tweens_.find(tag);
+  if (it != tweens_.end())
+    it->second->paused = !it->second->paused;
 }
 
 std::unordered_map<Easing, std::function<double(double)>> TweenMgr::TweenI_::easing_funcs_ = {

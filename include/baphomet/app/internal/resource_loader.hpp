@@ -7,15 +7,6 @@
 
 namespace baphomet {
 
-const static std::filesystem::path RESOURCE_PATH =
-    std::filesystem::path(__FILE__)
-        .parent_path()
-        .parent_path()
-        .parent_path()
-        .parent_path()
-        .parent_path()
-    / "resources";
-
 class ResourceLoader {
 public:
   ResourceLoader() = default;
@@ -26,8 +17,12 @@ public:
 
   const std::unique_ptr<gl::TextureUnit> &get_texture_unit(const std::string &name);
 
+  static std::string resolve_resource_path(const std::string &path);
+
 private:
   std::unordered_map<std::string, std::unique_ptr<gl::TextureUnit>> texture_units_{};
+
+  static const std::filesystem::path &resource_path_();
 };
 
 } // namespace baphomet

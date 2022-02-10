@@ -4,7 +4,7 @@
 
 ### What is it?
 
-Baphomet is a 2D graphics engine for modern C++ (20+). I wasn't satisfied with the options that were available, epsecially the many that rely on either (1) deprecated OpenGL functionality, a.k.a. the fixed function pipeline, or (2) were written for C and therefore feel very unnatural to use from modern C++.
+Baphomet is a 2D graphics engine for modern C++ (20+). I wasn't satisfied with the options that were available, especially the many that rely on either (1) deprecated OpenGL functionality, a.k.a. the fixed function pipeline, or (2) were written for C and therefore feel very unnatural to use from modern C++.
 
 ### What can it do?
 

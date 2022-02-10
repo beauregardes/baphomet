@@ -73,10 +73,10 @@ bool AudioMgr::open_device(const std::string &device_name) {
 
   device_ = alcOpenDevice(nullptr);
   if (!device_) {
-    spdlog::error("Failed to open device: '{}'", device_cp ? device_name : "default");
+    spdlog::error("Failed to open audio device: '{}'", device_cp ? device_name : "default");
     return false;
   } else
-    spdlog::debug("Opened device: '{}'", device_cp ? device_name : "default");
+    spdlog::debug("Opened audio device: '{}'", device_cp ? device_name : "default");
 
   if (alcIsExtensionPresent(device_, "ALC_SOFTX_reopen_device")) {
     alcReopenDeviceSOFT_ = (ALCboolean (ALC_APIENTRY*)(ALCdevice *device, const ALCchar *name, const ALCint *attribs))alcGetProcAddress(device_, "alcReopenDeviceSOFT");
@@ -96,13 +96,13 @@ bool AudioMgr::reopen_device(const std::string &device_name) {
     bool ok = alcReopenDeviceSOFT_(device_, device_cp, nullptr);
     check_alc_errors(device_);
     if (!ok) {
-      spdlog::error("Failed to reopen device: '{}'", device_cp ? device_name : "default");
+      spdlog::error("Failed to reopen audio device: '{}'", device_cp ? device_name : "default");
       return false;
     } else
-      spdlog::debug("Reopened device: '{}'", device_cp ? device_name : "default");
+      spdlog::debug("Reopened audio device: '{}'", device_cp ? device_name : "default");
 
   } else {
-    spdlog::error("Failed to reopen device: '{}'; extension not supported on this system");
+    spdlog::error("Failed to reopen audio device: '{}'; extension not supported on this system");
     return false;
   }
 

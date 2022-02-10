@@ -15,11 +15,11 @@ public:
   void update();
 
   double fps();
-  double dt();
+  Duration dt();
 
 private:
-  std::uint64_t start_time_{};
-  std::deque<std::uint64_t> timestamps_{};
+  Clock::time_point start_time_{};
+  std::deque<Clock::time_point> timestamps_{};
 
   Ticker ticker_{std::chrono::milliseconds(500)};
   EMA averager_{1.0};

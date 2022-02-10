@@ -92,17 +92,17 @@ void Application::draw_overlay_() {
 }
 
 void Application::draw_debug_log_() {
-  double dt = frame_counter_.dt();
+  Duration dt = frame_counter_.dt();
 
   glm::vec2 base_pos{1.0f, window->h() - 1};
 
   for (auto & line : overlay_.log.lines) {
-    if (line.timeout > 0) {
+    if (line.timeout > Duration(0)) {
       line.timeout -= dt;
-      if (line.timeout <= 0.0)
+      if (line.timeout <= Duration(0))
         line.should_show = false;
-      else if (line.timeout > 0.0 && line.timeout < 1.0)
-        line.opacity = int(255.0 * line.timeout);
+      else if (line.timeout < std::chrono::seconds(1))
+        line.opacity = int(255.0 * duration_to_double_secs(line.timeout));
     }
 
     if (line.should_show) {
@@ -208,7 +208,7 @@ void Application::init_gl_(glm::ivec2 glversion) {
 
   gfx->new_batch_set_("overlay", true);
   overlay_.font = gfx->load_cp437(
-      (RESOURCE_PATH / "fonts" / "no-bg" / "1px_7x9.png").string(),
+      ResourceLoader::resolve_resource_path("fonts/1px_7x9.png"),
       7, 9,
       true
   );

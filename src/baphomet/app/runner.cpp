@@ -1,5 +1,7 @@
 #include "baphomet/app/runner.hpp"
 
+#include "baphomet/util/platform.hpp"
+
 #include "spdlog/spdlog.h"
 
 namespace baphomet {
@@ -40,9 +42,9 @@ void Runner::start() {
 
   do {
     application_->frame_counter_.update();
-    double dt = application_->frame_counter_.dt();
+    Duration dt = application_->frame_counter_.dt();
 
-    application_->update(dt);
+    application_->update(duration_to_double_secs(dt));
 
     application_->start_frame_();
     application_->draw();
@@ -50,8 +52,7 @@ void Runner::start() {
 
     application_->input->update_(dt);
 
-    Duration dt_dur = std::chrono::nanoseconds(static_cast<std::uint64_t>(dt * 1e9));
-    application_->timer->update(dt_dur);
+    application_->timer->update(dt);
     application_->tween->update(dt);
     application_->audio->update();
 
@@ -105,7 +106,7 @@ void Runner::glfw_window_size_callback_(GLFWwindow *window, int width, int heigh
 void Runner::glfw_window_pos_callback_(GLFWwindow *window, int xpos, int ypos) {}
 
 void Runner::glfw_window_focus_callback_(GLFWwindow *window, int focused) {
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(BAPHOMET_PLATFORM_WINDOWS)
   auto runner = reinterpret_cast<Runner *>(glfwGetWindowUserPointer(window));
   if (runner->application_->window->wm_info_.borderless)
     runner->application_->window->set_floating(focused == 1);

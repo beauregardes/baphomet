@@ -17,7 +17,7 @@ namespace baphomet {
 
 struct DebugLogLine {
   bool should_show{true};
-  double timeout{2.5};
+  Duration timeout{std::chrono::milliseconds(2500)};
   int opacity{255};
 
   std::string msg{};

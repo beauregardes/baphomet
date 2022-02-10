@@ -32,15 +32,15 @@ bool InputMgr::released(const std::string &action) {
   return !state_[action] && prev_state_[action];
 }
 
-bool InputMgr::down(const std::string &action, double interval, double delay) {
-  if (interval <= 0.0 && delay <= 0.0)
+bool InputMgr::down(const std::string &action, Duration interval, Duration delay) {
+  if (interval <= Duration(0) && delay <= Duration(0))
     return state_[action];
 
   else if (repeat_state_.find(action) != repeat_state_.end())
     return repeat_state_[action].pressed;
 
   else if (state_[action]) {
-    if (delay >= 0.0) {
+    if (delay >= Duration(0)) {
       repeat_state_[action] = RepeatState {
           .time = interval,
           .interval = interval,
@@ -58,7 +58,7 @@ bool InputMgr::down(const std::string &action, double interval, double delay) {
   return false;
 }
 
-void InputMgr::update_(double dt) {
+void InputMgr::update_(Duration dt) {
   for (auto &p : state_)
     prev_state_[p.first] = p.second;
 
@@ -76,13 +76,13 @@ void InputMgr::update_(double dt) {
 
     if (r->delay_stage) {
       r->delay -= dt;
-      if (r->delay <= 0.0) {
+      if (r->delay <= Duration(0)) {
         r->delay_stage = false;
         r->pressed = true;
       }
     } else {
       r->time -= dt;
-      if (r->time <= 0.0) {
+      if (r->time <= Duration(0)) {
         r->time += r->interval;
         r->pressed = true;
       }
