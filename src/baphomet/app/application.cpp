@@ -16,7 +16,7 @@ Application::~Application() {
 }
 
 void Application::initialize() {}
-void Application::update(double dt) {}
+void Application::update(Duration dt) {}
 void Application::draw() {}
 
 void Application::shutdown() {
@@ -83,6 +83,11 @@ void Application::draw_overlay_() {
   auto stat_str = fmt::format("{:.2f} FPS", frame_counter_.fps());
   if (window->vsync())
     stat_str += " (vsync)";
+#ifdef DEBUG
+  stat_str += " (debug)";
+#else
+  stat_str += " (release)";
+#endif
   stat_str += fmt::format(" | {:.2f} MB", get_memusage_mb());
   draw_overlay_text_with_bg_(base_pos, stat_str);
 
@@ -97,12 +102,12 @@ void Application::draw_debug_log_() {
   glm::vec2 base_pos{1.0f, window->h() - 1};
 
   for (auto & line : overlay_.log.lines) {
-    if (line.timeout > Duration(0)) {
+    if (line.timeout > baphomet::sec(0)) {
       line.timeout -= dt;
-      if (line.timeout <= Duration(0))
+      if (line.timeout <= baphomet::sec(0))
         line.should_show = false;
-      else if (line.timeout < std::chrono::seconds(1))
-        line.opacity = int(255.0 * duration_to_double_secs(line.timeout));
+      else if (line.timeout < baphomet::sec(1))
+        line.opacity = int(255.0 * line.timeout.count());
     }
 
     if (line.should_show) {
@@ -155,9 +160,9 @@ void Application::debug_log_(fmt::string_view format, fmt::format_args args) {
  * INITIALIZATION *
  ******************/
 
-void Application::open_(const WCfg &cfg, glm::ivec2 glversion) {
+void Application::open_for_gl_(const WCfg &cfg, glm::ivec2 glversion) {
   window = std::make_unique<Window>();
-  window->open_(cfg, glversion);
+  window->open_for_gl_(cfg, glversion);
   window->wm_info_.vsync = set(cfg.flags, WFlags::vsync);
 
   input = std::make_unique<InputMgr>(window->glfw_window_);

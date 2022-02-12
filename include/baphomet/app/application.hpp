@@ -7,6 +7,7 @@
 #include "baphomet/mgr/inputmgr.hpp"
 #include "baphomet/mgr/timermgr.hpp"
 #include "baphomet/mgr/tweenmgr.hpp"
+#include "baphomet/util/time/time.hpp"
 #include "baphomet/util/framecounter.hpp"
 
 #include "imgui.h"
@@ -41,7 +42,7 @@ protected:
   std::unique_ptr<TweenMgr> tween{nullptr};
 
   virtual void initialize();
-  virtual void update(double dt);
+  virtual void update(Duration dt);
   virtual void draw();
 
   template <typename S, typename... Args>
@@ -84,7 +85,7 @@ private:
    * INITIALIZATION *
    ******************/
 
-  void open_(const WCfg &cfg, glm::ivec2 glversion);
+  void open_for_gl_(const WCfg &cfg, glm::ivec2 glversion);
   void init_gl_(glm::ivec2 glversion);
   void init_imgui_(glm::ivec2 glversion);
 };

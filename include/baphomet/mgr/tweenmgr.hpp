@@ -3,6 +3,7 @@
 #include "baphomet/util/time/time.hpp"
 #include "baphomet/util/random.hpp"
 
+#include <concepts>
 #include <functional>
 #include <memory>
 #include <numbers>
@@ -51,14 +52,16 @@ public:
   TweenMgr() = default;
   ~TweenMgr() = default;
 
-  template <typename T>
-  std::string tween(T &val, T start, T end, Duration duration, Easing easing) {
+  template <typename T, typename U, typename V>
+  requires std::convertible_to<U, T> && std::convertible_to<V, T>
+  std::string tween(T &val, U start, V end, Duration duration, Easing easing) {
     return tween(rnd::base58(11), val, start, end, duration, easing);
   }
 
-  template <typename T>
-  std::string tween(std::string const &tag, T &val, T start, T end, Duration duration, Easing easing) {
-    tweens_[tag] = std::make_unique<Tween_<T>>(val, start, end, duration, easing);
+  template <typename T, typename U, typename V>
+  requires std::convertible_to<U, T> && std::convertible_to<V, T>
+  std::string tween(std::string const &tag, T &val, U start, V end, Duration duration, Easing easing) {
+    tweens_[tag] = std::make_unique<Tween_<T, U, V>>(val, start, end, duration, easing);
     return tag;
   }
 
@@ -97,7 +100,8 @@ private:
     virtual bool advance(Duration dt) = 0;
   };
 
-  template<typename T>
+  template<typename T, typename U, typename V>
+  requires std::convertible_to<U, T> && std::convertible_to<V, T>
   class Tween_ : public TweenI_ {
   private:
     T &val_;
@@ -105,8 +109,8 @@ private:
     T end_;
 
   public:
-    Tween_(T &val, T start, T end, Duration duration, Easing easing)
-        : TweenI_(duration, easing), val_(val), start_(start), end_(end) {
+    Tween_(T &val, U start, V end, Duration duration, Easing easing)
+        : TweenI_(duration, easing), val_(val), start_(static_cast<T>(start)), end_(static_cast<T>(end)) {
       val = start;
     }
 

@@ -136,7 +136,7 @@ void Window::create_fbo_() {
       .check_complete();
 }
 
-void Window::open_(const WCfg &cfg, glm::ivec2 glversion) {
+void Window::open_for_gl_(const WCfg &cfg, glm::ivec2 glversion) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, glversion.x);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, glversion.y);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);

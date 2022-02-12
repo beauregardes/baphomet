@@ -6,8 +6,8 @@
 
 namespace baphomet {
 
-Runner::Runner() {
-  spdlog::set_level(spdlog::level::debug);
+Runner::Runner(spdlog::level::level_enum log_level) {
+  spdlog::set_level(log_level);
 
   if (!glfwInit()) {
     const char *description;
@@ -32,7 +32,7 @@ Runner &Runner::init_gl(glm::ivec2 glversion) {
 }
 
 void Runner::start() {
-  application_->open_(open_params_.cfg, open_params_.glversion);
+  application_->open_for_gl_(open_params_.cfg, open_params_.glversion);
   register_glfw_callbacks_();
 
   application_->init_gl_(open_params_.glversion);
@@ -44,7 +44,7 @@ void Runner::start() {
     application_->frame_counter_.update();
     Duration dt = application_->frame_counter_.dt();
 
-    application_->update(duration_to_double_secs(dt));
+    application_->update(dt);
 
     application_->start_frame_();
     application_->draw();

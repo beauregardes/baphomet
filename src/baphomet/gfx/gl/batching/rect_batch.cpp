@@ -112,12 +112,12 @@ void RectBatch::add_opaque_(
   }
 
   opaque_vertices_->add({
-    x,   y,   z, r, g, b, a, cx, cy, angle,
-    x + w, y,   z, r, g, b, a, cx, cy, angle,
+    x,     y,     z, r, g, b, a, cx, cy, angle,
+    x + w, y,     z, r, g, b, a, cx, cy, angle,
     x + w, y + h, z, r, g, b, a, cx, cy, angle,
-    x,   y,   z, r, g, b, a, cx, cy, angle,
+    x,     y,     z, r, g, b, a, cx, cy, angle,
     x + w, y + h, z, r, g, b, a, cx, cy, angle,
-    x,   y + h, z, r, g, b, a, cx, cy, angle
+    x,     y + h, z, r, g, b, a, cx, cy, angle
   });
 }
 
@@ -141,12 +141,12 @@ void RectBatch::add_alpha_(
   }
 
   alpha_vertices_->add({
-    x,   y,   z, r, g, b, a, cx, cy, angle,
-    x + w, y,   z, r, g, b, a, cx, cy, angle,
+    x,     y,     z, r, g, b, a, cx, cy, angle,
+    x + w, y,     z, r, g, b, a, cx, cy, angle,
     x + w, y + h, z, r, g, b, a, cx, cy, angle,
-    x,   y,   z, r, g, b, a, cx, cy, angle,
+    x,     y,     z, r, g, b, a, cx, cy, angle,
     x + w, y + h, z, r, g, b, a, cx, cy, angle,
-    x,   y + h, z, r, g, b, a, cx, cy, angle
+    x,     y + h, z, r, g, b, a, cx, cy, angle
   });
 }
 

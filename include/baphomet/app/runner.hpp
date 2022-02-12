@@ -14,7 +14,7 @@ concept DerivesHadesApplication = std::is_base_of_v<Application, T>;
 
 class Runner {
 public:
-  Runner();
+  Runner(spdlog::level::level_enum = spdlog::level::info);
   ~Runner();
 
   template<DerivesHadesApplication T>

@@ -34,11 +34,11 @@ public:
         std::vector<CellState>(CELL_COLS)
     );
 
-    timer->every("Simulate", 16ms, [&]{ step_simulate(); });
+    timer->every("Simulate", 16.667ms, [&]{ step_simulate(); });
     timer->pause("Simulate");
   }
 
-  void update(double dt) override {
+  void update(baphomet::Duration dt) override {
     if (input->pressed("escape"))
       shutdown();
 

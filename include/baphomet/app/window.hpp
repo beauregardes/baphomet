@@ -81,7 +81,7 @@ private:
     bool vsync{false};
   } wm_info_;
 
-  void open_(const WCfg &cfg, glm::ivec2 glversion);
+  void open_for_gl_(const WCfg &cfg, glm::ivec2 glversion);
   void close_();
 
   GLFWmonitor *get_monitor_(int monitor_num);

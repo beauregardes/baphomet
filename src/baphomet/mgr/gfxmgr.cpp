@@ -103,7 +103,7 @@ void GfxMgr::rect(float x, float y, float w, float h, const baphomet::RGB &color
 }
 
 void GfxMgr::rect(float x, float y, float w, float h, const baphomet::RGB &color, float angle) {
-  rect(x, y, w, h, color, (x + w) / 2.0f, (y + h) / 2.0f, angle);
+  rect(x, y, w, h, color, x + w / 2.0f, y + h / 2.0f, angle);
 }
 
 void GfxMgr::rect(float x, float y, float w, float h, const baphomet::RGB &color) {
@@ -189,7 +189,7 @@ void GfxMgr::rect(Rect r, const baphomet::RGB &color, float cx, float cy, float 
 }
 
 void GfxMgr::rect(Rect r, const baphomet::RGB &color, float angle) {
-  rect(r.x, r.y, r.w, r.h, color, (r.x + r.w) / 2.0f, (r.y + r.h) / 2.0f, angle);
+  rect(r.x, r.y, r.w, r.h, color, r.x + r.w / 2.0f, r.y + r.h / 2.0f, angle);
 }
 
 void GfxMgr::rect(Rect r, const baphomet::RGB &color) {

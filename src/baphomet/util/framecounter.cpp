@@ -10,7 +10,9 @@ FrameCounter::FrameCounter() {
 
 void FrameCounter::update() {
   timestamps_.emplace_back(Clock::now());
-  while (timestamps_.back() - timestamps_.front() > 1s)
+
+  // Keep size >= 2 otherwise dt will give bad results on pauses longer than 1s
+  while (timestamps_.size() > 2 && timestamps_.back() - timestamps_.front() > 1s)
     timestamps_.pop_front();
 
   averager_.update(timestamps_.size());

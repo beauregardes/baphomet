@@ -86,6 +86,8 @@ else ()
     target_compile_features(baphomet PUBLIC cxx_std_20)
 endif (MSVC)
 
+target_compile_definitions(baphomet PUBLIC "$<$<CONFIG:DEBUG>:DEBUG>")
+
 target_link_libraries(baphomet PUBLIC
     fmt
     glfw
@@ -113,5 +115,5 @@ if (BAPHOMET_BUILD_EXAMPLES)
                 "${OpenAL_BINARY_DIR}/OpenAL32.dll"
                 "${CMAKE_BINARY_DIR}/example"
                 )
-    endif (WIN32)
-endif (BAPHOMET_BUILD_EXAMPLES)
+    endif ()
+endif ()

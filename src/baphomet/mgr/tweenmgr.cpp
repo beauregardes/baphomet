@@ -181,7 +181,7 @@ std::unordered_map<Easing, std::function<double(double)>> TweenMgr::TweenI_::eas
     {Easing::in_out_bounce, [](double progress) -> double {
       return progress < 0.5
              ? (1 - easing_funcs_[Easing::out_bounce](1 - 2 * progress)) / 2
-             : (1 + easing_funcs_[Easing::out_bounce](2 * progress + 1)) / 2;
+             : (1 + easing_funcs_[Easing::out_bounce](2 * progress - 1)) / 2;
     }}
 };
 

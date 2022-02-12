@@ -2,42 +2,39 @@
 
 class Testing : public baphomet::Application {
 protected:
-  double x = 50;
-  double y = 50;
+  baphomet::Rect r{50, 50, 50, 50};
+  double angle = 0;
 
   void initialize() override {}
 
-  void update(double dt) override {
+  void update(baphomet::Duration dt) override {
     if (input->pressed("escape")) shutdown();
 
-    if (input->down("a", 500ms, 1s))
-      debug_log("Pressing a!");
-
-    if (input->pressed("1")) {
-      tween->tween("x", x, x, 200.0, 1s, baphomet::Easing::in_cubic);
-      tween->tween("y", y, y, 200.0, 1s, baphomet::Easing::out_cubic);
+    if (input->pressed("mb_left")) {
+      tween->tween("x", r.x, r.x, input->mouse.x - r.w / 2, 2s, baphomet::Easing::in_out_bounce);
+      tween->tween("y", r.y, r.y, input->mouse.y - r.h / 2, 2s, baphomet::Easing::in_out_bounce);
     }
 
-    if (input->pressed("2")) {
-      tween->toggle("x");
-      tween->toggle("y");
-    }
+    angle += 180 * (dt / 1s);
+    if (angle > 360.0)
+      angle -= 360.0;
   }
 
   void draw() override {
     gfx->clear();
 
-    gfx->rect(x, y, 50, 50, baphomet::rgb(0xff0000));
+    gfx->rect(r, baphomet::rgb(0xff0000), angle);
   }
 };
 
 int main(int, char *[]) {
-  baphomet::Runner()
+  baphomet::Runner(spdlog::level::debug)
       .open<Testing>({
           .title = "Testing",
           .size = {800, 600},
-          .flags = baphomet::WFlags::centered
+          .flags = baphomet::WFlags::centered | baphomet::WFlags::vsync
       })
       .init_gl()
       .start();
 }
+
