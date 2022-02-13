@@ -28,6 +28,8 @@ set(srcs ${srcs}
     src/baphomet/mgr/timermgr.cpp
     src/baphomet/mgr/tweenmgr.cpp
 
+    src/baphomet/noise/perlin.cpp
+
     src/baphomet/util/time/ticker.cpp
     src/baphomet/util/averagers.cpp
     src/baphomet/util/framecounter.cpp

@@ -31,6 +31,8 @@ set(headers ${headers}
     include/baphomet/mgr/timermgr.hpp
     include/baphomet/mgr/tweenmgr.hpp
 
+    include/baphomet/noise/perlin.hpp
+
     include/baphomet/util/time/ticker.hpp
     include/baphomet/util/time/time.hpp
     include/baphomet/util/averagers.hpp

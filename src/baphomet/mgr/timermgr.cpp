@@ -99,8 +99,6 @@ bool TimerMgr::EveryTimer::update(Duration dt) {
 }
 
 void TimerMgr::EveryTimer::fire() {
-  // Potentially execute multiple times if there was a delay
-  fmt::print("{} >= {}\n", acc_, interval_);
   while (acc_ >= interval_) {
     func();
     acc_ -= interval_;
