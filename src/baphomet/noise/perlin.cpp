@@ -1,12 +1,90 @@
 #include "baphomet/noise/perlin.hpp"
 
-#include "fmt/format.h"
-
 #include <cmath>
+#include <functional>
 
 namespace baphomet {
 
-double perlin::noise(double x, double y, double z) {
+using noise1d_func = std::function<double(double)>;
+using noise2d_func = std::function<double(double, double)>;
+using noise3d_func = std::function<double(double, double, double)>;
+
+inline double octave1d_base(double x, int octaves, double persistence, noise1d_func func) {
+  double total = 0.0, frequency = 1.0, amplitude = 1.0, max_value = 0.0;
+  for (int i = 0; i < octaves; ++i) {
+    total += func(x * frequency) * amplitude;
+    max_value += amplitude;
+    amplitude *= persistence;
+    frequency *= 2;
+  }
+  return total / max_value;
+}
+
+inline double octave2d_base(double x, double y, int octaves, double persistence, noise2d_func func) {
+  double total = 0.0, frequency = 1.0, amplitude = 1.0, max_value = 0.0;
+  for (int i = 0; i < octaves; ++i) {
+    total += func(x * frequency, y * frequency) * amplitude;
+    max_value += amplitude;
+    amplitude *= persistence;
+    frequency *= 2;
+  }
+  return total / max_value;
+}
+
+inline double octave3d_base(double x, double y, double z, int octaves, double persistence, noise3d_func func) {
+  double total = 0.0, frequency = 1.0, amplitude = 1.0, max_value = 0.0;
+  for (int i = 0; i < octaves; ++i) {
+    total += func(x * frequency, y * frequency, z * frequency) * amplitude;
+    max_value += amplitude;
+    amplitude *= persistence;
+    frequency *= 2;
+  }
+  return total / max_value;
+}
+
+double perlin::noise1d(double x) {
+  int cx = static_cast<int>(std::floor(x)) & 255;
+
+  x -= std::floor(x);
+
+  double u = fade_(x);
+
+  int a = p_[cx    ];
+  int b = p_[cx + 1];
+
+  double g1 = grad_(a, x    );
+  double g2 = grad_(b, x - 1);
+
+  return (lerp_(u, g1, g2) + 1.0) / 2.0f;
+}
+
+double perlin::noise2d(double x, double y) {
+  int cx = static_cast<int>(std::floor(x)) & 255;
+  int cy = static_cast<int>(std::floor(y)) & 255;
+
+  x -= std::floor(x);
+  y -= std::floor(y);
+
+  double u = fade_(x);
+  double v = fade_(y);
+
+  int aa = p_[p_[cx    ] + cy    ];
+  int ba = p_[p_[cx + 1] + cy    ];
+  int ab = p_[p_[cx    ] + cy + 1];
+  int bb = p_[p_[cx + 1] + cy + 1];
+
+  double g1 = grad_(aa, x,     y    );
+  double g2 = grad_(ba, x - 1, y    );
+  double g3 = grad_(ab, x,     y - 1);
+  double g4 = grad_(bb, x - 1, y - 1);
+
+  double l1 = lerp_(u, g1, g2);
+  double l2 = lerp_(u, g3, g4);
+
+  return (lerp_(v, l1, l2) + 1.0) / 2.0;
+}
+
+double perlin::noise3d(double x, double y, double z) {
   int cx = static_cast<int>(std::floor(x)) & 255;
   int cy = static_cast<int>(std::floor(y)) & 255;
   int cz = static_cast<int>(std::floor(z)) & 255;
@@ -47,102 +125,24 @@ double perlin::noise(double x, double y, double z) {
   return (lerp_(w, l5, l6) + 1.0) / 2.0;
 }
 
-double perlin::noise(double x, double y) {
-  int cx = static_cast<int>(std::floor(x)) & 255;
-  int cy = static_cast<int>(std::floor(y)) & 255;
-
-  x -= std::floor(x);
-  y -= std::floor(y);
-
-  double u = fade_(x);
-  double v = fade_(y);
-
-  int aa = p_[p_[cx    ] + cy    ];
-  int ba = p_[p_[cx + 1] + cy    ];
-  int ab = p_[p_[cx    ] + cy + 1];
-  int bb = p_[p_[cx + 1] + cy + 1];
-
-  double g1 = grad_(aa, x,     y    );
-  double g2 = grad_(ba, x - 1, y    );
-  double g3 = grad_(ab, x,     y - 1);
-  double g4 = grad_(bb, x - 1, y - 1);
-
-  double l1 = lerp_(u, g1, g2);
-  double l2 = lerp_(u, g3, g4);
-
-  return (lerp_(v, l1, l2) + 1.0) / 2.0;
+double perlin::octave1d(double x, int octaves, double persistence) {
+  return octave1d_base(x, octaves, persistence, noise1d);
 }
 
-double perlin::noise(double x) {
-  int cx = static_cast<int>(std::floor(x)) & 255;
-
-  x -= std::floor(x);
-
-  double u = fade_(x);
-
-  int a = p_[cx    ];
-  int b = p_[cx + 1];
-
-  double g1 = grad_(a, x    );
-  double g2 = grad_(b, x - 1);
-
-  return (lerp_(u, g1, g2) + 1.0) / 2.0f;
+double perlin::octave2d(double x, double y, int octaves, double persistence) {
+  return octave2d_base(x, y, octaves, persistence, noise2d);
 }
 
-double perlin::octave(double x, double y, double z, int octaves, double persistence) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise(x * frequency, y * frequency, z * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double perlin::octave3d(double x, double y, double z, int octaves, double persistence) {
+  return octave3d_base(x, y, z, octaves, persistence, noise3d);
 }
 
-double perlin::octave(double x, double y, int octaves, double persistence) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise(x * frequency, y * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double perlin::grad_(int hash, double x) {
+  return hash & 1 ? -x : x;
 }
 
-double perlin::octave(double x, int octaves, double persistence) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise(x * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
-}
-
-double perlin::fade_(double t) {
-  return t * t * t * (t * (t * 6 - 15) + 10);
-}
-
-double perlin::lerp_(double t, double a, double b) {
-  return a + t * (b - a);
+double perlin::grad_(int hash, double x, double y) {
+  return (hash & 1 ? -x : x) + (hash & 2 ? -y : y);
 }
 
 double perlin::grad_(int hash, double x, double y, double z) {
@@ -152,12 +152,12 @@ double perlin::grad_(int hash, double x, double y, double z) {
   return (h & 1 ? -u : u) + (h & 2 ? -v : v);
 }
 
-double perlin::grad_(int hash, double x, double y) {
-  return (hash & 1 ? -x : x) + (hash & 2 ? -y : y);
+double perlin::fade_(double t) {
+  return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
-double perlin::grad_(int hash, double x) {
-  return hash & 1 ? -x : x;
+double perlin::lerp_(double t, double a, double b) {
+  return a + t * (b - a);
 }
 
 std::array<int, 512> perlin::p_ = {151,160,137,91,90,15,131,13,201,95,96,53,194,

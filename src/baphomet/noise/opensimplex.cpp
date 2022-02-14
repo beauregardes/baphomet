@@ -1,14 +1,120 @@
 #include "baphomet/noise/opensimplex.hpp"
 
+#include "baphomet/util/random.hpp"
+
 #include <functional>
 
 namespace baphomet {
+
+std::int64_t opensimplex::seed_{rnd::get<std::int64_t>()};
+
+void opensimplex::set_seed(std::int64_t seed) {
+  seed_ = seed;
+}
+
+std::int64_t opensimplex::get_seed() {
+  return seed_;
+}
+
+void opensimplex::reseed() {
+  seed_ = rnd::get<std::int64_t>();
+}
+
+////////////////////
+// OCTAVE HELPERS //
+////////////////////
+
+///////////////
+// STATELESS //
+///////////////
+
+using noise2d_sl_func = std::function<double(std::int64_t, double, double)>;
+using noise3d_sl_func = std::function<double(std::int64_t, double, double, double)>;
+using noise4d_sl_func = std::function<double(std::int64_t, double, double, double, double)>;
+
+inline double octave2d_base_sl(std::int64_t seed, double x, double y, int octaves, double persistence, const noise2d_sl_func& func) {
+  double total = 0.0, frequency = 1.0, amplitude = 1.0, max_value = 0.0;
+  for (int i = 0; i < octaves; ++i) {
+    total += func(seed, x * frequency, y * frequency) * amplitude;
+    max_value += amplitude;
+    amplitude *= persistence;
+    frequency *= 2;
+  }
+  return total / max_value;
+}
+
+inline double octave3d_base_sl(std::int64_t seed, double x, double y, double z, int octaves, double persistence, const noise3d_sl_func& func) {
+  double total = 0.0, frequency = 1.0, amplitude = 1.0, max_value = 0.0;
+  for (int i = 0; i < octaves; ++i) {
+    total += func(seed, x * frequency, y * frequency, z * frequency) * amplitude;
+    max_value += amplitude;
+    amplitude *= persistence;
+    frequency *= 2;
+  }
+  return total / max_value;
+}
+
+inline double octave4d_base_sl(std::int64_t seed, double x, double y, double z, double w, int octaves, double persistence, const noise4d_sl_func& func) {
+  double total = 0.0, frequency = 1.0, amplitude = 1.0, max_value = 0.0;
+  for (int i = 0; i < octaves; ++i) {
+    total += func(seed, x * frequency, y * frequency, z * frequency, w * frequency) * amplitude;
+    max_value += amplitude;
+    amplitude *= persistence;
+    frequency *= 2;
+  }
+  return total / max_value;
+}
+
+////////////////
+// PRE-SEEDED //
+////////////////
+
+using noise2d_func = std::function<double(double, double)>;
+using noise3d_func = std::function<double(double, double, double)>;
+using noise4d_func = std::function<double(double, double, double, double)>;
+
+inline double octave2d_base(double x, double y, int octaves, double persistence, const noise2d_func& func) {
+  double total = 0.0, frequency = 1.0, amplitude = 1.0, max_value = 0.0;
+  for (int i = 0; i < octaves; ++i) {
+    total += func(x * frequency, y * frequency) * amplitude;
+    max_value += amplitude;
+    amplitude *= persistence;
+    frequency *= 2;
+  }
+  return total / max_value;
+}
+
+inline double octave3d_base(double x, double y, double z, int octaves, double persistence, const noise3d_func& func) {
+  double total = 0.0, frequency = 1.0, amplitude = 1.0, max_value = 0.0;
+  for (int i = 0; i < octaves; ++i) {
+    total += func(x * frequency, y * frequency, z * frequency) * amplitude;
+    max_value += amplitude;
+    amplitude *= persistence;
+    frequency *= 2;
+  }
+  return total / max_value;
+}
+
+inline double octave4d_base(double x, double y, double z, double w, int octaves, double persistence, const noise4d_func& func) {
+  double total = 0.0, frequency = 1.0, amplitude = 1.0, max_value = 0.0;
+  for (int i = 0; i < octaves; ++i) {
+    total += func(x * frequency, y * frequency, z * frequency, w * frequency) * amplitude;
+    max_value += amplitude;
+    amplitude *= persistence;
+    frequency *= 2;
+  }
+  return total / max_value;
+}
 
 ////////////
 // SMOOTH //
 ////////////
 
-double opensimplex::noise(std::int64_t seed, double x, double y) {
+///////////////
+// STATELESS //
+///////////////
+
+double opensimplex::noise2d_sl(std::int64_t seed, double x, double y) {
   double s = SKEW_2D_ * (x + y);
   double xs = x + s;
   double ys = y + s;
@@ -16,14 +122,14 @@ double opensimplex::noise(std::int64_t seed, double x, double y) {
   return noise_unskewed_base_(seed, xs, ys);
 }
 
-double opensimplex::noise_improve_x(std::int64_t seed, double x, double y) {
+double opensimplex::noise2d_improve_x_sl(std::int64_t seed, double x, double y) {
   double xx = x * ROOT2OVER2_;
   double yy = y * (ROOT2OVER2_ * (1 + 2 * SKEW_2D_));
 
   return noise_unskewed_base_(seed, yy + xx, yy - xx);
 }
 
-double opensimplex::noise_improve_xy(std::int64_t seed, double x, double y, double z) {
+double opensimplex::noise3d_improve_xy_sl(std::int64_t seed, double x, double y, double z) {
   double xy = x + y;
   double s2 = xy * ROTATE3_ORTHOGONALIZER_;
   double zz = z * ROOT3OVER3_;
@@ -34,7 +140,7 @@ double opensimplex::noise_improve_xy(std::int64_t seed, double x, double y, doub
   return noise_unrotated_base_(seed, xr, yr, zr);
 }
 
-double opensimplex::noise_improve_xz(std::int64_t seed, double x, double y, double z) {
+double opensimplex::noise3d_improve_xz_sl(std::int64_t seed, double x, double y, double z) {
   double xz = x + z;
   double s2 = xz * -0.211324865405187;
   double yy = y * ROOT3OVER3_;
@@ -45,7 +151,7 @@ double opensimplex::noise_improve_xz(std::int64_t seed, double x, double y, doub
   return noise_unrotated_base_(seed, xr, yr, zr);
 }
 
-double opensimplex::noise_fallback(std::int64_t seed, double x, double y, double z) {
+double opensimplex::noise3d_fallback_sl(std::int64_t seed, double x, double y, double z) {
   double r = FALLBACK_ROTATE3_ * (x + y + z);
   double xr = r - x;
   double yr = r - y;
@@ -54,7 +160,7 @@ double opensimplex::noise_fallback(std::int64_t seed, double x, double y, double
   return noise_unrotated_base_(seed, xr, yr, zr);
 }
 
-double opensimplex::noise_improve_xyz_improve_xy(std::int64_t seed, double x, double y, double z, double w) {
+double opensimplex::noise4d_improve_xyz_improve_xy_sl(std::int64_t seed, double x, double y, double z, double w) {
   double xy = x + y;
   double s2 = xy * -0.21132486540518699998;
   double zz = z * 0.28867513459481294226;
@@ -66,7 +172,7 @@ double opensimplex::noise_improve_xyz_improve_xy(std::int64_t seed, double x, do
   return noise_unskewed_base_(seed, xr, yr, zr, wr);
 }
 
-double opensimplex::noise_improve_xyz_improve_xz(std::int64_t seed, double x, double y, double z, double w) {
+double opensimplex::noise4d_improve_xyz_improve_xz_sl(std::int64_t seed, double x, double y, double z, double w) {
   double xz = x + z;
   double s2 = xz * -0.21132486540518699998;
   double yy = y * 0.28867513459481294226;
@@ -78,7 +184,7 @@ double opensimplex::noise_improve_xyz_improve_xz(std::int64_t seed, double x, do
   return noise_unskewed_base_(seed, xr, yr, zr, wr);
 }
 
-double opensimplex::noise_improve_xyz(std::int64_t seed, double x, double y, double z, double w) {
+double opensimplex::noise4d_improve_xyz_sl(std::int64_t seed, double x, double y, double z, double w) {
   double xyz = x + y + z;
   double ww = w * 1.118033988749894;
   double s2 = xyz * -0.16666666666666666 + ww;
@@ -90,7 +196,7 @@ double opensimplex::noise_improve_xyz(std::int64_t seed, double x, double y, dou
   return noise_unskewed_base_(seed, xs, ys, zs, ws);
 }
 
-double opensimplex::noise_improve_xy_improve_zw(std::int64_t seed, double x, double y, double z, double w) {
+double opensimplex::noise4d_improve_xy_improve_zw_sl(std::int64_t seed, double x, double y, double z, double w) {
   double s2 = (x + y) * -0.28522513987434876941 + (z + w) * 0.83897065470611435718;
   double t2 = (z + w) * 0.21939749883706435719 + (x + y) * -0.48214856493302476942;
   double xs = x + s2;
@@ -101,7 +207,7 @@ double opensimplex::noise_improve_xy_improve_zw(std::int64_t seed, double x, dou
   return noise_unskewed_base_(seed, xs, ys, zs, ws);
 }
 
-double opensimplex::noise_fallback(std::int64_t seed, double x, double y, double z, double w) {
+double opensimplex::noise4d_fallback_sl(std::int64_t seed, double x, double y, double z, double w) {
   double s = SKEW_4D_ * (x + y + z + w);
   double xs = x + s;
   double ys = y + s;
@@ -111,204 +217,191 @@ double opensimplex::noise_fallback(std::int64_t seed, double x, double y, double
   return noise_unskewed_base_(seed, xs, ys, zs, ws);
 }
 
-double opensimplex::octave(
-    std::int64_t seed,
-    double x, double y,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise(seed, x * frequency, y * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave2d_sl(std::int64_t seed, double x, double y, int octaves, double persistence) {
+  return octave2d_base_sl(seed, x, y, octaves, persistence, noise2d_sl);
 }
 
-double opensimplex::octave_improve_x(
-    std::int64_t seed,
-    double x, double y,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_improve_x(seed, x * frequency, y * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave2d_improve_x_sl(std::int64_t seed, double x, double y, int octaves, double persistence) {
+  return octave2d_base_sl(seed, x, y, octaves, persistence, noise2d_improve_x_sl);
 }
 
-double opensimplex::octave_improve_xy(
-    std::int64_t seed,
-    double x, double y, double z,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_improve_xy(seed, x * frequency, y * frequency, z * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave3d_improve_xy_sl(std::int64_t seed, double x, double y, double z, int octaves, double persistence) {
+  return octave3d_base_sl(seed, x, y, z, octaves, persistence, noise3d_improve_xy_sl);
 }
 
-double opensimplex::octave_improve_xz(
-    std::int64_t seed,
-    double x, double y, double z,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_improve_xz(seed, x * frequency, y * frequency, z * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave3d_improve_xz_sl(std::int64_t seed, double x, double y, double z, int octaves, double persistence) {
+  return octave3d_base_sl(seed, x, y, z, octaves, persistence, noise3d_improve_xz_sl);
 }
 
-double opensimplex::octave_fallback(
-    std::int64_t seed,
-    double x, double y, double z,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_fallback(seed, x * frequency, y * frequency, z * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave3d_fallback_sl(std::int64_t seed, double x, double y, double z, int octaves, double persistence) {
+  return octave3d_base_sl(seed, x, y, z, octaves, persistence, noise3d_fallback_sl);
 }
 
-double opensimplex::octave_improve_xyz_improve_xy(
-    std::int64_t seed,
-    double x, double y, double z, double w,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_improve_xyz_improve_xy(seed, x * frequency, y * frequency, z * frequency, w * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave4d_improve_xyz_improve_xy_sl(std::int64_t seed, double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base_sl(seed, x, y, z, w, octaves, persistence, noise4d_improve_xyz_improve_xy_sl);
 }
 
-double opensimplex::octave_improve_xyz_improve_xz(
-    std::int64_t seed,
-    double x, double y, double z, double w,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_improve_xyz_improve_xz(seed, x * frequency, y * frequency, z * frequency, w * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave4d_improve_xyz_improve_xz_sl(std::int64_t seed, double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base_sl(seed, x, y, z, w, octaves, persistence, noise4d_improve_xyz_improve_xz_sl);
 }
 
-double opensimplex::octave_improve_xyz(
-    std::int64_t seed,
-    double x, double y, double z, double w,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_improve_xyz(seed, x * frequency, y * frequency, z * frequency, w * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave4d_improve_xyz_sl(std::int64_t seed, double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base_sl(seed, x, y, z, w, octaves, persistence, noise4d_improve_xyz_sl);
 }
 
-double opensimplex::octave_improve_xy_improve_zw(
-    std::int64_t seed,
-    double x, double y, double z, double w,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_improve_xy_improve_zw(seed, x * frequency, y * frequency, z * frequency, w * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave4d_improve_xy_improve_zw_sl(std::int64_t seed, double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base_sl(seed, x, y, z, w, octaves, persistence, noise4d_improve_xy_improve_zw_sl);
 }
 
-double opensimplex::octave_fallback(
-    std::int64_t seed,
-    double x, double y, double z, double w,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
+double opensimplex::octave4d_fallback_sl(std::int64_t seed, double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base_sl(seed, x, y, z, w, octaves, persistence, noise4d_fallback_sl);
+}
 
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_fallback(seed, x * frequency, y * frequency, z * frequency, w * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
+////////////////
+// PRE-SEEDED //
+////////////////
 
-  return total / max_value;
+double opensimplex::noise2d(double x, double y) {
+  double s = SKEW_2D_ * (x + y);
+  double xs = x + s;
+  double ys = y + s;
+
+  return noise_unskewed_base_(seed_, xs, ys);
+}
+
+double opensimplex::noise2d_improve_x(double x, double y) {
+  double xx = x * ROOT2OVER2_;
+  double yy = y * (ROOT2OVER2_ * (1 + 2 * SKEW_2D_));
+
+  return noise_unskewed_base_(seed_, yy + xx, yy - xx);
+}
+
+double opensimplex::noise3d_improve_xy(double x, double y, double z) {
+  double xy = x + y;
+  double s2 = xy * ROTATE3_ORTHOGONALIZER_;
+  double zz = z * ROOT3OVER3_;
+  double xr = x + s2 + zz;
+  double yr = y + s2 + zz;
+  double zr = xy * -ROOT3OVER3_ + zz;
+
+  return noise_unrotated_base_(seed_, xr, yr, zr);
+}
+
+double opensimplex::noise3d_improve_xz(double x, double y, double z) {
+  double xz = x + z;
+  double s2 = xz * -0.211324865405187;
+  double yy = y * ROOT3OVER3_;
+  double xr = x + s2 + yy;
+  double zr = z + s2 + yy;
+  double yr = xz * -ROOT3OVER3_ + yy;
+
+  return noise_unrotated_base_(seed_, xr, yr, zr);
+}
+
+double opensimplex::noise3d_fallback(double x, double y, double z) {
+  double r = FALLBACK_ROTATE3_ * (x + y + z);
+  double xr = r - x;
+  double yr = r - y;
+  double zr = r - z;
+
+  return noise_unrotated_base_(seed_, xr, yr, zr);
+}
+
+double opensimplex::noise4d_improve_xyz_improve_xy(double x, double y, double z, double w) {
+  double xy = x + y;
+  double s2 = xy * -0.21132486540518699998;
+  double zz = z * 0.28867513459481294226;
+  double ww = w * 1.118033988749894;
+  double xr = x + (zz + ww + s2), yr = y + (zz + ww + s2);
+  double zr = xy * -0.57735026918962599998 + (zz + ww);
+  double wr = z * -0.866025403784439 + ww;
+
+  return noise_unskewed_base_(seed_, xr, yr, zr, wr);
+}
+
+double opensimplex::noise4d_improve_xyz_improve_xz(double x, double y, double z, double w) {
+  double xz = x + z;
+  double s2 = xz * -0.21132486540518699998;
+  double yy = y * 0.28867513459481294226;
+  double ww = w * 1.118033988749894;
+  double xr = x + (yy + ww + s2), zr = z + (yy + ww + s2);
+  double yr = xz * -0.57735026918962599998 + (yy + ww);
+  double wr = y * -0.866025403784439 + ww;
+
+  return noise_unskewed_base_(seed_, xr, yr, zr, wr);
+}
+
+double opensimplex::noise4d_improve_xyz(double x, double y, double z, double w) {
+  double xyz = x + y + z;
+  double ww = w * 1.118033988749894;
+  double s2 = xyz * -0.16666666666666666 + ww;
+  double xs = x + s2;
+  double ys = y + s2;
+  double zs = z + s2;
+  double ws = -0.5 * xyz + ww;
+
+  return noise_unskewed_base_(seed_, xs, ys, zs, ws);
+}
+
+double opensimplex::noise4d_improve_xy_improve_zw(double x, double y, double z, double w) {
+  double s2 = (x + y) * -0.28522513987434876941 + (z + w) * 0.83897065470611435718;
+  double t2 = (z + w) * 0.21939749883706435719 + (x + y) * -0.48214856493302476942;
+  double xs = x + s2;
+  double ys = y + s2;
+  double zs = z + t2;
+  double ws = w + t2;
+
+  return noise_unskewed_base_(seed_, xs, ys, zs, ws);
+}
+
+double opensimplex::noise4d_fallback(double x, double y, double z, double w) {
+  double s = SKEW_4D_ * (x + y + z + w);
+  double xs = x + s;
+  double ys = y + s;
+  double zs = z + s;
+  double ws = w + s;
+
+  return noise_unskewed_base_(seed_, xs, ys, zs, ws);
+}
+
+double opensimplex::octave2d(double x, double y, int octaves, double persistence) {
+  return octave2d_base(x, y, octaves, persistence, noise2d);
+}
+
+double opensimplex::octave2d_improve_x(double x, double y, int octaves, double persistence) {
+  return octave2d_base(x, y, octaves, persistence, noise2d_improve_x);
+}
+
+double opensimplex::octave3d_improve_xy(double x, double y, double z, int octaves, double persistence) {
+  return octave3d_base(x, y, z, octaves, persistence, noise3d_improve_xy);
+}
+
+double opensimplex::octave3d_improve_xz(double x, double y, double z, int octaves, double persistence) {
+  return octave3d_base(x, y, z, octaves, persistence, noise3d_improve_xz);
+}
+
+double opensimplex::octave3d_fallback(double x, double y, double z, int octaves, double persistence) {
+  return octave3d_base(x, y, z, octaves, persistence, noise3d_fallback);
+}
+
+double opensimplex::octave4d_improve_xyz_improve_xy(double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base(x, y, z, w, octaves, persistence, noise4d_improve_xyz_improve_xy);
+}
+
+double opensimplex::octave4d_improve_xyz_improve_xz(double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base(x, y, z, w, octaves, persistence, noise4d_improve_xyz_improve_xz);
+}
+
+double opensimplex::octave4d_improve_xyz(double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base(x, y, z, w, octaves, persistence, noise4d_improve_xyz);
+}
+
+double opensimplex::octave4d_improve_xy_improve_zw(double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base(x, y, z, w, octaves, persistence, noise4d_improve_xy_improve_zw);
+}
+
+double opensimplex::octave4d_fallback(double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base(x, y, z, w, octaves, persistence, noise4d_fallback);
 }
 
 double opensimplex::noise_unskewed_base_(std::int64_t seed, double xs, double ys) {
@@ -719,7 +812,11 @@ const std::array<opensimplex::LatticeVertex4D_, 3476> opensimplex::LOOKUP_4D_B_ 
 // FAST //
 //////////
 
-double opensimplex::noise_fast(std::int64_t seed, double x, double y) {
+///////////////
+// STATELESS //
+///////////////
+
+double opensimplex::noise2d_sl_fast(std::int64_t seed, double x, double y) {
   double s = SKEW_2D_ * (x + y);
   double xs = x + s;
   double ys = y + s;
@@ -727,14 +824,14 @@ double opensimplex::noise_fast(std::int64_t seed, double x, double y) {
   return noise_unskewed_base_fast_(seed, xs, ys);
 }
 
-double opensimplex::noise_improve_x_fast(std::int64_t seed, double x, double y) {
+double opensimplex::noise2d_improve_x_sl_fast(std::int64_t seed, double x, double y) {
   double xx = x * ROOT2OVER2_;
   double yy = y * (ROOT2OVER2_ * (1 + 2 * SKEW_2D_));
 
   return noise_unskewed_base_fast_(seed, yy + xx, yy - xx);
 }
 
-double opensimplex::noise_improve_xy_fast(std::int64_t seed, double x, double y, double z) {
+double opensimplex::noise3d_improve_xy_sl_fast(std::int64_t seed, double x, double y, double z) {
   double xy = x + y;
   double s2 = xy * ROTATE3_ORTHOGONALIZER_;
   double zz = z * ROOT3OVER3_;
@@ -745,7 +842,7 @@ double opensimplex::noise_improve_xy_fast(std::int64_t seed, double x, double y,
   return noise_unrotated_base_fast_(seed, xr, yr, zr);
 }
 
-double opensimplex::noise_improve_xz_fast(std::int64_t seed, double x, double y, double z) {
+double opensimplex::noise3d_improve_xz_sl_fast(std::int64_t seed, double x, double y, double z) {
   double xz = x + z;
   double s2 = xz * ROTATE3_ORTHOGONALIZER_;
   double yy = y * ROOT3OVER3_;
@@ -756,14 +853,14 @@ double opensimplex::noise_improve_xz_fast(std::int64_t seed, double x, double y,
   return noise_unrotated_base_fast_(seed, xr, yr, zr);
 }
 
-double opensimplex::noise_fallback_fast(std::int64_t seed, double x, double y, double z) {
+double opensimplex::noise3d_fallback_sl_fast(std::int64_t seed, double x, double y, double z) {
   double r = FALLBACK_ROTATE3_ * (x + y + z);
   double xr = r - x, yr = r - y, zr = r - z;
 
   return noise_unrotated_base_fast_(seed, xr, yr, zr);
 }
 
-double opensimplex::noise_improve_xyz_improve_xy_fast(std::int64_t seed, double x, double y, double z, double w) {
+double opensimplex::noise4d_improve_xyz_improve_xy_sl_fast(std::int64_t seed, double x, double y, double z, double w) {
   double xy = x + y;
   double s2 = xy * -0.21132486540518699998;
   double zz = z * 0.28867513459481294226;
@@ -775,7 +872,7 @@ double opensimplex::noise_improve_xyz_improve_xy_fast(std::int64_t seed, double 
   return noise_unskewed_base_fast_(seed, xr, yr, zr, wr);
 }
 
-double opensimplex::noise_improve_xyz_improve_xz_fast(std::int64_t seed, double x, double y, double z, double w) {
+double opensimplex::noise4d_improve_xyz_improve_xz_sl_fast(std::int64_t seed, double x, double y, double z, double w) {
   double xz = x + z;
   double s2 = xz * -0.21132486540518699998;
   double yy = y * 0.28867513459481294226;
@@ -787,7 +884,7 @@ double opensimplex::noise_improve_xyz_improve_xz_fast(std::int64_t seed, double 
   return noise_unskewed_base_fast_(seed, xr, yr, zr, wr);
 }
 
-double opensimplex::noise_improve_xyz_fast(std::int64_t seed, double x, double y, double z, double w) {
+double opensimplex::noise4d_improve_xyz_sl_fast(std::int64_t seed, double x, double y, double z, double w) {
   double xyz = x + y + z;
   double ww = w * 0.2236067977499788;
   double s2 = xyz * -0.16666666666666666 + ww;
@@ -796,7 +893,7 @@ double opensimplex::noise_improve_xyz_fast(std::int64_t seed, double x, double y
   return noise_unskewed_base_fast_(seed, xs, ys, zs, ws);
 }
 
-double opensimplex::noise_improve_xy_improve_zw_fast(std::int64_t seed, double x, double y, double z, double w) {
+double opensimplex::noise4d_improve_xy_improve_zw_sl_fast(std::int64_t seed, double x, double y, double z, double w) {
   double s2 = (x + y) * -0.178275657951399372 + (z + w) * 0.215623393288842828;
   double t2 = (z + w) * -0.403949762580207112 + (x + y) * -0.375199083010075342;
   double xs = x + s2, ys = y + s2, zs = z + t2, ws = w + t2;
@@ -804,211 +901,187 @@ double opensimplex::noise_improve_xy_improve_zw_fast(std::int64_t seed, double x
   return noise_unskewed_base_fast_(seed, xs, ys, zs, ws);
 }
 
-double opensimplex::noise_fallback_fast(std::int64_t seed, double x, double y, double z, double w) {
+double opensimplex::noise4d_fallback_sl_fast(std::int64_t seed, double x, double y, double z, double w) {
   double s = SKEW_4D_FAST_ * (x + y + z + w);
   double xs = x + s, ys = y + s, zs = z + s, ws = w + s;
 
   return noise_unskewed_base_fast_(seed, xs, ys, zs, ws);
 }
 
-double opensimplex::octave_fast(
-    std::int64_t seed,
-    double x, double y,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_fast(seed, x * frequency, y * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave2d_sl_fast(std::int64_t seed, double x, double y, int octaves, double persistence) {
+  return octave2d_base_sl(seed, x, y, octaves, persistence, noise2d_sl_fast);
 }
 
-double opensimplex::octave_improve_x_fast(
-    std::int64_t seed,
-    double x, double y,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_improve_x_fast(seed, x * frequency, y * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave2d_improve_x_sl_fast(std::int64_t seed, double x, double y, int octaves, double persistence) {
+  return octave2d_base_sl(seed, x, y, octaves, persistence, noise2d_improve_x_sl_fast);
 }
 
-double opensimplex::octave_improve_xy_fast(
-    std::int64_t seed,
-    double x, double y, double z,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_improve_xy_fast(seed, x * frequency, y * frequency, z * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave3d_improve_xy_sl_fast(std::int64_t seed, double x, double y, double z, int octaves, double persistence) {
+  return octave3d_base_sl(seed, x, y, z, octaves, persistence, noise3d_improve_xy_sl_fast);
 }
 
-double opensimplex::octave_improve_xz_fast(
-    std::int64_t seed,
-    double x, double y, double z,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_improve_xz_fast(seed, x * frequency, y * frequency, z * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave3d_improve_xz_sl_fast(std::int64_t seed, double x, double y, double z, int octaves, double persistence) {
+  return octave3d_base_sl(seed, x, y, z, octaves, persistence, noise3d_improve_xz_sl_fast);
 }
 
-double opensimplex::octave_fallback_fast(
-    std::int64_t seed,
-    double x, double y, double z,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_fallback_fast(seed, x * frequency, y * frequency, z * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave3d_fallback_sl_fast(std::int64_t seed, double x, double y, double z, int octaves, double persistence) {
+  return octave3d_base_sl(seed, x, y, z, octaves, persistence, noise3d_fallback_sl_fast);
 }
 
-double opensimplex::octave_improve_xyz_improve_xy_fast(
-    std::int64_t seed,
-    double x, double y, double z, double w,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_improve_xyz_improve_xy_fast(seed, x * frequency, y * frequency, z * frequency, w * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave4d_improve_xyz_improve_xy_sl_fast(std::int64_t seed, double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base_sl(seed, x, y, z, w, octaves, persistence, noise4d_improve_xyz_improve_xy_sl_fast);
 }
 
-double opensimplex::octave_improve_xyz_improve_xz_fast(
-    std::int64_t seed,
-    double x, double y, double z, double w,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_improve_xyz_improve_xz_fast(seed, x * frequency, y * frequency, z * frequency, w * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave4d_improve_xyz_improve_xz_sl_fast(std::int64_t seed, double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base_sl(seed, x, y, z, w, octaves, persistence, noise4d_improve_xyz_improve_xz_sl_fast);
 }
 
-double opensimplex::octave_improve_xyz_fast(
-    std::int64_t seed,
-    double x, double y, double z, double w,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_improve_xyz_fast(seed, x * frequency, y * frequency, z * frequency, w * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave4d_improve_xyz_sl_fast(std::int64_t seed, double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base_sl(seed, x, y, z, w, octaves, persistence, noise4d_improve_xyz_sl_fast);
 }
 
-double opensimplex::octave_improve_xy_improve_zw_fast(
-    std::int64_t seed,
-    double x, double y, double z, double w,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
-
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_improve_xy_improve_zw_fast(seed, x * frequency, y * frequency, z * frequency, w * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
-
-  return total / max_value;
+double opensimplex::octave4d_improve_xy_improve_zw_sl_fast(std::int64_t seed, double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base_sl(seed, x, y, z, w, octaves, persistence, noise4d_improve_xy_improve_zw_sl_fast);
 }
 
-double opensimplex::octave_fallback_fast(
-    std::int64_t seed,
-    double x, double y, double z, double w,
-    int octaves, double persistence
-) {
-  double total = 0.0;
-  double frequency = 1.0;
-  double amplitude = 1.0;
-  double max_value = 0.0;
+double opensimplex::octave4d_fallback_sl_fast(std::int64_t seed, double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base_sl(seed, x, y, z, w, octaves, persistence, noise4d_fallback_sl_fast);
+}
 
-  for (int i = 0; i < octaves; ++i) {
-    total += noise_fallback_fast(seed, x * frequency, y * frequency, z * frequency, w * frequency) * amplitude;
-    max_value += amplitude;
-    amplitude *= persistence;
-    frequency *= 2;
-  }
+////////////////
+// PRE-SEEDED //
+////////////////
 
-  return total / max_value;
+double opensimplex::noise2d_fast(double x, double y) {
+  double s = SKEW_2D_ * (x + y);
+  double xs = x + s;
+  double ys = y + s;
+
+  return noise_unskewed_base_fast_(seed_, xs, ys);
+}
+
+double opensimplex::noise2d_improve_x_fast(double x, double y) {
+  double xx = x * ROOT2OVER2_;
+  double yy = y * (ROOT2OVER2_ * (1 + 2 * SKEW_2D_));
+
+  return noise_unskewed_base_fast_(seed_, yy + xx, yy - xx);
+}
+
+double opensimplex::noise3d_improve_xy_fast(double x, double y, double z) {
+  double xy = x + y;
+  double s2 = xy * ROTATE3_ORTHOGONALIZER_;
+  double zz = z * ROOT3OVER3_;
+  double xr = x + s2 + zz;
+  double yr = y + s2 + zz;
+  double zr = xy * -ROOT3OVER3_ + zz;
+
+  return noise_unrotated_base_fast_(seed_, xr, yr, zr);
+}
+
+double opensimplex::noise3d_improve_xz_fast(double x, double y, double z) {
+  double xz = x + z;
+  double s2 = xz * ROTATE3_ORTHOGONALIZER_;
+  double yy = y * ROOT3OVER3_;
+  double xr = x + s2 + yy;
+  double zr = z + s2 + yy;
+  double yr = xz * -ROOT3OVER3_ + yy;
+
+  return noise_unrotated_base_fast_(seed_, xr, yr, zr);
+}
+
+double opensimplex::noise3d_fallback_fast(double x, double y, double z) {
+  double r = FALLBACK_ROTATE3_ * (x + y + z);
+  double xr = r - x, yr = r - y, zr = r - z;
+
+  return noise_unrotated_base_fast_(seed_, xr, yr, zr);
+}
+
+double opensimplex::noise4d_improve_xyz_improve_xy_fast(double x, double y, double z, double w) {
+  double xy = x + y;
+  double s2 = xy * -0.21132486540518699998;
+  double zz = z * 0.28867513459481294226;
+  double ww = w * 0.2236067977499788;
+  double xr = x + (zz + ww + s2), yr = y + (zz + ww + s2);
+  double zr = xy * -0.57735026918962599998 + (zz + ww);
+  double wr = z * -0.866025403784439 + ww;
+
+  return noise_unskewed_base_fast_(seed_, xr, yr, zr, wr);
+}
+
+double opensimplex::noise4d_improve_xyz_improve_xz_fast(double x, double y, double z, double w) {
+  double xz = x + z;
+  double s2 = xz * -0.21132486540518699998;
+  double yy = y * 0.28867513459481294226;
+  double ww = w * 0.2236067977499788;
+  double xr = x + (yy + ww + s2), zr = z + (yy + ww + s2);
+  double yr = xz * -0.57735026918962599998 + (yy + ww);
+  double wr = y * -0.866025403784439 + ww;
+
+  return noise_unskewed_base_fast_(seed_, xr, yr, zr, wr);
+}
+
+double opensimplex::noise4d_improve_xyz_fast(double x, double y, double z, double w) {
+  double xyz = x + y + z;
+  double ww = w * 0.2236067977499788;
+  double s2 = xyz * -0.16666666666666666 + ww;
+  double xs = x + s2, ys = y + s2, zs = z + s2, ws = -0.5 * xyz + ww;
+
+  return noise_unskewed_base_fast_(seed_, xs, ys, zs, ws);
+}
+
+double opensimplex::noise4d_improve_xy_improve_zw_fast(double x, double y, double z, double w) {
+  double s2 = (x + y) * -0.178275657951399372 + (z + w) * 0.215623393288842828;
+  double t2 = (z + w) * -0.403949762580207112 + (x + y) * -0.375199083010075342;
+  double xs = x + s2, ys = y + s2, zs = z + t2, ws = w + t2;
+
+  return noise_unskewed_base_fast_(seed_, xs, ys, zs, ws);
+}
+
+double opensimplex::noise4d_fallback_fast(double x, double y, double z, double w) {
+  double s = SKEW_4D_FAST_ * (x + y + z + w);
+  double xs = x + s, ys = y + s, zs = z + s, ws = w + s;
+
+  return noise_unskewed_base_fast_(seed_, xs, ys, zs, ws);
+}
+
+double opensimplex::octave2d_fast(double x, double y, int octaves, double persistence) {
+  return octave2d_base(x, y, octaves, persistence, noise2d_fast);
+}
+
+double opensimplex::octave2d_improve_x_fast(double x, double y, int octaves, double persistence) {
+  return octave2d_base(x, y, octaves, persistence, noise2d_improve_x_fast);
+}
+
+double opensimplex::octave3d_improve_xy_fast(double x, double y, double z, int octaves, double persistence) {
+  return octave3d_base(x, y, z, octaves, persistence, noise3d_improve_xy_fast);
+}
+
+double opensimplex::octave3d_improve_xz_fast(double x, double y, double z, int octaves, double persistence) {
+  return octave3d_base(x, y, z, octaves, persistence, noise3d_improve_xz_fast);
+}
+
+double opensimplex::octave3d_fallback_fast(double x, double y, double z, int octaves, double persistence) {
+  return octave3d_base(x, y, z, octaves, persistence, noise3d_fallback_fast);
+}
+
+double opensimplex::octave4d_improve_xyz_improve_xy_fast(double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base(x, y, z, w, octaves, persistence, noise4d_improve_xyz_improve_xy_fast);
+}
+
+double opensimplex::octave4d_improve_xyz_improve_xz_fast(double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base(x, y, z, w, octaves, persistence, noise4d_improve_xyz_improve_xz_fast);
+}
+
+double opensimplex::octave4d_improve_xyz_fast(double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base(x, y, z, w, octaves, persistence, noise4d_improve_xyz_fast);
+}
+
+double opensimplex::octave4d_improve_xy_improve_zw_fast(double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base(x, y, z, w, octaves, persistence, noise4d_improve_xy_improve_zw_fast);
+}
+
+double opensimplex::octave4d_fallback_fast(double x, double y, double z, double w, int octaves, double persistence) {
+  return octave4d_base(x, y, z, w, octaves, persistence, noise4d_fallback_fast);
 }
 
 double opensimplex::noise_unskewed_base_fast_(std::int64_t seed, double xs, double ys) {
@@ -1287,6 +1360,10 @@ const std::array<double, opensimplex::N_GRADS_4D_ * 4> opensimplex::GRADIENTS_4D
 
   return retval;
 });
+
+/////////////
+// HELPERS //
+/////////////
 
 int opensimplex::fast_floor_(double x) {
   int xi = static_cast<int>(x);
