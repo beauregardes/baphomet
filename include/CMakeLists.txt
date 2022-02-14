@@ -31,6 +31,7 @@ set(headers ${headers}
     include/baphomet/mgr/timermgr.hpp
     include/baphomet/mgr/tweenmgr.hpp
 
+    include/baphomet/noise/opensimplex.hpp
     include/baphomet/noise/perlin.hpp
 
     include/baphomet/util/time/ticker.hpp
