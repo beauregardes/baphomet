@@ -1,5 +1,7 @@
 #include "baphomet/noise/opensimplex.hpp"
 
+#include <functional>
+
 namespace baphomet {
 
 ////////////
