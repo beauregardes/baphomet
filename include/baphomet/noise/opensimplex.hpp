@@ -1,5 +1,19 @@
 #pragma once
 
+/**
+ * This is a straight(ish) translation of the Java implementation of
+ * OpenSimplex2 by KdotJPG which can be found here:
+ *      https://github.com/KdotJPG/OpenSimplex2/tree/master/java
+ *
+ * Notable changes:
+ * - Combined fast and smooth variants into single file--smooth is default, fast is suffixed
+ * - Octave methods for every variant
+ * - Naming conventions to match my own
+ * - TODO: Add option to not provide seed (have it pick at random)
+ *
+ * TODO: Which method should I use? (a guide)
+ */
+
 #include <array>
 #include <cstdint>
 #include <vector>
