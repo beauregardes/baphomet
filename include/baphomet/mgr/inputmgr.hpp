@@ -2,11 +2,14 @@
 
 #include "baphomet/util/time/time.hpp"
 
+#include "fmt/format.h"
+#include "fmt/chrono.h"
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace baphomet {
 
@@ -38,9 +41,15 @@ public:
   bool raw_mouse_motion_supported();
   void set_raw_mouse_motion(bool raw);
 
-  bool pressed(const std::string &action);
-  bool released(const std::string &action);
-  bool down(const std::string &action, Duration interval = Duration(0), Duration delay = Duration(0));
+  void bind(const std::string &name, const std::string &action);
+  void unbind(const std::string &name, const std::string &action);
+
+  bool pressed(const std::string &name);
+  bool released(const std::string &name);
+  bool down(const std::string &name, Duration interval = Duration(0), Duration delay = Duration(0));
+
+  template <typename ...Args>
+  bool sequence(const std::string &name, const Args &...args);
 
 private:
   GLFWwindow *parent_ {nullptr};
@@ -53,9 +62,28 @@ private:
     bool pressed {false};
   };
 
-  std::unordered_map<std::string, bool> state_ {};
-  std::unordered_map<std::string, bool> prev_state_ {};
-  std::unordered_map<std::string, RepeatState> repeat_state_ {};
+  struct SequenceStep {
+    Duration remaining{0};
+    std::string name{};
+  };
+  struct Sequence {
+    std::size_t idx{0};
+    std::vector<SequenceStep> steps{};
+  };
+
+  std::unordered_map<std::string, std::unordered_set<std::string>> binds_{};
+  std::unordered_map<std::string, bool> state_{};
+  std::unordered_map<std::string, bool> prev_state_{};
+  std::unordered_map<std::string, RepeatState> repeat_state_{};
+  std::unordered_map<std::string, Sequence> sequences_{};
+
+  template <typename ...Args>
+  std::string get_sequence_tag_(Duration d, const std::string &name, const Args &... args);
+
+  template <typename ...Args>
+  void get_sequence_(Sequence &out, Duration d, const std::string &name, const Args &... args);
+
+  bool check_sequence_(const std::string &tag);
 
   void update_(Duration dt);
 
@@ -67,6 +95,42 @@ private:
 
   std::string glfw_key_to_str_(int key);
   std::string glfw_button_to_str_(int button);
+
+  const std::unordered_set<std::string> &all_actions_();
 };
+
+template <typename ...Args>
+bool InputMgr::sequence(const std::string &name, const Args &...args) {
+  if constexpr (sizeof...(args) >= 2) {
+    auto tag = name + get_sequence_tag_(args...);
+    if (sequences_.contains(tag))
+      return check_sequence_(tag);
+    else if (pressed(name)) {
+      sequences_[tag] = Sequence();
+      get_sequence_(sequences_[tag], args...);
+    }
+
+  } else if (pressed(name))
+    return true;
+
+  return false;
+}
+
+template <typename ...Args>
+std::string InputMgr::get_sequence_tag_(Duration d, const std::string &name, const Args &... args) {
+  auto comp = fmt::format("_{}{}", d, name);
+
+  if constexpr (sizeof...(args) >= 2)
+    return comp + get_sequence_tag_(args...);
+  return comp;
+}
+
+template <typename ...Args>
+void InputMgr::get_sequence_(Sequence &out, Duration d, const std::string &name, const Args &... args) {
+  out.steps.emplace_back(SequenceStep{d, name});
+
+  if constexpr (sizeof...(args) >= 2)
+    get_sequence_(out, args...);
+}
 
 } // namespace baphomet

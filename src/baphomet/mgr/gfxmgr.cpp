@@ -193,7 +193,7 @@ void GfxMgr::rect(Rect r, const baphomet::RGB &color, float angle) {
 }
 
 void GfxMgr::rect(Rect r, const baphomet::RGB &color) {
-  rect(r.x, r.y, r.w, r.y, color, 0.0f, 0.0f, 0.0f);
+  rect(r.x, r.y, r.w, r.h, color, 0.0f, 0.0f, 0.0f);
 }
 
 void GfxMgr::oval(Oval o, const baphomet::RGB &color, float cx, float cy, float angle) {

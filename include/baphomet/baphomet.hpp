@@ -8,6 +8,9 @@
 
 #include "baphomet/mgr/timermgr.hpp"
 
+#include "baphomet/noise/perlin.hpp"
+#include "baphomet/noise/opensimplex.hpp"
+
 #include "baphomet/util/time/ticker.hpp"
 #include "baphomet/util/random.hpp"
 
