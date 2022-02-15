@@ -1,5 +1,6 @@
 #pragma once
 
+#include "baphomet/app/internal/messenger.hpp"
 #include "baphomet/util/platform.hpp"
 
 #include "AL/al.h"
@@ -176,11 +177,9 @@ struct PlayOptions {
 
 class AudioMgr {
 public:
-  AudioMgr();
+  AudioMgr(std::shared_ptr<Messenger> msgr);
 
   ~AudioMgr();
-
-  void update();
 
   bool open_device(const std::string &device_name = "");
   bool reopen_device(const std::string &device_name = "");
@@ -196,6 +195,8 @@ public:
   const std::vector<std::string> &get_devices();
 
 private:
+  std::shared_ptr<Messenger> msgr_;
+
   ALCcontext *ctx_{nullptr};
 
   ALCdevice *device_{nullptr};
@@ -208,6 +209,10 @@ private:
   ALCboolean (ALC_APIENTRY *alcReopenDeviceSOFT_)(ALCdevice *device, const ALCchar *name, const ALCint *attribs);
 
   bool reopen_supported_{false};
+
+  void update_(Duration dt);
+
+  void received_message_(const MsgCat &category, const std::any &payload);
 
   void get_available_devices_();
 

@@ -2,7 +2,15 @@
 
 #include "baphomet/util/random.hpp"
 
+#include "spdlog/spdlog.h"
+
 namespace baphomet {
+
+TimerMgr::TimerMgr(std::shared_ptr<Messenger> msgr) : msgr_(msgr) {
+  msgr_->register_endpoint("TIMER-MGR", [&](const MsgCat &category, const std::any &payload) {
+    received_message_(category, payload);
+  });
+}
 
 std::string TimerMgr::after(const std::string &tag, Duration delay, AfterFunc &func) {
   timers_[tag] = std::make_unique<AfterTimer>(delay, func);
@@ -31,19 +39,6 @@ std::string TimerMgr::until(Duration interval, UntilFunc &func) {
   return until(rnd::base58(11), interval, func);
 }
 
-void TimerMgr::update(Duration dt) {
-  for (auto it = timers_.begin(); it != timers_.end();) {
-    if (!it->second->paused)
-      if (it->second->update(dt))
-        it->second->fire();
-
-    if (it->second->expired)
-      timers_.erase(it++);
-    else
-      ++it;
-  }
-}
-
 void TimerMgr::pause(const std::string &tag) {
   auto it = timers_.find(tag);
   if (it != timers_.end())
@@ -60,6 +55,34 @@ void TimerMgr::toggle(const std::string &tag) {
   auto it = timers_.find(tag);
   if (it != timers_.end())
     it->second->paused = !it->second->paused;
+}
+
+void TimerMgr::received_message_(const MsgCat &category, const std::any &payload) {
+  switch (category) {
+    using enum MsgCat;
+
+    case Update: {
+      auto p = Messenger::extract_payload<Update>(payload);
+      update_(p.dt);
+    }
+      break;
+
+    default:
+      spdlog::error("TIMER-MGR: Unhandled message category: '{}'", category);
+  }
+}
+
+void TimerMgr::update_(Duration dt) {
+  for (auto it = timers_.begin(); it != timers_.end();) {
+    if (!it->second->paused)
+      if (it->second->update(dt))
+        it->second->fire();
+
+    if (it->second->expired)
+      timers_.erase(it++);
+    else
+      ++it;
+  }
 }
 
 /*********

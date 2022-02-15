@@ -11,6 +11,12 @@
 
 namespace baphomet {
 
+Window::Window(std::shared_ptr<Messenger> &msgr) : msgr_(msgr) {
+  msgr_->register_endpoint("WINDOW", [&](const MsgCat &category, const std::any &payload) {
+    received_message_(category, payload);
+  });
+}
+
 void Window::set_size(int width, int height) {
   glfwSetWindowSize(glfw_window_, width, height);
 }
@@ -129,11 +135,35 @@ glm::mat4 Window::projection() const {
   );
 }
 
-void Window::create_fbo_() {
-  fbo_ = gl::FramebufferBuilder(w(), h())
+void Window::create_fbo_(int width, int height) {
+  fbo_ = gl::FramebufferBuilder(width, height)
       .renderbuffer(gl::RBufFormat::rgba8)
       .renderbuffer(gl::RBufFormat::d32f)
       .check_complete();
+}
+
+void Window::received_message_(const MsgCat &category, const std::any &payload) {
+  switch (category) {
+    using enum MsgCat;
+
+    case WindowSize: {
+      auto p = Messenger::extract_payload<WindowSize>(payload);
+      create_fbo_(p.width, p.height);
+    }
+      break;
+
+    case WindowFocus: {
+#if defined(BAPHOMET_PLATFORM_WINDOWS)
+      auto p = Messenger::extract_payload<WindowFocus>(payload);
+      if (wm_info_.borderless)
+        set_floating(p.focused == 1);
+#endif
+    }
+      break;
+
+    default:
+      spdlog::error("WINDOW: Unhandled message category: '{}'", category);
+  }
 }
 
 void Window::open_for_gl_(const WCfg &cfg, glm::ivec2 glversion) {
@@ -146,6 +176,9 @@ void Window::open_for_gl_(const WCfg &cfg, glm::ivec2 glversion) {
     open_fullscreen_(cfg);
   else
     open_windowed_(cfg);
+
+  // Send a message so the runner can save the handle and register callbacks now
+  msgr_->send_message<MsgCat::RegisterGlfwCallbacks>("RUNNER", glfw_window_);
 
   if (!set(cfg.flags, WFlags::fullscreen) &&
       !set(cfg.flags, WFlags::borderless) &&

@@ -25,14 +25,19 @@ public:
   void start();
 
 private:
+  std::shared_ptr<Messenger> msgr_{nullptr};
+
   struct {
     glm::ivec2 glversion{};
     WCfg cfg{};
-  } open_params_;
+  } open_params_{};
 
-  std::unique_ptr<Application> application_;
+  std::unique_ptr<Application> application_{nullptr};
 
-  void register_glfw_callbacks_();
+  GLFWwindow *glfw_window_{nullptr};
+
+  void received_message_(const MsgCat &category, const std::any &payload);
+
   static void glfw_key_callback_(GLFWwindow *window, int key, int scancode, int action, int mods);
   static void glfw_cursor_position_callback_(GLFWwindow *window, double xpos, double ypos);
   static void glfw_cursor_enter_callback_(GLFWwindow *window, int entered);
@@ -46,6 +51,7 @@ private:
 template<DerivesHadesApplication T>
 Runner &Runner::open(const WCfg &cfg) {
   application_ = std::unique_ptr<Application>(new T());
+  application_->msgr_ = msgr_;
   open_params_.cfg = cfg;
   return *this;
 }

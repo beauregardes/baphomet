@@ -1,4 +1,6 @@
 set(headers ${headers}
+    include/baphomet/app/internal/messenger.hpp
+    include/baphomet/app/internal/msgcat.hpp
     include/baphomet/app/internal/resource_loader.hpp
     include/baphomet/app/application.hpp
     include/baphomet/app/runner.hpp

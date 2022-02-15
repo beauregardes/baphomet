@@ -23,6 +23,15 @@ void Application::shutdown() {
   window->close_();
 }
 
+void Application::received_message_(const MsgCat &category, const std::any &payload) {
+  switch (category) {
+    using enum MsgCat;
+
+    default:
+      spdlog::error("APPLICATION: Unhandled message category: '{}'", category);
+  }
+}
+
 void Application::imgui_startframe_() {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
@@ -34,15 +43,6 @@ void Application::imgui_startframe_() {
 void Application::imgui_endframe_() {
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-//  if (imgui_state_.io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-//    GLFWwindow* backup_current_context = glfwGetCurrentContext();
-//
-//    ImGui::UpdatePlatformWindows();
-//    ImGui::RenderPlatformWindowsDefault();
-//
-//    glfwMakeContextCurrent(backup_current_context);
-//  }
 
   imgui_state_.newframe_called = false;
 }
@@ -161,19 +161,23 @@ void Application::debug_log_(fmt::string_view format, fmt::format_args args) {
  ******************/
 
 void Application::open_for_gl_(const WCfg &cfg, glm::ivec2 glversion) {
-  window = std::make_unique<Window>();
+  msgr_->register_endpoint("APPLICATION", [&](const MsgCat &category, const std::any &payload) {
+    received_message_(category, payload);
+  });
+
+  window = std::make_unique<Window>(msgr_);
   window->open_for_gl_(cfg, glversion);
   window->wm_info_.vsync = set(cfg.flags, WFlags::vsync);
 
-  input = std::make_unique<InputMgr>(window->glfw_window_);
+  input = std::make_unique<InputMgr>(window->glfw_window_, msgr_);
 
-  audio = std::make_unique<AudioMgr>();
+  audio = std::make_unique<AudioMgr>(msgr_);
   audio->open_device();
   audio->open_context();
   audio->make_current();
 
-  timer = std::make_unique<TimerMgr>();
-  tween = std::make_unique<TweenMgr>();
+  timer = std::make_unique<TimerMgr>(msgr_);
+  tween = std::make_unique<TweenMgr>(msgr_);
 }
 
 void Application::init_gl_(glm::ivec2 glversion) {
@@ -209,7 +213,7 @@ void Application::init_gl_(glm::ivec2 glversion) {
 
   glEnable(GL_TEXTURE_2D);
 
-  window->create_fbo_();
+  window->create_fbo_(window->w(), window->h());
 
   gfx->new_batch_set_("overlay", true);
   overlay_.font = gfx->load_cp437(
@@ -225,8 +229,6 @@ void Application::init_imgui_(glm::ivec2 glversion) {
   IMGUI_CHECKVERSION();
   imgui_state_.ctx = ImGui::CreateContext();
   imgui_state_.io = &ImGui::GetIO(); (void)imgui_state_.io;
-//  imgui_state_.io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-//  imgui_state_.io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
   imgui_state_.io->IniFilename = nullptr;
 
   ImGui_ImplGlfw_InitForOpenGL(window->glfw_window_, true);

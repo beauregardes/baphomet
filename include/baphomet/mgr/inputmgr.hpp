@@ -1,5 +1,6 @@
 #pragma once
 
+#include "baphomet/app/internal/messenger.hpp"
 #include "baphomet/util/time/time.hpp"
 
 #include "fmt/format.h"
@@ -14,8 +15,6 @@
 namespace baphomet {
 
 class InputMgr {
-  friend class Runner;
-
 public:
   struct {
     double x{0.0}, y{0.0};
@@ -33,7 +32,7 @@ public:
     bool raw_motion{false};
   } mouse;
 
-  InputMgr(GLFWwindow *parent);
+  InputMgr(GLFWwindow *parent, std::shared_ptr<Messenger> msgr);
 
   void set_mouse_locked(bool locked);
   void set_mouse_hidden(bool hidden);
@@ -52,6 +51,8 @@ public:
   bool sequence(const std::string &name, const Args &...args);
 
 private:
+  std::shared_ptr<Messenger> msgr_;
+
   GLFWwindow *parent_ {nullptr};
 
   struct RepeatState {
@@ -87,16 +88,18 @@ private:
 
   void update_(Duration dt);
 
+  void received_message_(const MsgCat &category, const std::any &payload);
+
   void glfw_key_event_(int key, int scancode, int action, int mods);
   void glfw_cursor_position_event_(double xpos, double ypos);
   void glfw_cursor_enter_event_(int entered);
   void glfw_mouse_button_event_(int button, int action, int mods);
   void glfw_scroll_event_(double xoffset, double yoffset);
 
-  std::string glfw_key_to_str_(int key);
-  std::string glfw_button_to_str_(int button);
+  static std::string glfw_key_to_str_(int key);
+  static std::string glfw_button_to_str_(int button);
 
-  const std::unordered_set<std::string> &all_actions_();
+  static const std::unordered_set<std::string> &all_actions_();
 };
 
 template <typename ...Args>

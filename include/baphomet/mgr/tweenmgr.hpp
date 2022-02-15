@@ -1,5 +1,6 @@
 #pragma once
 
+#include "baphomet/app/internal/messenger.hpp"
 #include "baphomet/util/time/time.hpp"
 #include "baphomet/util/random.hpp"
 
@@ -49,8 +50,7 @@ enum class Easing {
 class TweenMgr {
 
 public:
-  TweenMgr() = default;
-  ~TweenMgr() = default;
+  TweenMgr(std::shared_ptr<Messenger> msgr);
 
   template <typename T, typename U, typename V>
   requires std::convertible_to<U, T> && std::convertible_to<V, T>
@@ -69,9 +69,12 @@ public:
   void resume(const std::string &tag);
   void toggle(const std::string &tag);
 
-  void update(Duration dt);
-
 private:
+  std::shared_ptr<Messenger> msgr_;
+  void received_message_(const MsgCat &category, const std::any &payload);
+
+  void update_(Duration dt);
+
   class TweenI_ {
   protected:
     static constexpr double c1 = 1.70158;

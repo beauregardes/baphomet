@@ -9,6 +9,8 @@ class Testing : public baphomet::Application {
 
   void draw() override {
     gfx->clear();
+
+    gfx->circle(input->mouse.x, input->mouse.y, 10, baphomet::rgb(0xffffff));
   }
 };
 
@@ -17,7 +19,7 @@ int main(int, char *[]) {
       .open<Testing>({
           .title = "Testing",
           .size = {800, 600},
-          .flags = baphomet::WFlags::centered | baphomet::WFlags::vsync
+          .flags = baphomet::WFlags::centered
       })
       .init_gl()
       .start();

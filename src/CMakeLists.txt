@@ -1,4 +1,6 @@
 set(srcs ${srcs}
+    src/baphomet/app/internal/messenger.cpp
+    src/baphomet/app/internal/msgcat.cpp
     src/baphomet/app/internal/resource_loader.cpp
     src/baphomet/app/application.cpp
     src/baphomet/app/runner.cpp

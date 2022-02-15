@@ -8,7 +8,11 @@
 
 namespace baphomet {
 
-AudioMgr::AudioMgr() {
+AudioMgr::AudioMgr(std::shared_ptr<Messenger> msgr) : msgr_(msgr) {
+  msgr_->register_endpoint("AUDIO-MGR", [&](const MsgCat &category, const std::any &payload) {
+    received_message_(category, payload);
+  });
+
 //#if defined(BAPHOMET_PLATFORM_WINDOWS)
 //  const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
 //const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
@@ -38,32 +42,6 @@ AudioMgr::~AudioMgr() {
 
   alcMakeContextCurrent(nullptr);
   alcDestroyContext(ctx_);
-}
-
-void AudioMgr::update() {
-  for (auto s_it = sources_.begin(); s_it != sources_.end(); ) {
-    auto &l = s_it->second;
-
-    for (auto it = l.begin(); it != l.end(); ) {
-      ALint state;
-      alGetSourcei(*it, AL_SOURCE_STATE, &state);
-      check_al_errors();
-
-      if (state == AL_STOPPED) {
-        alDeleteSources(1, &(*it));
-        check_al_errors();
-        it = l.erase(it);
-        continue;
-      }
-      it++;
-    }
-
-    if (s_it->second.empty()) {
-      s_it = sources_.erase(s_it);
-      continue;
-    }
-    s_it++;
-  }
 }
 
 bool AudioMgr::open_device(const std::string &device_name) {
@@ -181,6 +159,47 @@ const std::vector<std::string> &AudioMgr::get_devices() {
   if (devices_.empty())
     get_available_devices_();
   return devices_;
+}
+
+void AudioMgr::update_(Duration dt) {
+  for (auto s_it = sources_.begin(); s_it != sources_.end(); ) {
+    auto &l = s_it->second;
+
+    for (auto it = l.begin(); it != l.end(); ) {
+      ALint state;
+      alGetSourcei(*it, AL_SOURCE_STATE, &state);
+      check_al_errors();
+
+      if (state == AL_STOPPED) {
+        alDeleteSources(1, &(*it));
+        check_al_errors();
+        it = l.erase(it);
+        continue;
+      }
+      it++;
+    }
+
+    if (s_it->second.empty()) {
+      s_it = sources_.erase(s_it);
+      continue;
+    }
+    s_it++;
+  }
+}
+
+void AudioMgr::received_message_(const MsgCat &category, const std::any &payload) {
+  switch (category) {
+    using enum MsgCat;
+
+    case Update: {
+      auto p = Messenger::extract_payload<Update>(payload);
+      update_(p.dt);
+    }
+      break;
+
+    default:
+      spdlog::error("AUDIO-MGR: Unhandled message category: '{}'", category);
+  }
 }
 
 void AudioMgr::get_available_devices_() {

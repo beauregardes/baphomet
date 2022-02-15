@@ -1,19 +1,13 @@
 #include "baphomet/mgr/tweenmgr.hpp"
 
+#include "spdlog/spdlog.h"
+
 namespace baphomet {
 
-void TweenMgr::update(Duration dt) {
-  for (auto it = tweens_.begin(); it != tweens_.end(); ) {
-    auto &tween = it->second;
-
-    if (!tween->paused)
-      if (tween->advance(dt)) {
-        it = tweens_.erase(it);
-        continue;
-      }
-
-    it++;
-  }
+TweenMgr::TweenMgr(std::shared_ptr<Messenger> msgr) : msgr_(msgr) {
+  msgr_->register_endpoint("TWEEN-MGR", [&](const MsgCat &category, const std::any &payload) {
+    received_message_(category, payload);
+  });
 }
 
 void TweenMgr::pause(const std::string &tag) {
@@ -32,6 +26,35 @@ void TweenMgr::toggle(const std::string &tag) {
   auto it = tweens_.find(tag);
   if (it != tweens_.end())
     it->second->paused = !it->second->paused;
+}
+
+void TweenMgr::received_message_(const MsgCat &category, const std::any &payload) {
+  switch (category) {
+    using enum MsgCat;
+
+    case Update: {
+      auto p = Messenger::extract_payload<Update>(payload);
+      update_(p.dt);
+    }
+      break;
+
+    default:
+      spdlog::error("TIMER-MGR: Unhandled message category: '{}'", category);
+  }
+}
+
+void TweenMgr::update_(Duration dt) {
+  for (auto it = tweens_.begin(); it != tweens_.end(); ) {
+    auto &tween = it->second;
+
+    if (!tween->paused)
+      if (tween->advance(dt)) {
+        it = tweens_.erase(it);
+        continue;
+      }
+
+    it++;
+  }
 }
 
 std::unordered_map<Easing, std::function<double(double)>> TweenMgr::TweenI_::easing_funcs_ = {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "baphomet/app/internal/messenger.hpp"
 #include "baphomet/util/time/time.hpp"
 
 #include <chrono>
@@ -17,6 +18,8 @@ using UntilFunc = const std::function<bool(void)>;
 
 class TimerMgr {
 public:
+  TimerMgr(std::shared_ptr<Messenger> msgr);
+
   std::string after(const std::string &tag, Duration delay, AfterFunc &func);
   std::string after(Duration delay, AfterFunc &func);
 
@@ -30,9 +33,12 @@ public:
   void resume(const std::string &tag);
   void toggle(const std::string &tag);
 
-  void update(Duration dt);
-
 private:
+  std::shared_ptr<Messenger> msgr_;
+  void received_message_(const MsgCat &category, const std::any &payload);
+
+  void update_(Duration dt);
+
   class Timer_ {
   public:
     bool paused{false};

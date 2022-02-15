@@ -1,5 +1,6 @@
 #pragma once
 
+#include "baphomet/app/internal/messenger.hpp"
 #include "baphomet/app/window.hpp"
 #include "baphomet/gfx/gl/framebuffer.hpp"
 #include "baphomet/mgr/audiomgr.hpp"
@@ -51,6 +52,9 @@ protected:
   void shutdown();
 
 private:
+  std::shared_ptr<Messenger> msgr_;
+  void received_message_(const MsgCat &category, const std::any &payload);
+
   FrameCounter frame_counter_{};
 
   struct {

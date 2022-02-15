@@ -1,5 +1,6 @@
 #pragma once
 
+#include "baphomet/app/internal/messenger.hpp"
 #include "baphomet/gfx/gl/framebuffer.hpp"
 #include "baphomet/util/enum_bitmask_ops.hpp"
 
@@ -35,9 +36,10 @@ struct WCfg {
 
 class Window {
   friend class Application;
-  friend class Runner;
 
 public:
+  Window(std::shared_ptr<Messenger> &msgr);
+
   void set_size(int width, int height);
   glm::ivec2 size() const;
   int w() const;
@@ -71,15 +73,19 @@ public:
   glm::mat4 projection() const;
 
 private:
+  std::shared_ptr<Messenger> msgr_;
+
   GLFWwindow *glfw_window_{nullptr};
 
   std::unique_ptr<gl::Framebuffer> fbo_{nullptr};
-  void create_fbo_();
+  void create_fbo_(int width, int height);
 
   struct {
     bool borderless{false};
     bool vsync{false};
   } wm_info_;
+
+  void received_message_(const MsgCat &category, const std::any &payload);
 
   void open_for_gl_(const WCfg &cfg, glm::ivec2 glversion);
   void close_();
