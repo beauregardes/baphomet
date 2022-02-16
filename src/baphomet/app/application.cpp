@@ -49,6 +49,13 @@ void Application::imgui_endframe_() {
   imgui_state_.newframe_called = false;
 }
 
+void Application::update_nonuser_(Duration dt) {
+  send_msg<MsgCategory::Update>(MsgEndpoint::Input, dt);
+  send_msg<MsgCategory::Update>(MsgEndpoint::Audio, dt);
+  send_msg<MsgCategory::Update>(MsgEndpoint::Timer, dt);
+  send_msg<MsgCategory::Update>(MsgEndpoint::Tween, dt);
+}
+
 void Application::start_frame_() {
   window->fbo_->bind();
 

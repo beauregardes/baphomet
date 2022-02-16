@@ -8,12 +8,12 @@ Baphomet is a 2D graphics engine for modern C++ (20+). I wasn't satisfied with t
 
 ### What can it do?
 
-A non-exhaustive list of existing/planned features (subject to change as Baphomet is still in very early development)
+A non-exhaustive list of existing/planned features (subject to change as Baphomet development is volatile as hell right now)
 
 - [x] Windowing à la GLFW, supports regular windowed, fullscreen, and borderless/windowed fullscreen
-    - [ ] Bind keys to names
+    - [x] Bind keys to names
     - [x] Key repeats/intervals/delay
-    - [ ] Input sequences
+    - [x] Input sequences
 - [x] Timers
 - [ ] Render targets/viewports
 - [x] Primitive support: pixels/points, lines, triangles, rectangles, and ovals
@@ -32,6 +32,12 @@ A non-exhaustive list of existing/planned features (subject to change as Baphome
     - [ ] TTF
 - [ ] Particle systems
 - [ ] Audio
+  - [x] Load multiple formats (libnyquist)
+  - [x] One-off sounds
+  - [x] Looping
+  - [ ] Stop/start/restart
+  - [ ] BG Music
+  - [ ] Crossfade
 - [ ] GUI toolkit
 
 ### Credits

@@ -44,16 +44,15 @@ void Runner::start() {
     application_->frame_counter_.update();
     Duration dt = application_->frame_counter_.dt();
 
+    // User defined update, doesn't update systems
     application_->update(dt);
 
     application_->start_frame_();
     application_->draw();
     application_->end_frame_();
 
-    send_msg<MsgCategory::Update>(MsgEndpoint::Input, dt);
-    send_msg<MsgCategory::Update>(MsgEndpoint::Audio, dt);
-    send_msg<MsgCategory::Update>(MsgEndpoint::Timer, dt);
-    send_msg<MsgCategory::Update>(MsgEndpoint::Tween, dt);
+    // Non-user defined update, updates systems (input, audio, etc)
+    application_->update_nonuser_(dt);
 
     glfwPollEvents();
   } while (!glfwWindowShouldClose(glfw_window_));

@@ -75,6 +75,8 @@ private:
   void imgui_startframe_();
   void imgui_endframe_();
 
+  void update_nonuser_(Duration dt);
+
   void start_frame_();
   void end_frame_();
 
