@@ -175,9 +175,9 @@ struct PlayOptions {
   bool looping{false};
 };
 
-class AudioMgr {
+class AudioMgr : Endpoint {
 public:
-  AudioMgr(std::shared_ptr<Messenger> msgr);
+  AudioMgr(std::shared_ptr<Messenger> messenger);
 
   ~AudioMgr();
 
@@ -195,7 +195,7 @@ public:
   const std::vector<std::string> &get_devices();
 
 private:
-  std::shared_ptr<Messenger> msgr_;
+  void received_msg(const MsgCategory &category, const std::any &payload) override;
 
   ALCcontext *ctx_{nullptr};
 
@@ -211,8 +211,6 @@ private:
   bool reopen_supported_{false};
 
   void update_(Duration dt);
-
-  void received_message_(const MsgCat &category, const std::any &payload);
 
   void get_available_devices_();
 

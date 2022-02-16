@@ -4,10 +4,8 @@
 
 namespace baphomet {
 
-TweenMgr::TweenMgr(std::shared_ptr<Messenger> msgr) : msgr_(msgr) {
-  msgr_->register_endpoint("TWEEN-MGR", [&](const MsgCat &category, const std::any &payload) {
-    received_message_(category, payload);
-  });
+TweenMgr::TweenMgr(std::shared_ptr<Messenger> messenger) : Endpoint() {
+  initialize_endpoint(messenger, MsgEndpoint::Tween);
 }
 
 void TweenMgr::pause(const std::string &tag) {
@@ -28,18 +26,18 @@ void TweenMgr::toggle(const std::string &tag) {
     it->second->paused = !it->second->paused;
 }
 
-void TweenMgr::received_message_(const MsgCat &category, const std::any &payload) {
+void TweenMgr::received_msg(const MsgCategory &category, const std::any &payload) {
   switch (category) {
-    using enum MsgCat;
+    using enum MsgCategory;
 
     case Update: {
-      auto p = Messenger::extract_payload<Update>(payload);
+      auto p = extract_msg_payload<Update>(payload);
       update_(p.dt);
     }
       break;
 
     default:
-      spdlog::error("TIMER-MGR: Unhandled message category: '{}'", category);
+      Endpoint::received_msg(category, payload);
   }
 }
 
@@ -58,75 +56,75 @@ void TweenMgr::update_(Duration dt) {
 }
 
 std::unordered_map<Easing, std::function<double(double)>> TweenMgr::TweenI_::easing_funcs_ = {
-    {Easing::linear, [](double progress) -> double {
+    {Easing::Linear, [](double progress) -> double {
       return progress;
     }},
 
-    {Easing::in_sine, [](double progress) -> double {
+    {Easing::InSine, [](double progress) -> double {
       return 1 - std::cos((progress * std::numbers::pi) / 2.0);
     }},
-    {Easing::out_sine, [](double progress) -> double {
+    {Easing::OutSine, [](double progress) -> double {
       return std::sin((progress * std::numbers::pi) / 2.0);
     }},
-    {Easing::in_out_sine, [](double progress) -> double {
+    {Easing::InOutSine, [](double progress) -> double {
       return -(std::cos(progress * std::numbers::pi) - 1) / 2.0;
     }},
 
-    {Easing::in_quad, [](double progress) -> double {
+    {Easing::InQuad, [](double progress) -> double {
       return progress * progress;
     }},
-    {Easing::out_quad, [](double progress) -> double {
+    {Easing::OutQuad, [](double progress) -> double {
       return 1 - (1 - progress) * (1 - progress);
     }},
-    {Easing::in_out_quad, [](double progress) -> double {
+    {Easing::InOutQuad, [](double progress) -> double {
       return progress < 0.5
              ? 2 * progress * progress
              : 1 - std::pow(-2 * progress + 2, 2) / 2;
     }},
 
-    {Easing::in_cubic, [](double progress) -> double {
+    {Easing::InCubic, [](double progress) -> double {
       return progress * progress * progress;
     }},
-    {Easing::out_cubic, [](double progress) -> double {
+    {Easing::OutCubic, [](double progress) -> double {
       return 1 - std::pow(1 - progress, 3);
     }},
-    {Easing::in_out_cubic, [](double progress) -> double {
+    {Easing::InOutCubic, [](double progress) -> double {
       return progress < 0.5
              ? 4 * progress * progress * progress
              : 1 - std::pow(-2 * progress + 2, 3) / 2;
     }},
 
-    {Easing::in_quart, [](double progress) -> double {
+    {Easing::InQuart, [](double progress) -> double {
       return progress * progress * progress * progress;
     }},
-    {Easing::out_quart, [](double progress) -> double {
+    {Easing::OutQuart, [](double progress) -> double {
       return 1 - std::pow(1 - progress, 4);
     }},
-    {Easing::in_out_quart, [](double progress) -> double {
+    {Easing::InOutQuart, [](double progress) -> double {
       return progress < 0.5
              ? 8 * progress * progress * progress * progress
              : 1 - std::pow(-2 * progress + 2, 4) / 2;
     }},
 
-    {Easing::in_quint, [](double progress) -> double {
+    {Easing::InQuint, [](double progress) -> double {
       return progress * progress * progress * progress * progress;
     }},
-    {Easing::out_quint, [](double progress) -> double {
+    {Easing::OutQuint, [](double progress) -> double {
       return 1 - std::pow(1 - progress, 5);
     }},
-    {Easing::in_out_quint, [](double progress) -> double {
+    {Easing::InOutQuint, [](double progress) -> double {
       return progress < 0.5
              ? 16 * progress * progress * progress * progress * progress
              : 1 - std::pow(-2 * progress + 2, 5) / 2;
     }},
 
-    {Easing::in_exp, [](double progress) -> double {
+    {Easing::InExp, [](double progress) -> double {
       return progress == 0.0 ? 0.0 : std::pow(2, 10 * progress - 10);
     }},
-    {Easing::out_exp, [](double progress) -> double {
+    {Easing::OutExp, [](double progress) -> double {
       return progress == 1.0 ? 1.0 : 1 - std::pow(2, -10 * progress);
     }},
-    {Easing::in_out_exp, [](double progress) -> double {
+    {Easing::InOutExp, [](double progress) -> double {
       return progress == 0.0
              ? 0.0
              : progress == 1.0
@@ -136,45 +134,45 @@ std::unordered_map<Easing, std::function<double(double)>> TweenMgr::TweenI_::eas
                  : (2 - std::pow(2, -20 * progress + 10)) / 2;
     }},
 
-    {Easing::in_circ, [](double progress) -> double {
+    {Easing::InCirc, [](double progress) -> double {
       return 1 - std::sqrt(1 - std::pow(progress, 2));
     }},
-    {Easing::out_circ, [](double progress) -> double {
+    {Easing::OutCirc, [](double progress) -> double {
       return std::sqrt(1 - std::pow(progress - 1, 2));
     }},
-    {Easing::in_out_circ, [](double progress) -> double {
+    {Easing::InOutCirc, [](double progress) -> double {
       return progress < 0.5
              ? (1 - std::sqrt(1 - std::pow(2 * progress, 2))) / 2
              : (std::sqrt(1 - std::pow(-2 * progress + 2, 2)) + 1) / 2;
     }},
 
-    {Easing::in_back, [](double progress) -> double {
+    {Easing::InBack, [](double progress) -> double {
       return c3 * progress * progress * progress - c1 * progress * progress;
     }},
-    {Easing::out_back, [](double progress) -> double {
+    {Easing::OutBack, [](double progress) -> double {
       return 1 + c3 * std::pow(progress - 1, 3) + c1 * std::pow(progress - 1, 2);
     }},
-    {Easing::in_out_back, [](double progress) -> double {
+    {Easing::InOutBack, [](double progress) -> double {
       return progress < 0.5
              ? (std::pow(2 * progress, 2) * ((c2 + 1) * 2 * progress - c2)) / 2
              : (std::pow(2 * progress - 2, 2) * ((c2 + 1) * (progress * 2 - 2) + c2) + 2) / 2;
     }},
 
-    {Easing::in_elastic, [](double progress) -> double {
+    {Easing::InElastic, [](double progress) -> double {
       return progress == 0.0
              ? 0.0
              : progress == 1.0
                ? 1.0
                : -std::pow(2, 10 * progress - 10) * std::sin((progress * 10 - 10.75) * c4);
     }},
-    {Easing::out_elastic, [](double progress) -> double {
+    {Easing::OutElastic, [](double progress) -> double {
       return progress == 0.0
              ? 0.0
              : progress == 1.0
                ? 1.0
                : std::pow(2, -10 * progress) * std::sin((progress * 10 - 0.75) * c4) + 1;
     }},
-    {Easing::in_out_elastic, [](double progress) -> double {
+    {Easing::InOutElastic, [](double progress) -> double {
       return progress == 0.0
              ? 0.0
              : progress == 1.0
@@ -184,10 +182,10 @@ std::unordered_map<Easing, std::function<double(double)>> TweenMgr::TweenI_::eas
                  : (std::pow(2, -20 * progress + 10) * std::sin((20 * progress - 11.125) * c5)) / 2 + 1;
     }},
 
-    {Easing::in_bounce, [](double progress) -> double {
-      return 1 - easing_funcs_[Easing::out_bounce](1 - progress);
+    {Easing::InBounce,      [](double progress) -> double {
+      return 1 - easing_funcs_[Easing::OutBounce](1 - progress);
     }},
-    {Easing::out_bounce, [](double progress) -> double {
+    {Easing::OutBounce,     [](double progress) -> double {
       if (progress < 1 / d1) {
         return n1 * progress * progress;
       } else if (progress < 2 / d1) {
@@ -201,10 +199,10 @@ std::unordered_map<Easing, std::function<double(double)>> TweenMgr::TweenI_::eas
         return n1 * progress * progress + 0.984375;
       }
     }},
-    {Easing::in_out_bounce, [](double progress) -> double {
+    {Easing::InOutBounce, [](double progress) -> double {
       return progress < 0.5
-             ? (1 - easing_funcs_[Easing::out_bounce](1 - 2 * progress)) / 2
-             : (1 + easing_funcs_[Easing::out_bounce](2 * progress - 1)) / 2;
+             ? (1 - easing_funcs_[Easing::OutBounce](1 - 2 * progress)) / 2
+             : (1 + easing_funcs_[Easing::OutBounce](2 * progress - 1)) / 2;
     }}
 };
 

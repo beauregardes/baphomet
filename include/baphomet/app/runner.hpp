@@ -1,5 +1,6 @@
 #pragma once
 
+#include "baphomet/app/internal/messenger.hpp"
 #include "baphomet/app/application.hpp"
 
 #define GLFW_INCLUDE_NONE
@@ -12,7 +13,7 @@ namespace baphomet {
 template<typename T>
 concept DerivesHadesApplication = std::is_base_of_v<Application, T>;
 
-class Runner {
+class Runner : Endpoint {
 public:
   Runner(spdlog::level::level_enum = spdlog::level::info);
   ~Runner();
@@ -25,7 +26,8 @@ public:
   void start();
 
 private:
-  std::shared_ptr<Messenger> msgr_{nullptr};
+  std::shared_ptr<Messenger> messenger_{nullptr};
+  void received_msg(const MsgCategory &category, const std::any &payload) override;
 
   struct {
     glm::ivec2 glversion{};
@@ -35,8 +37,6 @@ private:
   std::unique_ptr<Application> application_{nullptr};
 
   GLFWwindow *glfw_window_{nullptr};
-
-  void received_message_(const MsgCat &category, const std::any &payload);
 
   static void glfw_key_callback_(GLFWwindow *window, int key, int scancode, int action, int mods);
   static void glfw_cursor_position_callback_(GLFWwindow *window, double xpos, double ypos);
@@ -51,7 +51,7 @@ private:
 template<DerivesHadesApplication T>
 Runner &Runner::open(const WCfg &cfg) {
   application_ = std::unique_ptr<Application>(new T());
-  application_->msgr_ = msgr_;
+  application_->messenger_ = messenger_;
   open_params_.cfg = cfg;
   return *this;
 }

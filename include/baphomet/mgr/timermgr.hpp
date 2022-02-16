@@ -16,9 +16,9 @@ using AfterFunc = const std::function<void(void)>;
 using EveryFunc = const std::function<void(void)>;
 using UntilFunc = const std::function<bool(void)>;
 
-class TimerMgr {
+class TimerMgr : Endpoint {
 public:
-  TimerMgr(std::shared_ptr<Messenger> msgr);
+  TimerMgr(std::shared_ptr<Messenger> messenger);
 
   std::string after(const std::string &tag, Duration delay, AfterFunc &func);
   std::string after(Duration delay, AfterFunc &func);
@@ -34,8 +34,7 @@ public:
   void toggle(const std::string &tag);
 
 private:
-  std::shared_ptr<Messenger> msgr_;
-  void received_message_(const MsgCat &category, const std::any &payload);
+  void received_msg(const MsgCategory &category, const std::any &payload) override;
 
   void update_(Duration dt);
 

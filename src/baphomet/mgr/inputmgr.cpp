@@ -4,12 +4,8 @@
 
 namespace baphomet {
 
-InputMgr::InputMgr(GLFWwindow *parent, std::shared_ptr<Messenger> msgr)
-    : msgr_(msgr), parent_(parent) {
-
-  msgr_->register_endpoint("INPUT-MGR", [&](const MsgCat &category, const std::any &payload) {
-    received_message_(category, payload);
-  });
+InputMgr::InputMgr(GLFWwindow *parent, std::shared_ptr<Messenger> messenger) : Endpoint(), parent_(parent) {
+  initialize_endpoint(messenger, MsgEndpoint::Input);
 
   for (const auto &action : all_actions_())
     bind(action, action);
@@ -95,6 +91,51 @@ bool InputMgr::down(const std::string &name, Duration interval, Duration delay) 
   return false;
 }
 
+void InputMgr::received_msg(const MsgCategory &category, const std::any &payload) {
+  switch (category) {
+    using enum MsgCategory;
+
+    case KeyEvent: {
+      auto p = extract_msg_payload<KeyEvent>(payload);
+      glfw_key_event_(p.key, p.scancode, p.action, p.mods);
+    }
+      break;
+
+    case CursorPositionEvent: {
+      auto p = extract_msg_payload<CursorPositionEvent>(payload);
+      glfw_cursor_position_event_(p.xpos, p.ypos);
+    }
+      break;
+
+    case CursorEnterEvent: {
+      auto p = extract_msg_payload<CursorEnterEvent>(payload);
+      glfw_cursor_enter_event_(p.entered);
+    }
+      break;
+
+    case MouseButtonEvent: {
+      auto p = extract_msg_payload<MouseButtonEvent>(payload);
+      glfw_mouse_button_event_(p.button, p.action, p.mods);
+    }
+      break;
+
+    case ScrollEvent: {
+      auto p = extract_msg_payload<ScrollEvent>(payload);
+      glfw_scroll_event_(p.xoffset, p.yoffset);
+    }
+      break;
+
+    case Update: {
+      auto p = extract_msg_payload<Update>(payload);
+      update_(p.dt);
+    }
+      break;
+
+    default:
+      Endpoint::received_msg(category, payload);
+  }
+}
+
 bool InputMgr::check_sequence_(const std::string &tag) {
   auto &s = sequences_[tag];
 
@@ -154,51 +195,6 @@ void InputMgr::update_(Duration dt) {
     }
 
     it++;
-  }
-}
-
-void InputMgr::received_message_(const MsgCat &category, const std::any &payload) {
-  switch (category) {
-    using enum MsgCat;
-
-    case KeyEvent: {
-      auto p = Messenger::extract_payload<KeyEvent>(payload);
-      glfw_key_event_(p.key, p.scancode, p.action, p.mods);
-    }
-      break;
-
-    case CursorPositionEvent: {
-      auto p = Messenger::extract_payload<CursorPositionEvent>(payload);
-      glfw_cursor_position_event_(p.xpos, p.ypos);
-    }
-      break;
-
-    case CursorEnterEvent: {
-      auto p = Messenger::extract_payload<CursorEnterEvent>(payload);
-      glfw_cursor_enter_event_(p.entered);
-    }
-      break;
-
-    case MouseButtonEvent: {
-      auto p = Messenger::extract_payload<MouseButtonEvent>(payload);
-      glfw_mouse_button_event_(p.button, p.action, p.mods);
-    }
-      break;
-
-    case ScrollEvent: {
-      auto p = Messenger::extract_payload<ScrollEvent>(payload);
-      glfw_scroll_event_(p.xoffset, p.yoffset);
-    }
-      break;
-
-    case Update: {
-      auto p = Messenger::extract_payload<Update>(payload);
-      update_(p.dt);
-    }
-      break;
-
-    default:
-      spdlog::error("INPUT-MGR: Unhandled message category: '{}'", category);
   }
 }
 

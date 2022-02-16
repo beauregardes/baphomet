@@ -11,10 +11,8 @@
 
 namespace baphomet {
 
-Window::Window(std::shared_ptr<Messenger> &msgr) : msgr_(msgr) {
-  msgr_->register_endpoint("WINDOW", [&](const MsgCat &category, const std::any &payload) {
-    received_message_(category, payload);
-  });
+Window::Window(std::shared_ptr<Messenger> messenger) : Endpoint() {
+  initialize_endpoint(messenger, MsgEndpoint::Window);
 }
 
 void Window::set_size(int width, int height) {
@@ -142,19 +140,19 @@ void Window::create_fbo_(int width, int height) {
       .check_complete();
 }
 
-void Window::received_message_(const MsgCat &category, const std::any &payload) {
+void Window::received_msg(const MsgCategory &category, const std::any &payload) {
   switch (category) {
-    using enum MsgCat;
+    using enum MsgCategory;
 
     case WindowSize: {
-      auto p = Messenger::extract_payload<WindowSize>(payload);
+      auto p = extract_msg_payload<WindowSize>(payload);
       create_fbo_(p.width, p.height);
     }
       break;
 
     case WindowFocus: {
 #if defined(BAPHOMET_PLATFORM_WINDOWS)
-      auto p = Messenger::extract_payload<WindowFocus>(payload);
+      auto p = extract_msg_payload<WindowFocus>(payload);
       if (wm_info_.borderless)
         set_floating(p.focused == 1);
 #endif
@@ -162,7 +160,7 @@ void Window::received_message_(const MsgCat &category, const std::any &payload) 
       break;
 
     default:
-      spdlog::error("WINDOW: Unhandled message category: '{}'", category);
+      Endpoint::received_msg(category, payload);
   }
 }
 
@@ -178,7 +176,7 @@ void Window::open_for_gl_(const WCfg &cfg, glm::ivec2 glversion) {
     open_windowed_(cfg);
 
   // Send a message so the runner can save the handle and register callbacks now
-  msgr_->send_message<MsgCat::RegisterGlfwCallbacks>("RUNNER", glfw_window_);
+  send_msg<MsgCategory::RegisterGlfwCallbacks>(MsgEndpoint::Runner, glfw_window_);
 
   if (!set(cfg.flags, WFlags::fullscreen) &&
       !set(cfg.flags, WFlags::borderless) &&

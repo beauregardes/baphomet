@@ -34,11 +34,11 @@ struct WCfg {
   WFlags flags{WFlags::none};
 };
 
-class Window {
+class Window : Endpoint {
   friend class Application;
 
 public:
-  Window(std::shared_ptr<Messenger> &msgr);
+  Window(std::shared_ptr<Messenger> messenger);
 
   void set_size(int width, int height);
   glm::ivec2 size() const;
@@ -73,7 +73,7 @@ public:
   glm::mat4 projection() const;
 
 private:
-  std::shared_ptr<Messenger> msgr_;
+  void received_msg(const MsgCategory &category, const std::any &payload) override;
 
   GLFWwindow *glfw_window_{nullptr};
 
@@ -84,8 +84,6 @@ private:
     bool borderless{false};
     bool vsync{false};
   } wm_info_;
-
-  void received_message_(const MsgCat &category, const std::any &payload);
 
   void open_for_gl_(const WCfg &cfg, glm::ivec2 glversion);
   void close_();

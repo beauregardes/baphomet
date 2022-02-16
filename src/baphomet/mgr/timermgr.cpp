@@ -6,10 +6,8 @@
 
 namespace baphomet {
 
-TimerMgr::TimerMgr(std::shared_ptr<Messenger> msgr) : msgr_(msgr) {
-  msgr_->register_endpoint("TIMER-MGR", [&](const MsgCat &category, const std::any &payload) {
-    received_message_(category, payload);
-  });
+TimerMgr::TimerMgr(std::shared_ptr<Messenger> messenger) : Endpoint() {
+  initialize_endpoint(messenger, MsgEndpoint::Timer);
 }
 
 std::string TimerMgr::after(const std::string &tag, Duration delay, AfterFunc &func) {
@@ -57,18 +55,18 @@ void TimerMgr::toggle(const std::string &tag) {
     it->second->paused = !it->second->paused;
 }
 
-void TimerMgr::received_message_(const MsgCat &category, const std::any &payload) {
+void TimerMgr::received_msg(const MsgCategory &category, const std::any &payload) {
   switch (category) {
-    using enum MsgCat;
+    using enum MsgCategory;
 
     case Update: {
-      auto p = Messenger::extract_payload<Update>(payload);
+      auto p = extract_msg_payload<Update>(payload);
       update_(p.dt);
     }
       break;
 
     default:
-      spdlog::error("TIMER-MGR: Unhandled message category: '{}'", category);
+      Endpoint::received_msg(category, payload);
   }
 }
 

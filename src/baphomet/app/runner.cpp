@@ -1,13 +1,10 @@
 #include "baphomet/app/runner.hpp"
 
-#include "baphomet/app/internal/messenger.hpp"
-#include "baphomet/util/platform.hpp"
-
 #include "spdlog/spdlog.h"
 
 namespace baphomet {
 
-Runner::Runner(spdlog::level::level_enum log_level) {
+Runner::Runner(spdlog::level::level_enum log_level) : Endpoint() {
   spdlog::set_level(log_level);
 
   if (!glfwInit()) {
@@ -22,11 +19,8 @@ Runner::Runner(spdlog::level::level_enum log_level) {
   } else
     spdlog::debug("Initialized GLFW");
 
-  msgr_ = std::make_shared<Messenger>();
-
-  msgr_->register_endpoint("RUNNER", [&](const MsgCat &category, const std::any &payload) {
-    received_message_(category, payload);
-  });
+  messenger_ = std::make_shared<Messenger>();
+  initialize_endpoint(messenger_, MsgEndpoint::Runner);
 }
 
 Runner::~Runner() {
@@ -56,21 +50,21 @@ void Runner::start() {
     application_->draw();
     application_->end_frame_();
 
-    msgr_->send_message<MsgCat::Update>("INPUT-MGR", dt);
-    msgr_->send_message<MsgCat::Update>("TIMER-MGR", dt);
-    msgr_->send_message<MsgCat::Update>("TWEEN-MGR", dt);
-    msgr_->send_message<MsgCat::Update>("AUDIO-MGR", dt);
+    send_msg<MsgCategory::Update>(MsgEndpoint::Input, dt);
+    send_msg<MsgCategory::Update>(MsgEndpoint::Audio, dt);
+    send_msg<MsgCategory::Update>(MsgEndpoint::Timer, dt);
+    send_msg<MsgCategory::Update>(MsgEndpoint::Tween, dt);
 
     glfwPollEvents();
   } while (!glfwWindowShouldClose(glfw_window_));
 }
 
-void Runner::received_message_(const MsgCat &category, const std::any &payload) {
+void Runner::received_msg(const MsgCategory &category, const std::any &payload) {
   switch (category) {
-    using enum MsgCat;
+    using enum MsgCategory;
 
     case RegisterGlfwCallbacks: {
-      auto p = Messenger::extract_payload<RegisterGlfwCallbacks>(payload);
+      auto p = extract_msg_payload<RegisterGlfwCallbacks>(payload);
       glfwSetWindowUserPointer(p.window, this);
       glfwSetKeyCallback(p.window, glfw_key_callback_);
       glfwSetCursorPosCallback(p.window, glfw_cursor_position_callback_);
@@ -88,45 +82,45 @@ void Runner::received_message_(const MsgCat &category, const std::any &payload) 
       break;
 
     default:
-      spdlog::error("RUNNER: Unhandled message category: '{}'", category);
+      Endpoint::received_msg(category, payload);
   }
 }
 
 void Runner::glfw_key_callback_(GLFWwindow *window, int key, int scancode, int action, int mods) {
   auto runner = reinterpret_cast<Runner *>(glfwGetWindowUserPointer(window));
-  runner->msgr_->send_message<MsgCat::KeyEvent>("INPUT-MGR", key, scancode, action, mods);
+  runner->send_msg<MsgCategory::KeyEvent>(MsgEndpoint::Input, key, scancode, action, mods);
 }
 
 void Runner::glfw_cursor_position_callback_(GLFWwindow *window, double xpos, double ypos) {
   auto runner = reinterpret_cast<Runner *>(glfwGetWindowUserPointer(window));
-  runner->msgr_->send_message<MsgCat::CursorPositionEvent>("INPUT-MGR", xpos, ypos);
+  runner->send_msg<MsgCategory::CursorPositionEvent>(MsgEndpoint::Input, xpos, ypos);
 }
 
 void Runner::glfw_cursor_enter_callback_(GLFWwindow *window, int entered) {
   auto runner = reinterpret_cast<Runner *>(glfwGetWindowUserPointer(window));
-  runner->msgr_->send_message<MsgCat::CursorEnterEvent>("INPUT-MGR", entered);
+  runner->send_msg<MsgCategory::CursorEnterEvent>(MsgEndpoint::Input, entered);
 }
 
 void Runner::glfw_mouse_button_callback_(GLFWwindow *window, int button, int action, int mods) {
   auto runner = reinterpret_cast<Runner *>(glfwGetWindowUserPointer(window));
-  runner->msgr_->send_message<MsgCat::MouseButtonEvent>("INPUT-MGR", button, action, mods);
+  runner->send_msg<MsgCategory::MouseButtonEvent>(MsgEndpoint::Input, button, action, mods);
 }
 
 void Runner::glfw_scroll_callback_(GLFWwindow *window, double xoffset, double yoffset) {
   auto runner = reinterpret_cast<Runner *>(glfwGetWindowUserPointer(window));
-  runner->msgr_->send_message<MsgCat::ScrollEvent>("INPUT-MGR", xoffset, yoffset);
+  runner->send_msg<MsgCategory::ScrollEvent>(MsgEndpoint::Input, xoffset, yoffset);
 }
 
 void Runner::glfw_window_size_callback_(GLFWwindow *window, int width, int height) {
   auto runner = reinterpret_cast<Runner *>(glfwGetWindowUserPointer(window));
-  runner->msgr_->send_message<MsgCat::WindowSize>("WINDOW", width, height);
+  runner->send_msg<MsgCategory::WindowSize>(MsgEndpoint::Window, width, height);
 }
 
 void Runner::glfw_window_pos_callback_(GLFWwindow *window, int xpos, int ypos) { /* noop */ }
 
 void Runner::glfw_window_focus_callback_(GLFWwindow *window, int focused) {
   auto runner = reinterpret_cast<Runner *>(glfwGetWindowUserPointer(window));
-  runner->msgr_->send_message<MsgCat::WindowFocus>("WINDOW", focused);
+  runner->send_msg<MsgCategory::WindowFocus>(MsgEndpoint::Window, focused);
 }
 
 } // namespace baphomet

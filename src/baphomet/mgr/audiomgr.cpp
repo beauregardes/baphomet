@@ -8,10 +8,8 @@
 
 namespace baphomet {
 
-AudioMgr::AudioMgr(std::shared_ptr<Messenger> msgr) : msgr_(msgr) {
-  msgr_->register_endpoint("AUDIO-MGR", [&](const MsgCat &category, const std::any &payload) {
-    received_message_(category, payload);
-  });
+AudioMgr::AudioMgr(std::shared_ptr<Messenger> messenger) : Endpoint() {
+  initialize_endpoint(messenger, MsgEndpoint::Audio);
 
 //#if defined(BAPHOMET_PLATFORM_WINDOWS)
 //  const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
@@ -161,6 +159,21 @@ const std::vector<std::string> &AudioMgr::get_devices() {
   return devices_;
 }
 
+void AudioMgr::received_msg(const MsgCategory &category, const std::any &payload) {
+  switch (category) {
+    using enum MsgCategory;
+
+    case Update: {
+      auto p = extract_msg_payload<Update>(payload);
+      update_(p.dt);
+    }
+      break;
+
+    default:
+      Endpoint::received_msg(category, payload);
+  }
+}
+
 void AudioMgr::update_(Duration dt) {
   for (auto s_it = sources_.begin(); s_it != sources_.end(); ) {
     auto &l = s_it->second;
@@ -184,21 +197,6 @@ void AudioMgr::update_(Duration dt) {
       continue;
     }
     s_it++;
-  }
-}
-
-void AudioMgr::received_message_(const MsgCat &category, const std::any &payload) {
-  switch (category) {
-    using enum MsgCat;
-
-    case Update: {
-      auto p = Messenger::extract_payload<Update>(payload);
-      update_(p.dt);
-    }
-      break;
-
-    default:
-      spdlog::error("AUDIO-MGR: Unhandled message category: '{}'", category);
   }
 }
 

@@ -27,10 +27,11 @@ struct DebugLogLine {
   DebugLogLine(const std::string &msg) : msg(msg) {}
 };
 
-class Application {
+class Application : Endpoint {
   friend class Runner;
 
 public:
+  Application();
   virtual ~Application();
 
 protected:
@@ -52,8 +53,8 @@ protected:
   void shutdown();
 
 private:
-  std::shared_ptr<Messenger> msgr_;
-  void received_message_(const MsgCat &category, const std::any &payload);
+  std::shared_ptr<Messenger> messenger_{nullptr};
+  void received_msg(const MsgCategory &category, const std::any &payload) override;
 
   FrameCounter frame_counter_{};
 

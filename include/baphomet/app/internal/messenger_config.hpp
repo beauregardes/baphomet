@@ -8,7 +8,21 @@
 
 namespace baphomet {
 
-enum class MsgCat {
+enum class MsgEndpoint {
+  Runner,
+  Application,
+  Window,
+  Audio,
+  Input,
+  Timer,
+  Tween,
+
+  Undefined
+};
+
+std::ostream &operator<<(std::ostream &out, MsgEndpoint value);
+
+enum class MsgCategory {
   /* RUNNER INITIALIZATION */
   RegisterGlfwCallbacks,
 
@@ -25,16 +39,17 @@ enum class MsgCat {
   Update
 };
 
-std::ostream &operator<<(std::ostream &out, MsgCat value);
+std::ostream &operator<<(std::ostream &out, MsgCategory value);
 
-namespace internal {
-
-template<MsgCat>
+template<MsgCategory>
 struct PayloadMap;
 
 #define EVENT_TYPE_PAYLOAD(e, ...)                \
-  template<> struct PayloadMap<MsgCat::e> {       \
-    using type = struct e ## Pay { __VA_ARGS__ }; \
+  template<> struct PayloadMap<MsgCategory::e> {  \
+    using type = struct e ## Pay {                \
+      __VA_ARGS__                                 \
+      MsgEndpoint origin;                         \
+    };                                            \
   };
 
 EVENT_TYPE_PAYLOAD(RegisterGlfwCallbacks,
@@ -81,5 +96,7 @@ EVENT_TYPE_PAYLOAD(Update,
     Duration dt;
 )
 
-} // namespace internal
+// don't leak this, it's just for convenience here
+#undef EVENT_TYPE_PAYLOAD
+
 } // namespace baphomet

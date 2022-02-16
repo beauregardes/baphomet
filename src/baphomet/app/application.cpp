@@ -7,6 +7,8 @@
 
 namespace baphomet {
 
+Application::Application() : Endpoint() {}
+
 Application::~Application() {
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
@@ -23,12 +25,12 @@ void Application::shutdown() {
   window->close_();
 }
 
-void Application::received_message_(const MsgCat &category, const std::any &payload) {
+void Application::received_msg(const MsgCategory &category, const std::any &payload) {
   switch (category) {
-    using enum MsgCat;
+    using enum MsgCategory;
 
     default:
-      spdlog::error("APPLICATION: Unhandled message category: '{}'", category);
+      Endpoint::received_msg(category, payload);
   }
 }
 
@@ -161,23 +163,21 @@ void Application::debug_log_(fmt::string_view format, fmt::format_args args) {
  ******************/
 
 void Application::open_for_gl_(const WCfg &cfg, glm::ivec2 glversion) {
-  msgr_->register_endpoint("APPLICATION", [&](const MsgCat &category, const std::any &payload) {
-    received_message_(category, payload);
-  });
+  initialize_endpoint(messenger_, MsgEndpoint::Application);
 
-  window = std::make_unique<Window>(msgr_);
+  window = std::make_unique<Window>(messenger_);
   window->open_for_gl_(cfg, glversion);
   window->wm_info_.vsync = set(cfg.flags, WFlags::vsync);
 
-  input = std::make_unique<InputMgr>(window->glfw_window_, msgr_);
+  input = std::make_unique<InputMgr>(window->glfw_window_, messenger_);
 
-  audio = std::make_unique<AudioMgr>(msgr_);
+  audio = std::make_unique<AudioMgr>(messenger_);
   audio->open_device();
   audio->open_context();
   audio->make_current();
 
-  timer = std::make_unique<TimerMgr>(msgr_);
-  tween = std::make_unique<TweenMgr>(msgr_);
+  timer = std::make_unique<TimerMgr>(messenger_);
+  tween = std::make_unique<TweenMgr>(messenger_);
 }
 
 void Application::init_gl_(glm::ivec2 glversion) {

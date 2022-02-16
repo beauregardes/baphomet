@@ -14,7 +14,7 @@
 
 namespace baphomet {
 
-class InputMgr {
+class InputMgr : Endpoint {
 public:
   struct {
     double x{0.0}, y{0.0};
@@ -32,7 +32,7 @@ public:
     bool raw_motion{false};
   } mouse;
 
-  InputMgr(GLFWwindow *parent, std::shared_ptr<Messenger> msgr);
+  InputMgr(GLFWwindow *parent, std::shared_ptr<Messenger> messenger);
 
   void set_mouse_locked(bool locked);
   void set_mouse_hidden(bool hidden);
@@ -51,7 +51,7 @@ public:
   bool sequence(const std::string &name, const Args &...args);
 
 private:
-  std::shared_ptr<Messenger> msgr_;
+  void received_msg(const MsgCategory &category, const std::any &payload) override;
 
   GLFWwindow *parent_ {nullptr};
 
@@ -87,8 +87,6 @@ private:
   bool check_sequence_(const std::string &tag);
 
   void update_(Duration dt);
-
-  void received_message_(const MsgCat &category, const std::any &payload);
 
   void glfw_key_event_(int key, int scancode, int action, int mods);
   void glfw_cursor_position_event_(double xpos, double ypos);

@@ -14,43 +14,53 @@
 namespace baphomet {
 
 enum class Easing {
-  linear,
-  in_sine,
-  out_sine,
-  in_out_sine,
-  in_quad,
-  out_quad,
-  in_out_quad,
-  in_cubic,
-  out_cubic,
-  in_out_cubic,
-  in_quart,
-  out_quart,
-  in_out_quart,
-  in_quint,
-  out_quint,
-  in_out_quint,
-  in_exp,
-  out_exp,
-  in_out_exp,
-  in_circ,
-  out_circ,
-  in_out_circ,
-  in_back,
-  out_back,
-  in_out_back,
-  in_elastic,
-  out_elastic,
-  in_out_elastic,
-  in_bounce,
-  out_bounce,
-  in_out_bounce
+  Linear,
+
+  InSine,
+  OutSine,
+  InOutSine,
+
+  InQuad,
+  OutQuad,
+  InOutQuad,
+
+  InCubic,
+  OutCubic,
+  InOutCubic,
+
+  InQuart,
+  OutQuart,
+  InOutQuart,
+
+  InQuint,
+  OutQuint,
+  InOutQuint,
+
+  InExp,
+  OutExp,
+  InOutExp,
+
+  InCirc,
+  OutCirc,
+  InOutCirc,
+
+  InBack,
+  OutBack,
+  InOutBack,
+
+  InElastic,
+  OutElastic,
+  InOutElastic,
+
+  InBounce,
+  OutBounce,
+  InOutBounce
 };
 
-class TweenMgr {
+class TweenMgr : Endpoint {
 
 public:
-  TweenMgr(std::shared_ptr<Messenger> msgr);
+  TweenMgr(std::shared_ptr<Messenger> messenger);
 
   template <typename T, typename U, typename V>
   requires std::convertible_to<U, T> && std::convertible_to<V, T>
@@ -70,8 +80,7 @@ public:
   void toggle(const std::string &tag);
 
 private:
-  std::shared_ptr<Messenger> msgr_;
-  void received_message_(const MsgCat &category, const std::any &payload);
+  void received_msg(const MsgCategory &category, const std::any &payload) override;
 
   void update_(Duration dt);
 
