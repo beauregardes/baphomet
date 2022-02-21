@@ -189,12 +189,8 @@ public:
   }
 };
 
-int main(int, char *[]) {
-  baphomet::Runner()
-      .open<GameOfLife>({
-          .title = "Game Of Life",
-          .flags = baphomet::WFlags::hidden
-      })
-      .init_gl()
-      .start();
-}
+BAPHOMET_GL_MAIN_DEBUG(
+    GameOfLife,
+    .title = "Game Of Life",
+    .flags = baphomet::WFlags::hidden
+)

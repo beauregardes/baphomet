@@ -9,6 +9,7 @@ set(headers ${headers}
     include/baphomet/gfx/font/cp437.hpp
     include/baphomet/gfx/gl/batching/batch.hpp
     include/baphomet/gfx/gl/batching/line_batch.hpp
+    include/baphomet/gfx/gl/batching/lined_batch.hpp
     include/baphomet/gfx/gl/batching/oval_batch.hpp
     include/baphomet/gfx/gl/batching/pixel_batch.hpp
     include/baphomet/gfx/gl/batching/rect_batch.hpp

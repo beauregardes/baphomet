@@ -10,7 +10,7 @@
 
 namespace baphomet::gl {
 
-enum class BatchType { none, pixel, line, tri, rect, oval, texture };
+enum class BatchType { none, pixel, line, tri, rect, oval, lined, texture };
 
 class Batch {
 public:
@@ -23,11 +23,11 @@ public:
   bool empty_opaque();
   bool empty_alpha();
 
-  std::size_t size_opaque();
-  std::size_t size_alpha();
+  virtual std::size_t size_opaque();
+  virtual std::size_t size_alpha();
 
-  std::size_t vertex_count_opaque();
-  std::size_t vertex_count_alpha();
+  virtual std::size_t vertex_count_opaque();
+  virtual std::size_t vertex_count_alpha();
 
   virtual void draw_opaque(float z_max, glm::mat4 projection) = 0;
   virtual void draw_alpha(float z_max, glm::mat4 projection, GLint first, GLsizei count) = 0;

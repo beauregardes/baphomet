@@ -10,6 +10,10 @@ namespace baphomet {
 Application::Application() : Endpoint() {}
 
 Application::~Application() {
+  ImPlot::DestroyContext(implot_state_.ctx);
+
+  implot_state_.ctx = nullptr;
+
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext(imgui_state_.ctx);
@@ -123,7 +127,7 @@ void Application::draw_debug_log_() {
       auto bounds = overlay_.font->calc_text_bounds(0.0f, 0.0f, line.msg);
       base_pos.y -= bounds.h + 2;
 
-      gfx->rect(
+      gfx->fill_rect(
           base_pos.x, base_pos.y, bounds.w + 2, bounds.h + 2,
           baphomet::rgba(0, 0, 0, 217 * (line.opacity / 255.0))
       );
@@ -142,7 +146,7 @@ void Application::draw_debug_log_() {
 
 void Application::draw_overlay_text_with_bg_(glm::vec2 &base_pos, const std::string &text) {
   auto bounds = overlay_.font->calc_text_bounds(base_pos.x, base_pos.y, text);
-  gfx->rect(
+  gfx->fill_rect(
       bounds.x, bounds.y, bounds.w + 2, bounds.h + 2,
       baphomet::rgba(0, 0, 0, 217)
   );
@@ -237,6 +241,8 @@ void Application::init_imgui_(glm::ivec2 glversion) {
   imgui_state_.ctx = ImGui::CreateContext();
   imgui_state_.io = &ImGui::GetIO(); (void)imgui_state_.io;
   imgui_state_.io->IniFilename = nullptr;
+
+  implot_state_.ctx = ImPlot::CreateContext();
 
   ImGui_ImplGlfw_InitForOpenGL(window->glfw_window_, true);
   std::string glsl_version;

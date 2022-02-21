@@ -51,9 +51,21 @@ void VertexArray::attrib_pointer(const BufferBase *buffer, const AttrDef &defini
   unbind();
 }
 
+void VertexArray::indices(const BufferBase *buffer) {
+  bind();
+  buffer->bind(BufTarget::element_array);
+  unbind();
+}
+
 void VertexArray::draw_arrays(DrawMode mode, GLint first, GLsizei count) {
   bind();
   glDrawArrays(unwrap(mode), first, count);
+  unbind();
+}
+
+void VertexArray::draw_elements(DrawMode mode, GLsizei count, GLenum type, void *indices) {
+  bind();
+  glDrawElements(unwrap(mode), count, type, indices);
   unbind();
 }
 

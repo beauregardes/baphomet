@@ -12,6 +12,9 @@ set(headers ${headers}
     thirdparty/imgui/include/imstb_textedit.h
     thirdparty/imgui/include/imstb_truetype.h
 
+    thirdparty/implot/include/implot.h
+    thirdparty/implot/include/implot_internal.h
+
     thirdparty/stb/stb_image.h
     thirdparty/stb/stb_image_write.h
 )
@@ -26,4 +29,8 @@ set(srcs ${srcs}
     thirdparty/imgui/src/imgui_draw.cpp
     thirdparty/imgui/src/imgui_tables.cpp
     thirdparty/imgui/src/imgui_widgets.cpp
+
+    thirdparty/implot/src/implot.cpp
+    thirdparty/implot/src/implot_demo.cpp
+    thirdparty/implot/src/implot_items.cpp
 )

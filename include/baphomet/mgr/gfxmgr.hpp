@@ -43,56 +43,67 @@ public:
    */
 
   void pixel(float x, float y, const baphomet::RGB &color);
+  void pixel(Point p, const baphomet::RGB &color);
 
   void line(float x0, float y0, float x1, float y1, const baphomet::RGB &color, float cx, float cy, float angle);
   void line(float x0, float y0, float x1, float y1, const baphomet::RGB &color, float angle);
   void line(float x0, float y0, float x1, float y1, const baphomet::RGB &color);
-
-  void tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color, float cx, float cy, float angle);
-  void tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color, float angle);
-  void tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color);
-
-  void tri(float x, float y, float radius, const baphomet::RGB &color, float angle);
-  void tri(float x, float y, float radius, const baphomet::RGB &color);
-
-  void rect(float x, float y, float w, float h, const baphomet::RGB &color, float cx, float cy, float angle);
-  void rect(float x, float y, float w, float h, const baphomet::RGB &color, float angle);
-  void rect(float x, float y, float w, float h, const baphomet::RGB &color);
-
-  void oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color, float cx, float cy, float angle);
-  void oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color, float angle);
-  void oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color);
-
-  void circle(float x, float y, float radius, const baphomet::RGB &color, float cx, float cy, float angle);
-  void circle(float x, float y, float radius, const baphomet::RGB &color, float angle);
-  void circle(float x, float y, float radius, const baphomet::RGB &color);
-
-  // ********** SHAPES **********
-
-  void pixel(Point p, const baphomet::RGB &color);
-
   void line(Line l, const baphomet::RGB &color, float cx, float cy, float angle);
   void line(Line l, const baphomet::RGB &color, float angle);
   void line(Line l, const baphomet::RGB &color);
 
-  void tri(Tri t, const baphomet::RGB &color, float cx, float cy, float angle);
-  void tri(Tri t, const baphomet::RGB &color, float angle);
-  void tri(Tri t, const baphomet::RGB &color);
+  // ********** FILLED ***********
 
-  void tri(Point origin, float radius, const baphomet::RGB &color, float angle);
-  void tri(Point origin, float radius, const baphomet::RGB &color);
+  void fill_tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color, float cx, float cy, float angle);
+  void fill_tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color, float angle);
+  void fill_tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color);
+  void fill_tri(float x, float y, float radius, const baphomet::RGB &color, float cx, float cy, float angle);
+  void fill_tri(float x, float y, float radius, const baphomet::RGB &color, float angle);
+  void fill_tri(float x, float y, float radius, const baphomet::RGB &color);
+  void fill_tri(Tri t, const baphomet::RGB &color, float cx, float cy, float angle);
+  void fill_tri(Tri t, const baphomet::RGB &color, float angle);
+  void fill_tri(Tri t, const baphomet::RGB &color);
+  void fill_tri(Point origin, float radius, const baphomet::RGB &color, float cx, float cy, float angle);
+  void fill_tri(Point origin, float radius, const baphomet::RGB &color, float angle);
+  void fill_tri(Point origin, float radius, const baphomet::RGB &color);
 
-  void rect(Rect r, const baphomet::RGB &color, float cx, float cy, float angle);
-  void rect(Rect r, const baphomet::RGB &color, float angle);
-  void rect(Rect r, const baphomet::RGB &color);
+  void fill_rect(float x, float y, float w, float h, const baphomet::RGB &color, float cx, float cy, float angle);
+  void fill_rect(float x, float y, float w, float h, const baphomet::RGB &color, float angle);
+  void fill_rect(float x, float y, float w, float h, const baphomet::RGB &color);
+  void fill_rect(Rect r, const baphomet::RGB &color, float cx, float cy, float angle);
+  void fill_rect(Rect r, const baphomet::RGB &color, float angle);
+  void fill_rect(Rect r, const baphomet::RGB &color);
 
-  void oval(Oval o, const baphomet::RGB &color, float cx, float cy, float angle);
-  void oval(Oval o, const baphomet::RGB &color, float angle);
-  void oval(Oval o, const baphomet::RGB &color);
+  void fill_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color, float cx, float cy, float angle);
+  void fill_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color, float angle);
+  void fill_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color);
+  void fill_oval(Oval o, const baphomet::RGB &color, float cx, float cy, float angle);
+  void fill_oval(Oval o, const baphomet::RGB &color, float angle);
+  void fill_oval(Oval o, const baphomet::RGB &color);
 
-  void circle(Circle c, const baphomet::RGB &color, float cx, float cy, float angle);
-  void circle(Circle c, const baphomet::RGB &color, float angle);
-  void circle(Circle c, const baphomet::RGB &color);
+  void fill_circle(float x, float y, float radius, const baphomet::RGB &color, float cx, float cy, float angle);
+  void fill_circle(float x, float y, float radius, const baphomet::RGB &color, float angle);
+  void fill_circle(float x, float y, float radius, const baphomet::RGB &color);
+  void fill_circle(Circle c, const baphomet::RGB &color, float cx, float cy, float angle);
+  void fill_circle(Circle c, const baphomet::RGB &color, float angle);
+  void fill_circle(Circle c, const baphomet::RGB &color);
+
+  // ********** LINED ***********
+
+  void draw_tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color, float cx, float cy, float angle);
+  void draw_tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color, float angle);
+  void draw_tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color);
+  void draw_tri(float x, float y, float radius, const baphomet::RGB &color, float cx, float cy, float angle);
+  void draw_tri(float x, float y, float radius, const baphomet::RGB &color, float angle);
+  void draw_tri(float x, float y, float radius, const baphomet::RGB &color);
+
+  void draw_rect(float x, float y, float w, float h, const baphomet::RGB &color, float cx, float cy, float angle);
+  void draw_rect(float x, float y, float w, float h, const baphomet::RGB &color, float angle);
+  void draw_rect(float x, float y, float w, float h, const baphomet::RGB &color);
+
+  void draw_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color, float cx, float cy, float angle);
+  void draw_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color, float angle);
+  void draw_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color);
 
   /***********
    * TEXTURES

@@ -22,4 +22,26 @@ using namespace std::chrono_literals;
 namespace fs = std::filesystem;
 #endif
 
+#ifndef BAPHOMET_NO_MAIN_MACROS
+#define BAPHOMET_GL_MAIN(a, ...) \
+  int main(int, char *[]) {      \
+    baphomet::Runner()           \
+        .open<a>({               \
+            __VA_ARGS__          \
+        })                       \
+        .init_gl()               \
+        .start();                \
+  }
+
+#define BAPHOMET_GL_MAIN_DEBUG(a, ...)     \
+  int main(int, char *[]) {                \
+    baphomet::Runner(spdlog::level::debug) \
+        .open<a>({                         \
+            __VA_ARGS__                    \
+        })                                 \
+        .init_gl()                         \
+        .start();                          \
+  }
+#endif
+
 #endif //BAPHOMET_BAPHOMET_HPP

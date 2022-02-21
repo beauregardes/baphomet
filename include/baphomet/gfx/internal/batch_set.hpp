@@ -1,6 +1,7 @@
 #pragma once
 
 #include "baphomet/gfx/gl/batching/line_batch.hpp"
+#include "baphomet/gfx/gl/batching/lined_batch.hpp"
 #include "baphomet/gfx/gl/batching/oval_batch.hpp"
 #include "baphomet/gfx/gl/batching/pixel_batch.hpp"
 #include "baphomet/gfx/gl/batching/rect_batch.hpp"
@@ -44,6 +45,10 @@ public:
   void add_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color, float cx, float cy, float angle);
   void add_texture(const std::string &name, float x, float y, float w, float h, float tx, float ty, float tw, float th, float cx, float cy, float angle, const baphomet::RGB &color);
 
+  void add_lined_tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color, float cx, float cy, float angle);
+  void add_lined_rect(float x, float y, float w, float h, const baphomet::RGB &color, float cx, float cy, float angle);
+  void add_lined_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color, float cx, float cy, float angle);
+
   void draw_opaque(glm::mat4 projection);
   void draw_alpha(glm::mat4 projection);
 
@@ -52,6 +57,7 @@ private:
 
   std::unique_ptr <gl::PixelBatch> pixels{nullptr};
   std::unique_ptr <gl::LineBatch> lines{nullptr};
+  std::unique_ptr <gl::LinedBatch> lined{nullptr};
   std::unique_ptr <gl::TriBatch> tris{nullptr};
   std::unique_ptr <gl::RectBatch> rects{nullptr};
   std::unique_ptr <gl::OvalBatch> ovals{nullptr};

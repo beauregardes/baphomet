@@ -102,6 +102,7 @@ target_include_directories(baphomet PUBLIC
     thirdparty/glad/include
     thirdparty/imgui/include
     thirdparty/imgui/include/backends
+    thirdparty/implot/include
     thirdparty/stb
 )
 
@@ -114,6 +115,6 @@ if (BAPHOMET_BUILD_EXAMPLES)
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 "${OpenAL_BINARY_DIR}/OpenAL32.dll"
                 "${CMAKE_BINARY_DIR}/example"
-                )
+        )
     endif ()
 endif ()

@@ -69,7 +69,11 @@ public:
   void attrib_pointer(const BufferBase *buffer, const std::vector<AttrDef> &definitions);
   void attrib_pointer(const BufferBase *buffer, const AttrDef &definition);
 
+  void indices(const BufferBase *buffer);
+
   void draw_arrays(DrawMode mode, GLint first, GLsizei count);
+
+  void draw_elements(DrawMode mode, GLsizei count, GLenum type, void *indices = nullptr);
 
 private:
   void setup_enable_definition_(const AttrDef &definition);

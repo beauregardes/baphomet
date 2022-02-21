@@ -10,18 +10,17 @@ class Testing : public baphomet::Application {
   void draw() override {
     gfx->clear();
 
-    gfx->circle(input->mouse.x, input->mouse.y, 10, baphomet::rgb(0xffffff));
+    gfx->draw_oval(
+        window->w() / 2.0f, window->h() / 2.0f,
+        100.0f, 100.0f,
+        baphomet::rgb(0xffffff)
+    );
   }
 };
 
-int main(int, char *[]) {
-  baphomet::Runner(spdlog::level::debug)
-      .open<Testing>({
-          .title = "Testing",
-          .size = {800, 600},
-          .flags = baphomet::WFlags::centered
-      })
-      .init_gl()
-      .start();
-}
-
+BAPHOMET_GL_MAIN_DEBUG(
+    Testing,
+    .title = "Testing",
+    .size = {800, 600},
+    .flags = baphomet::WFlags::centered
+)

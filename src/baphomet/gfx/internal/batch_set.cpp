@@ -9,6 +9,7 @@ BatchSet::BatchSet() {
 void BatchSet::clear() {
   if (pixels) pixels->clear();
   if (lines)  lines->clear();
+  if (lined)  lined->clear();
   if (tris)   tris->clear();
   if (rects)  rects->clear();
   if (ovals)  ovals->clear();
@@ -177,12 +178,65 @@ void BatchSet::add_texture(const std::string &name, float x, float y, float w, f
   z_level++;
 }
 
+void BatchSet::add_lined_tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color, float cx, float cy, float angle) {
+  if (!lined)
+    lined = std::make_unique<gl::LinedBatch>();
+  if (color.a < 255)
+    check_store_alpha_batch_(gl::BatchType::lined);
+
+  auto cv = color.vec4();
+  lined->add_tri(
+      x0 + 0.5f, y0 + 0.5f,
+      x1 + 0.5f, y1 + 0.5f,
+      x2 + 0.5f, y2 + 0.5f,
+      z_level,
+      cv.r, cv.g, cv.b, cv.a,
+      cx, cy, glm::radians(angle)
+  );
+  z_level++;
+}
+
+void BatchSet::add_lined_rect(float x, float y, float w, float h, const baphomet::RGB &color, float cx, float cy, float angle) {
+  if (!lined)
+    lined = std::make_unique<gl::LinedBatch>();
+  if (color.a < 255)
+    check_store_alpha_batch_(gl::BatchType::lined);
+
+  auto cv = color.vec4();
+  lined->add_rect(
+      x + 0.5f, y + 0.5f,
+      w - 1, h - 1,
+      z_level,
+      cv.r, cv.g, cv.b, cv.a,
+      cx, cy, glm::radians(angle)
+  );
+  z_level++;
+}
+
+void BatchSet::add_lined_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color, float cx, float cy, float angle) {
+  if (!lined)
+    lined = std::make_unique<gl::LinedBatch>();
+  if (color.a < 255)
+    check_store_alpha_batch_(gl::BatchType::lined);
+
+  auto cv = color.vec4();
+  lined->add_oval(
+      x + 0.5f, y + 0.5f,
+      x_radius + 0.5f, y_radius + 0.5f,
+      z_level,
+      cv.r, cv.g, cv.b, cv.a,
+      cx + 0.5f, cy + 0.5f, glm::radians(angle)
+  );
+  z_level++;
+}
+
 void BatchSet::draw_opaque(glm::mat4 projection) {
   for (auto &p : tex_batches_)
     p.second->draw_opaque(z_level, projection);
   if (ovals)  ovals->draw_opaque(z_level, projection);
   if (rects)  rects->draw_opaque(z_level, projection);
   if (tris)   tris->draw_opaque(z_level, projection);
+  if (lined)  lined->draw_opaque(z_level, projection);
   if (lines)  lines->draw_opaque(z_level, projection);
   if (pixels) pixels->draw_opaque(z_level, projection);
 }
@@ -207,6 +261,15 @@ void BatchSet::draw_alpha(glm::mat4 projection) {
           projection,
           batch_starts_[last_batch_type_],
           lines->size_alpha() - batch_starts_[last_batch_type_]
+      );
+      break;
+
+    case gl::BatchType::lined:
+      lined->draw_alpha(
+          z_level,
+          projection,
+          batch_starts_[last_batch_type_],
+          lined->size_alpha() - batch_starts_[last_batch_type_]
       );
       break;
 
@@ -255,6 +318,7 @@ void BatchSet::draw_alpha(glm::mat4 projection) {
 void BatchSet::clear_batch_starts_() {
   batch_starts_[gl::BatchType::pixel] = 0;
   batch_starts_[gl::BatchType::line] = 0;
+  batch_starts_[gl::BatchType::lined] = 0;
   batch_starts_[gl::BatchType::tri] = 0;
   batch_starts_[gl::BatchType::rect] = 0;
   batch_starts_[gl::BatchType::oval] = 0;
@@ -297,6 +361,17 @@ void BatchSet::store_alpha_batch_() {
           lines->size_alpha() - batch_starts_[last_batch_type_])
       );
       batch_starts_[last_batch_type_] = lines->size_alpha();
+      break;
+
+    case gl::BatchType::lined:
+      alpha_fns_.emplace_back(std::bind(
+          &gl::LinedBatch::draw_alpha,
+          lined.get(),
+          std::placeholders::_1, std::placeholders::_2,
+          batch_starts_[last_batch_type_],
+          lined->size_alpha() - batch_starts_[last_batch_type_])
+      );
+      batch_starts_[last_batch_type_] = lined->size_alpha();
       break;
 
     case gl::BatchType::tri:

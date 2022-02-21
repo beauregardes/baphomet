@@ -12,6 +12,7 @@
 #include "baphomet/util/framecounter.hpp"
 
 #include "imgui.h"
+#include "implot.h"
 
 #include <deque>
 
@@ -69,8 +70,13 @@ private:
   struct {
     ImGuiContext *ctx{nullptr};
     ImGuiIO *io{nullptr};
+
     bool newframe_called{false};
   } imgui_state_;
+
+  struct {
+    ImPlotContext *ctx{nullptr};
+  } implot_state_;
 
   void imgui_startframe_();
   void imgui_endframe_();

@@ -9,6 +9,7 @@ set(srcs ${srcs}
     src/baphomet/gfx/font/cp437.cpp
     src/baphomet/gfx/gl/batching/batch.cpp
     src/baphomet/gfx/gl/batching/line_batch.cpp
+    src/baphomet/gfx/gl/batching/lined_batch.cpp
     src/baphomet/gfx/gl/batching/oval_batch.cpp
     src/baphomet/gfx/gl/batching/pixel_batch.cpp
     src/baphomet/gfx/gl/batching/rect_batch.cpp
