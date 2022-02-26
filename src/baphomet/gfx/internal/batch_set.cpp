@@ -222,7 +222,7 @@ void BatchSet::add_lined_oval(float x, float y, float x_radius, float y_radius, 
   auto cv = color.vec4();
   lined->add_oval(
       x + 0.5f, y + 0.5f,
-      x_radius + 0.5f, y_radius + 0.5f,
+      x_radius, y_radius,
       z_level,
       cv.r, cv.g, cv.b, cv.a,
       cx + 0.5f, cy + 0.5f, glm::radians(angle)

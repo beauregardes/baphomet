@@ -95,6 +95,9 @@ private:
   );
 
   void add_oval_opaque_recurse_(
+      std::vector<float> &vertices,
+      std::vector<unsigned int> &indices,
+      unsigned int &base,
       float x, float y,
       float x_radius, float y_radius,
       float z,
@@ -113,6 +116,9 @@ private:
   );
 
   void add_oval_alpha_recurse_(
+      std::vector<float> &vertices,
+      std::vector<unsigned int> &indices,
+      unsigned int &base,
       float x, float y,
       float x_radius, float y_radius,
       float z,

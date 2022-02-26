@@ -171,7 +171,6 @@ void OvalBatch::add_opaque_recurse_(
     add_opaque_recurse_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x0, y0, a0, x2, y2, a2);
     add_opaque_recurse_(x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x1, y1, a1, x2, y2, a2);
   }
-
 }
 
 void OvalBatch::add_alpha_(

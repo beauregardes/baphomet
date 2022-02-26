@@ -49,8 +49,8 @@ void main() {
 
 void LinedBatch::clear() {
   Batch::clear();
-  opaque_indices_->clear();
-  alpha_indices_->clear();
+  if (opaque_indices_) opaque_indices_->clear();
+  if (alpha_indices_)  alpha_indices_->clear();
 }
 
 void LinedBatch::add_tri(
@@ -271,6 +271,19 @@ void LinedBatch::add_rect_alpha_(
   });
 }
 
+void push_vertex(
+    std::vector<float> &vertices,
+    std::vector<unsigned int> &indices,
+    unsigned int &base,
+    float x, float y, float z,
+    float r, float g, float b, float a,
+    float cx, float cy, float angle
+) {
+  vertices.insert(vertices.end(), {x, y, z, r, g, b, a, cx, cy, angle});
+  indices.push_back(base);
+  base++;
+}
+
 void LinedBatch::add_oval_opaque_(
     float x, float y,
     float x_radius, float y_radius,
@@ -279,9 +292,49 @@ void LinedBatch::add_oval_opaque_(
     float cx, float cy, float angle
 ) {
   check_initialize_opaque_();
+
+  std::vector<float> vertices{};
+  std::vector<unsigned int> indices{};
+  unsigned int base = opaque_vertices_->size() / floats_per_vertex_;
+
+  static float
+      a0 = 0.0f,
+      a1 = glm::radians(90.0f),
+      a2 = glm::radians(180.0f),
+      a3 = glm::radians(270.0f),
+      a4 = glm::radians(360.0f);
+
+  float
+      x0 = x + x_radius * std::cos(a0),
+      y0 = y + y_radius * std::sin(a0),
+      x1 = x + x_radius * std::cos(a1),
+      y1 = y + y_radius * std::sin(a1),
+      x2 = x + x_radius * std::cos(a2),
+      y2 = y + y_radius * std::sin(a2),
+      x3 = x + x_radius * std::cos(a3),
+      y3 = y + y_radius * std::sin(a3);
+
+  push_vertex(vertices, indices, base, x0, y0, z, r, g, b, a, cx, cy, angle);
+  add_oval_opaque_recurse_(vertices, indices, base, x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x0, y0, a0, x1, y1, a1);
+
+  push_vertex(vertices, indices, base, x1, y1, z, r, g, b, a, cx, cy, angle);
+  add_oval_opaque_recurse_(vertices, indices, base, x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x1, y1, a1, x2, y2, a2);
+
+  push_vertex(vertices, indices, base, x2, y2, z, r, g, b, a, cx, cy, angle);
+  add_oval_opaque_recurse_(vertices, indices, base, x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x2, y2, a2, x3, y3, a3);
+
+  push_vertex(vertices, indices, base, x3, y3, z, r, g, b, a, cx, cy, angle);
+  add_oval_opaque_recurse_(vertices, indices, base, x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x3, y3, a3, x0, y0, a4);
+
+  indices.push_back(65565);
+  opaque_indices_->add(indices);
+  opaque_vertices_->add(vertices);
 }
 
 void LinedBatch::add_oval_opaque_recurse_(
+    std::vector<float> &vertices,
+    std::vector<unsigned int> &indices,
+    unsigned int &base,
     float x, float y,
     float x_radius, float y_radius,
     float z,
@@ -290,7 +343,20 @@ void LinedBatch::add_oval_opaque_recurse_(
     float x0, float y0, float a0,
     float x1, float y1, float a1
 ) {
+  float a2 = (a0 + a1) / 2.0f;
+  float
+      x2 = x + x_radius * std::cos(a2),
+      y2 = y + y_radius * std::sin(a2);
 
+  float dist_sq =
+      ((((x0 + x1) / 2.0f) - x2) * (((x0 + x1) / 2.0f) - x2)) +
+      ((((y0 + y1) / 2.0f) - y2) * (((y0 + y1) / 2.0f) - y2));
+  if (dist_sq > 2.0f) {
+    add_oval_opaque_recurse_(vertices, indices, base, x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x0, y0, a0, x2, y2, a2);
+    push_vertex(vertices, indices, base, x2, y2, z, r, g, b, a, cx, cy, angle);
+    add_oval_opaque_recurse_(vertices, indices, base, x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x2, y2, a2, x1, y1, a1);
+  } else
+    push_vertex(vertices, indices, base, x2, y2, z, r, g, b, a, cx, cy, angle);
 }
 
 void LinedBatch::add_oval_alpha_(
@@ -301,9 +367,49 @@ void LinedBatch::add_oval_alpha_(
     float cx, float cy, float angle
 ) {
   check_initialize_alpha_();
+
+  std::vector<float> vertices{};
+  std::vector<unsigned int> indices{};
+  unsigned int base = alpha_vertices_->size() / floats_per_vertex_;
+
+  static float
+      a0 = 0.0f,
+      a1 = glm::radians(90.0f),
+      a2 = glm::radians(180.0f),
+      a3 = glm::radians(270.0f),
+      a4 = glm::radians(360.0f);
+
+  float
+      x0 = x + x_radius * std::cos(a0),
+      y0 = y + y_radius * std::sin(a0),
+      x1 = x + x_radius * std::cos(a1),
+      y1 = y + y_radius * std::sin(a1),
+      x2 = x + x_radius * std::cos(a2),
+      y2 = y + y_radius * std::sin(a2),
+      x3 = x + x_radius * std::cos(a3),
+      y3 = y + y_radius * std::sin(a3);
+
+  push_vertex(vertices, indices, base, x0, y0, z, r, g, b, a, cx, cy, angle);
+  add_oval_alpha_recurse_(vertices, indices, base, x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x0, y0, a0, x1, y1, a1);
+
+  push_vertex(vertices, indices, base, x1, y1, z, r, g, b, a, cx, cy, angle);
+  add_oval_alpha_recurse_(vertices, indices, base, x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x1, y1, a1, x2, y2, a2);
+
+  push_vertex(vertices, indices, base, x2, y2, z, r, g, b, a, cx, cy, angle);
+  add_oval_alpha_recurse_(vertices, indices, base, x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x2, y2, a2, x3, y3, a3);
+
+  push_vertex(vertices, indices, base, x3, y3, z, r, g, b, a, cx, cy, angle);
+  add_oval_alpha_recurse_(vertices, indices, base, x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x3, y3, a3, x0, y0, a4);
+
+  indices.push_back(65565);
+  alpha_indices_->add(indices);
+  alpha_vertices_->add(vertices);
 }
 
 void LinedBatch::add_oval_alpha_recurse_(
+    std::vector<float> &vertices,
+    std::vector<unsigned int> &indices,
+    unsigned int &base,
     float x, float y,
     float x_radius, float y_radius,
     float z,
@@ -312,7 +418,20 @@ void LinedBatch::add_oval_alpha_recurse_(
     float x0, float y0, float a0,
     float x1, float y1, float a1
 ) {
+  float a2 = (a0 + a1) / 2.0f;
+  float
+      x2 = x + x_radius * std::cos(a2),
+      y2 = y + y_radius * std::sin(a2);
 
+  float dist_sq =
+      ((((x0 + x1) / 2.0f) - x2) * (((x0 + x1) / 2.0f) - x2)) +
+      ((((y0 + y1) / 2.0f) - y2) * (((y0 + y1) / 2.0f) - y2));
+  if (dist_sq > 2.0f) {
+    add_oval_alpha_recurse_(vertices, indices, base, x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x0, y0, a0, x2, y2, a2);
+    push_vertex(vertices, indices, base, x2, y2, z, r, g, b, a, cx, cy, angle);
+    add_oval_alpha_recurse_(vertices, indices, base, x, y, x_radius, y_radius, z, r, g, b, a, cx, cy, angle, x2, y2, a2, x1, y1, a1);
+  } else
+    push_vertex(vertices, indices, base, x2, y2, z, r, g, b, a, cx, cy, angle);
 }
 
 } // namespace baphomet::gl
