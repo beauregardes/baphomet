@@ -172,7 +172,7 @@ public:
   }
 
   void draw_cell(int r, int c, const baphomet::RGB &color) {
-    gfx->rect(
+    gfx->fill_rect(
         WIN_PADH + c * CELL_SIZE + c + 1,
         WIN_PADW + r * CELL_SIZE + r + 1,
         CELL_SIZE,
