@@ -20,7 +20,7 @@ namespace baphomet {
 
 struct DebugLogLine {
   bool should_show{true};
-  Duration timeout{std::chrono::milliseconds(2500)};
+  Duration timeout{baphomet::sec(2.5)};
   int opacity{255};
 
   std::string msg{};
@@ -48,6 +48,8 @@ protected:
   virtual void update(Duration dt);
   virtual void draw();
 
+  void set_overlay_enabled(bool enabled);
+
   template <typename S, typename... Args>
   void debug_log(const S &format, Args &&... args);
 
@@ -60,6 +62,10 @@ private:
   FrameCounter frame_counter_{};
 
   struct {
+    bool enabled{false};
+
+    std::shared_ptr<RenderTarget> render_target{nullptr};
+
     std::unique_ptr<CP437> font{nullptr};
 
     struct {
@@ -82,6 +88,8 @@ private:
   void imgui_endframe_();
 
   void update_nonuser_(Duration dt);
+  void poll_events_();
+  bool should_close_();
 
   void start_frame_();
   void end_frame_();
@@ -98,7 +106,7 @@ private:
    * INITIALIZATION *
    ******************/
 
-  void open_for_gl_(const WCfg &cfg, glm::ivec2 glversion);
+  void open_for_gl_(std::shared_ptr<Messenger> &messenger, const WCfg &cfg, glm::ivec2 glversion);
   void init_gl_(glm::ivec2 glversion);
   void init_imgui_(glm::ivec2 glversion);
 };

@@ -12,6 +12,7 @@
 #include "baphomet/noise/opensimplex.hpp"
 
 #include "baphomet/util/time/ticker.hpp"
+#include "baphomet/util/dear.hpp"
 #include "baphomet/util/random.hpp"
 
 #ifndef BAPHOMET_NO_CHRONO_LITERALS

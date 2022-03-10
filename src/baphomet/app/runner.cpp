@@ -33,7 +33,7 @@ Runner &Runner::init_gl(glm::ivec2 glversion) {
 }
 
 void Runner::start() {
-  application_->open_for_gl_(open_params_.cfg, open_params_.glversion);
+  application_->open_for_gl_(messenger_, open_params_.cfg, open_params_.glversion);
 
   application_->init_gl_(open_params_.glversion);
   application_->init_imgui_(open_params_.glversion);
@@ -54,8 +54,8 @@ void Runner::start() {
     // Non-user defined update, updates systems (input, audio, etc)
     application_->update_nonuser_(dt);
 
-    glfwPollEvents();
-  } while (!glfwWindowShouldClose(glfw_window_));
+    application_->poll_events_();
+  } while (!application_->should_close_());
 }
 
 void Runner::received_msg(const MsgCategory &category, const std::any &payload) {
@@ -63,7 +63,12 @@ void Runner::received_msg(const MsgCategory &category, const std::any &payload) 
     using enum MsgCategory;
 
     case RegisterGlfwCallbacks: {
+      // The callbacks all exist in a single place because we can only set one
+      // user pointer for the GLFW window. The only common place where
+      // everything is involved is the runner, so that's where they get to live
+
       auto p = extract_msg_payload<RegisterGlfwCallbacks>(payload);
+
       glfwSetWindowUserPointer(p.window, this);
       glfwSetKeyCallback(p.window, glfw_key_callback_);
       glfwSetCursorPosCallback(p.window, glfw_cursor_position_callback_);
@@ -73,10 +78,6 @@ void Runner::received_msg(const MsgCategory &category, const std::any &payload) 
       glfwSetWindowSizeCallback(p.window, glfw_window_size_callback_);
       glfwSetWindowPosCallback(p.window, glfw_window_pos_callback_);
       glfwSetWindowFocusCallback(p.window, glfw_window_focus_callback_);
-
-      // Save this for later--we'll need it to
-      // check if we should quit the application
-      glfw_window_ = p.window;
     }
       break;
 

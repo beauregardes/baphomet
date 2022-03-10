@@ -25,6 +25,7 @@ set(headers ${headers}
     include/baphomet/gfx/gl/vertex_array.hpp
     include/baphomet/gfx/internal/batch_set.hpp
     include/baphomet/gfx/color.hpp
+    include/baphomet/gfx/render_target.hpp
     include/baphomet/gfx/spritesheet.hpp
     include/baphomet/gfx/texture.hpp
 
@@ -40,6 +41,7 @@ set(headers ${headers}
     include/baphomet/util/time/ticker.hpp
     include/baphomet/util/time/time.hpp
     include/baphomet/util/averagers.hpp
+    include/baphomet/util/dear.hpp
     include/baphomet/util/enum_bitmask_ops.hpp
     include/baphomet/util/framecounter.hpp
     include/baphomet/util/memusage.hpp

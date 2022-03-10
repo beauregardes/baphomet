@@ -25,6 +25,10 @@ void Application::initialize() {}
 void Application::update(Duration dt) {}
 void Application::draw() {}
 
+void Application::set_overlay_enabled(bool enabled) {
+  overlay_.enabled = enabled;
+}
+
 void Application::shutdown() {
   window->close_();
 }
@@ -60,36 +64,36 @@ void Application::update_nonuser_(Duration dt) {
   send_msg<MsgCategory::Update>(MsgEndpoint::Tween, dt);
 }
 
+void Application::poll_events_() {
+  glfwPollEvents();
+}
+
+bool Application::should_close_() {
+  return glfwWindowShouldClose(window->glfw_window_);
+}
+
 void Application::start_frame_() {
-  window->fbo_->bind();
+  gfx->clear_render_targets_();
+  gfx->reset_to_base_render_target_();
 
-  gfx->switch_to_batch_set_("default");
-  gfx->clear_batches_();
-
-  gfx->clear(gl::ClearMask::depth);
-
-  imgui_startframe_();
+//  imgui_startframe_();
 }
 
 void Application::end_frame_() {
-  gfx->draw_batches_(window->projection());
+  if (overlay_.enabled)
+    draw_overlay_();
 
-  imgui_endframe_();
+  //  imgui_endframe_();
 
-  window->fbo_->unbind();
-
-  gfx->clear(gl::ClearMask::color | gl::ClearMask::depth);
-  window->fbo_->copy_to_default_framebuffer();
-
-  gfx->clear(gl::ClearMask::depth);
-  draw_overlay_();
+  gfx->draw_render_targets_(window->w(), window->h(), window->projection());
 
   glfwSwapBuffers(window->glfw_window_);
 }
 
 void Application::draw_overlay_() {
-  gfx->switch_to_batch_set_("overlay");
-  gfx->clear_batches_();
+  gfx->push_render_target(overlay_.render_target);
+  gfx->clear_color(baphomet::rgba(0x00000000));
+  gfx->clear();
 
   glm::vec2 base_pos{1.0f, 1.0f};
 
@@ -106,7 +110,7 @@ void Application::draw_overlay_() {
 
   draw_debug_log_();
 
-  gfx->draw_batches_(window->projection());
+  gfx->pop_render_target();
 }
 
 void Application::draw_debug_log_() {
@@ -173,7 +177,8 @@ void Application::debug_log_(fmt::string_view format, fmt::format_args args) {
  * INITIALIZATION *
  ******************/
 
-void Application::open_for_gl_(const WCfg &cfg, glm::ivec2 glversion) {
+void Application::open_for_gl_(std::shared_ptr<Messenger> &messenger, const WCfg &cfg, glm::ivec2 glversion) {
+  messenger_ = messenger;
   initialize_endpoint(messenger_, MsgEndpoint::Application);
 
   window = std::make_unique<Window>(messenger_);
@@ -215,7 +220,7 @@ void Application::init_gl_(glm::ivec2 glversion) {
   spdlog::debug("=> Vendor: {}", glGetString(GL_VENDOR));
   spdlog::debug("=> Renderer: {}", glGetString(GL_RENDERER));
 
-  gfx = std::make_unique<GfxMgr>();
+  gfx = std::make_unique<GfxMgr>(window->w(), window->h());
 
   glfwSwapInterval(window->vsync() ? 1 : 0);
 
@@ -226,13 +231,14 @@ void Application::init_gl_(glm::ivec2 glversion) {
 
   window->create_fbo_(window->w(), window->h());
 
-  gfx->new_batch_set_("overlay", true);
+  overlay_.render_target = gfx->make_render_target(0, 0, window->w(), window->h(), std::numeric_limits<std::uint64_t>::max());
+  gfx->push_render_target(overlay_.render_target);
   overlay_.font = gfx->load_cp437(
       ResourceLoader::resolve_resource_path("fonts/1px_7x9.png"),
       7, 9,
       true
   );
-  gfx->switch_to_batch_set_("default");
+  gfx->pop_render_target();
 }
 
 void Application::init_imgui_(glm::ivec2 glversion) {

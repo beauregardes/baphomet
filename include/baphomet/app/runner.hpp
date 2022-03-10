@@ -36,8 +36,6 @@ private:
 
   std::unique_ptr<Application> application_{nullptr};
 
-  GLFWwindow *glfw_window_{nullptr};
-
   static void glfw_key_callback_(GLFWwindow *window, int key, int scancode, int action, int mods);
   static void glfw_cursor_position_callback_(GLFWwindow *window, double xpos, double ypos);
   static void glfw_cursor_enter_callback_(GLFWwindow *window, int entered);
@@ -51,7 +49,6 @@ private:
 template<DerivesHadesApplication T>
 Runner &Runner::open(const WCfg &cfg) {
   application_ = std::unique_ptr<Application>(new T());
-  application_->messenger_ = messenger_;
   open_params_.cfg = cfg;
   return *this;
 }

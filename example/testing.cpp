@@ -1,29 +1,37 @@
 #include "testing.hpp"
 
 class Testing : public baphomet::Application {
-  float x_radius{250.0f}, y_radius{250.0f};
+  std::shared_ptr<baphomet::RenderTarget> left{nullptr};
+  std::shared_ptr<baphomet::RenderTarget> right{nullptr};
 
-  void initialize() override {}
+  void initialize() override {
+    set_overlay_enabled(true);
+
+    left = gfx->make_render_target(0, 0, 400, 600);
+    right = gfx->make_render_target(400, 0, 400, 600);
+  }
 
   void update(baphomet::Duration dt) override {
-    if (input->pressed("escape")) shutdown();
+    if (input->pressed("escape"))
+      shutdown();
   }
 
   void draw() override {
+    gfx->clear_color(baphomet::rgba(0x101010ff));
     gfx->clear();
+    gfx->fill_circle(400, 300, 50, baphomet::rgb(0xff8080));
 
-    if (ImGui::Begin("Oval")) {
-      ImGui::DragFloat("x radius", &x_radius);
-      ImGui::DragFloat("y radius", &y_radius);
+    gfx->push_render_target(left);
+    gfx->clear_color(baphomet::rgba(0x00000000));
+    gfx->clear();
+    gfx->fill_circle(200, 300, 25, baphomet::rgb(0x80ff80));
+    gfx->pop_render_target();
 
-      ImGui::End();
-    }
-
-    gfx->draw_oval(
-        window->w() / 2.0f, window->h() / 2.0f,
-        x_radius, y_radius,
-        baphomet::rgb(0xffffff)
-    );
+    gfx->push_render_target(right);
+    gfx->clear_color(baphomet::rgba(0x00000000));
+    gfx->clear();
+    gfx->fill_circle(200, 300, 25, baphomet::rgb(0x8080ff));
+    gfx->pop_render_target();
   }
 };
 

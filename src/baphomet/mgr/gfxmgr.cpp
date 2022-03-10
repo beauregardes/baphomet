@@ -2,29 +2,27 @@
 
 #include "baphomet/util/random.hpp"
 
+#include <algorithm>
+
 namespace baphomet {
 
-GfxMgr::GfxMgr() {
+GfxMgr::GfxMgr(float width, float height) {
   resource_loader = std::make_unique<ResourceLoader>();
 
-  new_batch_set_("default", true);
+  // create the default render target
+  make_render_target(0, 0, width, height);
+  push_render_target(render_targets_[0]);
 }
 
 GfxMgr::GfxMgr(GfxMgr &&other) noexcept {
   resource_loader = std::move(other.resource_loader);
-  batch_sets_ = std::move(other.batch_sets_);
-  active_batch_ = other.active_batch_;
-
-  other.active_batch_ = "default";
+  // TODO: Fix this
 }
 
 GfxMgr &GfxMgr::operator=(GfxMgr &&other) noexcept {
   if (this != &other) {
     resource_loader = std::move(other.resource_loader);
-    batch_sets_ = std::move(other.batch_sets_);
-    active_batch_ = other.active_batch_;
-
-    other.active_batch_ = "default";
+    // TODO: Fix this
   }
   return *this;
 }
@@ -51,7 +49,7 @@ void GfxMgr::clear(gl::ClearMask mask) {
  */
 
 void GfxMgr::pixel(float x, float y, const baphomet::RGB &color) {
-  batch_sets_[active_batch_]->add_pixel(x, y, color);
+  render_stack_.top()->batches_->add_pixel(x, y, color);
 }
 
 void GfxMgr::pixel(Point p, const baphomet::RGB &color) {
@@ -59,7 +57,7 @@ void GfxMgr::pixel(Point p, const baphomet::RGB &color) {
 }
 
 void GfxMgr::line(float x0, float y0, float x1, float y1, const baphomet::RGB &color, float cx, float cy, float angle) {
-  batch_sets_[active_batch_]->add_line(x0, y0, x1, y1, color, cx, cy, angle);
+  render_stack_.top()->batches_->add_line(x0, y0, x1, y1, color, cx, cy, angle);
 }
 
 void GfxMgr::line(float x0, float y0, float x1, float y1, const baphomet::RGB &color, float angle) {
@@ -85,7 +83,7 @@ void GfxMgr::line(Line l, const baphomet::RGB &color) {
 // ********** FILLED ***********
 
 void GfxMgr::fill_tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color, float cx, float cy, float angle) {
-  batch_sets_[active_batch_]->add_tri(x0, y0, x1, y1, x2, y2, color, cx, cy, angle);
+  render_stack_.top()->batches_->add_tri(x0, y0, x1, y1, x2, y2, color, cx, cy, angle);
 }
 
 void GfxMgr::fill_tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color, float angle) {
@@ -169,7 +167,7 @@ void GfxMgr::fill_tri(Point origin, float radius, const baphomet::RGB &color) {
 }
 
 void GfxMgr::fill_rect(float x, float y, float w, float h, const baphomet::RGB &color, float cx, float cy, float angle) {
-  batch_sets_[active_batch_]->add_rect(x, y, w, h, color, cx, cy, angle);
+  render_stack_.top()->batches_->add_rect(x, y, w, h, color, cx, cy, angle);
 }
 
 void GfxMgr::fill_rect(float x, float y, float w, float h, const baphomet::RGB &color, float angle) {
@@ -193,7 +191,7 @@ void GfxMgr::fill_rect(Rect r, const baphomet::RGB &color) {
 }
 
 void GfxMgr::fill_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color, float cx, float cy, float angle) {
-  batch_sets_[active_batch_]->add_oval(x, y, x_radius, y_radius, color, cx, cy, angle);
+  render_stack_.top()->batches_->add_oval(x, y, x_radius, y_radius, color, cx, cy, angle);
 }
 
 void GfxMgr::fill_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color, float angle) {
@@ -243,7 +241,7 @@ void GfxMgr::fill_circle(Circle c, const baphomet::RGB &color) {
 // ********** LINED ***********
 
 void GfxMgr::draw_tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color, float cx, float cy, float angle) {
-  batch_sets_[active_batch_]->add_lined_tri(x0, y0, x1, y1, x2, y2, color, cx, cy, angle);
+  render_stack_.top()->batches_->add_lined_tri(x0, y0, x1, y1, x2, y2, color, cx, cy, angle);
 }
 
 void GfxMgr::draw_tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color, float angle) {
@@ -284,8 +282,50 @@ void GfxMgr::draw_tri(float x, float y, float radius, const baphomet::RGB &color
   );
 }
 
+void GfxMgr::draw_tri(Tri t, const baphomet::RGB &color, float cx, float cy, float angle) {
+  draw_tri(t.x0, t.y0, t.x1, t.y1, t.x2, t.y2, color, cx, cy, angle);
+}
+
+void GfxMgr::draw_tri(Tri t, const baphomet::RGB &color, float angle) {
+  draw_tri(t.x0, t.y0, t.x1, t.y1, t.x2, t.y2, color, (t.x0 + t.x1 + t.x2) / 3.0f, (t.y0 + t.y1 + t.y2) / 3.0f, angle);
+}
+
+void GfxMgr::draw_tri(Tri t, const baphomet::RGB &color) {
+  draw_tri(t.x0, t.y0, t.x1, t.y1, t.x2, t.y2, color, 0.0f, 0.0f, 0.0f);
+}
+
+void GfxMgr::draw_tri(Point origin, float radius, const baphomet::RGB &color, float cx, float cy, float angle) {
+  draw_tri(
+      origin.x + radius * std::cos(-glm::radians(90.0f)),  origin.y + radius * std::sin(-glm::radians(90.0f)),
+      origin.x + radius * std::cos(-glm::radians(210.0f)), origin.y + radius * std::sin(-glm::radians(210.0f)),
+      origin.x + radius * std::cos(-glm::radians(330.0f)), origin.y + radius * std::sin(-glm::radians(330.0f)),
+      color,
+      cx, cy, angle
+  );
+}
+
+void GfxMgr::draw_tri(Point origin, float radius, const baphomet::RGB &color, float angle) {
+  draw_tri(
+      origin.x + radius * std::cos(-glm::radians(90.0f)),  origin.y + radius * std::sin(-glm::radians(90.0f)),
+      origin.x + radius * std::cos(-glm::radians(210.0f)), origin.y + radius * std::sin(-glm::radians(210.0f)),
+      origin.x + radius * std::cos(-glm::radians(330.0f)), origin.y + radius * std::sin(-glm::radians(330.0f)),
+      color,
+      origin.x, origin.y, angle
+  );
+}
+
+void GfxMgr::draw_tri(Point origin, float radius, const baphomet::RGB &color) {
+  draw_tri(
+      origin.x + radius * std::cos(-glm::radians(90.0f)),  origin.y + radius * std::sin(-glm::radians(90.0f)),
+      origin.x + radius * std::cos(-glm::radians(210.0f)), origin.y + radius * std::sin(-glm::radians(210.0f)),
+      origin.x + radius * std::cos(-glm::radians(330.0f)), origin.y + radius * std::sin(-glm::radians(330.0f)),
+      color,
+      0.0f, 0.0f, 0.0f
+  );
+}
+
 void GfxMgr::draw_rect(float x, float y, float w, float h, const baphomet::RGB &color, float cx, float cy, float angle) {
-  batch_sets_[active_batch_]->add_lined_rect(x, y, w, h, color, cx, cy, angle);
+  render_stack_.top()->batches_->add_lined_rect(x, y, w, h, color, cx, cy, angle);
 }
 
 void GfxMgr::draw_rect(float x, float y, float w, float h, const baphomet::RGB &color, float angle) {
@@ -296,8 +336,20 @@ void GfxMgr::draw_rect(float x, float y, float w, float h, const baphomet::RGB &
   draw_rect(x, y, w, h, color, 0.0f, 0.0f, 0.0f);
 }
 
+void GfxMgr::draw_rect(Rect r, const baphomet::RGB &color, float cx, float cy, float angle) {
+  draw_rect(r.x, r.y, r.w, r.h, color, cx, cy, angle);
+}
+
+void GfxMgr::draw_rect(Rect r, const baphomet::RGB &color, float angle) {
+  draw_rect(r.x, r.y, r.w, r.h, color, r.x + r.w / 2.0f, r.y + r.h / 2.0f, angle);
+}
+
+void GfxMgr::draw_rect(Rect r, const baphomet::RGB &color) {
+  draw_rect(r.x, r.y, r.w, r.h, color, 0.0f, 0.0f, 0.0f);
+}
+
 void GfxMgr::draw_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color, float cx, float cy, float angle) {
-  batch_sets_[active_batch_]->add_lined_oval(x, y, x_radius, y_radius, color, cx, cy, angle);
+  render_stack_.top()->batches_->add_lined_oval(x, y, x_radius, y_radius, color, cx, cy, angle);
 }
 
 void GfxMgr::draw_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color, float angle) {
@@ -306,6 +358,42 @@ void GfxMgr::draw_oval(float x, float y, float x_radius, float y_radius, const b
 
 void GfxMgr::draw_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color) {
   draw_oval(x, y, x_radius, y_radius, color, 0.0f, 0.0f, 0.0f);
+}
+
+void GfxMgr::draw_oval(Oval o, const baphomet::RGB &color, float cx, float cy, float angle) {
+  draw_oval(o.x, o.y, o.rad_x, o.rad_y, color, cx, cy, angle);
+}
+
+void GfxMgr::draw_oval(Oval o, const baphomet::RGB &color, float angle) {
+  draw_oval(o.x, o.y, o.rad_x, o.rad_y, color, o.x, o.y, angle);
+}
+
+void GfxMgr::draw_oval(Oval o, const baphomet::RGB &color) {
+  draw_oval(o.x, o.y, o.rad_x, o.rad_y, color, 0.0f, 0.0f, 0.0f);
+}
+
+void GfxMgr::draw_circle(float x, float y, float radius, const baphomet::RGB &color, float cx, float cy, float angle) {
+  render_stack_.top()->batches_->add_lined_oval(x, y, radius, radius, color, cx, cy, angle);
+}
+
+void GfxMgr::draw_circle(float x, float y, float radius, const baphomet::RGB &color, float angle) {
+  draw_circle(x, y, radius, color, x, y, angle);
+}
+
+void GfxMgr::draw_circle(float x, float y, float radius, const baphomet::RGB &color) {
+  draw_circle(x, y, radius, color, 0.0f, 0.0f, 0.0f);
+}
+
+void GfxMgr::draw_circle(Circle c, const baphomet::RGB &color, float cx, float cy, float angle) {
+  draw_oval(c.x, c.y, c.rad, c.rad, color, cx, cy, angle);
+}
+
+void GfxMgr::draw_circle(Circle c, const baphomet::RGB &color, float angle) {
+  draw_oval(c.x, c.y, c.rad, c.rad, color, c.x, c.y, angle);
+}
+
+void GfxMgr::draw_circle(Circle c, const baphomet::RGB &color) {
+  draw_oval(c.x, c.y, c.rad, c.rad, color, 0.0f, 0.0f, 0.0f);
 }
 
 /***********
@@ -317,10 +405,10 @@ std::unique_ptr<Texture> GfxMgr::load_texture(const std::string &path, bool retr
   resource_loader->load_texture_unit(name, path, retro);
 
   auto &tex = resource_loader->get_texture_unit(name);
-  batch_sets_[active_batch_]->create_texture_batch(name, tex);
+  render_stack_.top()->batches_->create_texture_batch(name, tex);
 
   return std::make_unique<Texture>(
-      batch_sets_[active_batch_],
+      render_stack_.top()->batches_,
       name,
       tex->width(), tex->height()
   );
@@ -331,9 +419,9 @@ SpritesheetBuilder GfxMgr::load_spritesheet(const std::string &path, bool retro)
   resource_loader->load_texture_unit(name, path, retro);
 
   auto &tex = resource_loader->get_texture_unit(name);
-  batch_sets_[active_batch_]->create_texture_batch(name, tex);
+  render_stack_.top()->batches_->create_texture_batch(name, tex);
 
-  return SpritesheetBuilder(batch_sets_[active_batch_], name);
+  return SpritesheetBuilder(render_stack_.top()->batches_, name);
 }
 
 std::unique_ptr<CP437> GfxMgr::load_cp437(const std::string &path, int char_w, int char_h, bool retro) {
@@ -341,14 +429,52 @@ std::unique_ptr<CP437> GfxMgr::load_cp437(const std::string &path, int char_w, i
   resource_loader->load_texture_unit(name, path, retro);
 
   auto &tex = resource_loader->get_texture_unit(name);
-  batch_sets_[active_batch_]->create_texture_batch(name, tex);
+  render_stack_.top()->batches_->create_texture_batch(name, tex);
 
   return std::make_unique<CP437>(
-      batch_sets_[active_batch_],
+      render_stack_.top()->batches_,
       name,
       tex->width(), tex->height(),
       char_w, char_h
   );
+}
+
+/*****************
+ * RENDER TARGETS
+ */
+
+std::shared_ptr<RenderTarget> GfxMgr::make_render_target(float x, float y, float w, float h, std::uint64_t weight) {
+  auto new_render_target = std::make_shared<RenderTarget>(
+      rnd::base58(11),
+      weight,
+      x, y, w, h
+  );
+
+  // Find where this element should be inserted according to its weight
+  auto it = std::upper_bound(
+      render_targets_.begin(), render_targets_.end(),
+      new_render_target,
+      [](auto l, auto r) { return l->weight_ < r->weight_; }
+  );
+  render_targets_.insert(it, new_render_target);;
+
+  return new_render_target;
+}
+
+std::shared_ptr<RenderTarget> GfxMgr::make_render_target(float x, float y, float w, float h) {
+  return make_render_target(x, y, w, h, next_render_target_weight_++);
+}
+
+void GfxMgr::push_render_target(std::shared_ptr<RenderTarget> &render_target) {
+  render_stack_.push(render_target);
+  render_target->fbo_->bind();
+}
+
+void GfxMgr::pop_render_target(std::size_t count) {
+  // TODO: don't allow popping everything off
+  for (int i = 0; i < count; i++)
+    render_stack_.pop();
+  render_stack_.top()->fbo_->bind();
 }
 
 /*****************
@@ -387,69 +513,55 @@ void GfxMgr::flush_() {
   glFlush();
 }
 
-/***********
- * BATCHING
+/*****************
+ * RENDER TARGETS
  */
 
-void GfxMgr::new_batch_set_(const std::string &name, bool switch_to) {
-  batch_sets_[name] = std::make_unique<BatchSet>();
-
-  if (switch_to)
-    switch_to_batch_set_(name);
+void GfxMgr::clear_render_targets_() {
+//  window_batch_->clear();
+  for (auto &rt : render_targets_)
+    rt->batches_->clear();
 }
 
-void GfxMgr::switch_to_batch_set_(const std::string &name) {
-  active_batch_ = name;
+void GfxMgr::reset_to_base_render_target_() {
+  while (render_stack_.size() > 1)
+    render_stack_.pop();
+  render_stack_.top()->fbo_->bind();
 }
 
-void GfxMgr::clear_batches_() {
-  batch_sets_[active_batch_]->clear();
-}
+void GfxMgr::draw_render_targets_(
+    GLsizei window_width, GLsizei window_height,
+    glm::mat4 projection
+) {
+  for (auto &rt : render_targets_) {
+    rt->fbo_->bind();
 
-void GfxMgr::draw_batches_(glm::mat4 projection) {
-  batch_sets_[active_batch_]->draw_opaque(projection);
+    rt->batches_->draw_opaque(rt->projection_);
 
-  enable_(gl::Capability::blend);
-  depth_mask_(false);
+    enable_(gl::Capability::blend);
+    depth_mask_(false);
 
-  batch_sets_[active_batch_]->draw_alpha(projection);
+    rt->batches_->draw_alpha(rt->projection_);
 
-  depth_mask_(true);
-  disable_(gl::Capability::blend);
-}
+    depth_mask_(true);
+    disable_(gl::Capability::blend);
 
-/********
- * DEBUG
- */
+    // Reset back to the default framebuffer
+    // and fix the viewport, so we can draw on it
+    rt->fbo_->unbind();
+    glViewport(0, 0, window_width, window_height);
 
-std::size_t GfxMgr::pixel_count_() {
-  return batch_sets_["default"]->pixel_vertex_count_opaque() +
-         batch_sets_["default"]->pixel_vertex_count_alpha();
-}
+    // This needs to be done between each call
+    clear(gl::ClearMask::depth);
 
-std::size_t GfxMgr::line_count_() {
-  return batch_sets_["default"]->line_vertex_count_opaque() +
-         batch_sets_["default"]->line_vertex_count_alpha();
-}
+    enable_(gl::Capability::blend);
+    depth_mask_(false);
 
-std::size_t GfxMgr::tri_count_() {
-  return batch_sets_["default"]->tri_vertex_count_opaque() +
-         batch_sets_["default"]->tri_vertex_count_alpha();
-}
+    rt->draw_(projection);
 
-std::size_t GfxMgr::rect_count_() {
-  return batch_sets_["default"]->rect_vertex_count_opaque() +
-         batch_sets_["default"]->rect_vertex_count_alpha();
-}
-
-std::size_t GfxMgr::oval_count_() {
-  return batch_sets_["default"]->oval_vertex_count_opaque() +
-         batch_sets_["default"]->oval_vertex_count_alpha();
-}
-
-std::size_t GfxMgr::texture_count_() {
-  return batch_sets_["default"]->texture_vertex_count_opaque() +
-         batch_sets_["default"]->texture_vertex_count_alpha();
+    depth_mask_(true);
+    disable_(gl::Capability::blend);
+  }
 }
 
 } // namespace baphomet

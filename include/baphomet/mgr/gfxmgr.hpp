@@ -5,6 +5,7 @@
 #include "baphomet/gfx/gl/context_enums.hpp"
 #include "baphomet/gfx/internal/batch_set.hpp"
 #include "baphomet/gfx/color.hpp"
+#include "baphomet/gfx/render_target.hpp"
 #include "baphomet/gfx/spritesheet.hpp"
 #include "baphomet/gfx/texture.hpp"
 #include "baphomet/util/shapes.hpp"
@@ -13,6 +14,7 @@
 #include "glm/glm.hpp"
 
 #include <memory>
+#include <stack>
 #include <string>
 #include <unordered_map>
 
@@ -22,7 +24,7 @@ class GfxMgr {
   friend class Application;
 
 public:
-  GfxMgr();
+  GfxMgr(float width, float height);
   ~GfxMgr() = default;
 
   GfxMgr(const GfxMgr &) = delete;
@@ -96,14 +98,33 @@ public:
   void draw_tri(float x, float y, float radius, const baphomet::RGB &color, float cx, float cy, float angle);
   void draw_tri(float x, float y, float radius, const baphomet::RGB &color, float angle);
   void draw_tri(float x, float y, float radius, const baphomet::RGB &color);
+  void draw_tri(Tri t, const baphomet::RGB &color, float cx, float cy, float angle);
+  void draw_tri(Tri t, const baphomet::RGB &color, float angle);
+  void draw_tri(Tri t, const baphomet::RGB &color);
+  void draw_tri(Point origin, float radius, const baphomet::RGB &color, float cx, float cy, float angle);
+  void draw_tri(Point origin, float radius, const baphomet::RGB &color, float angle);
+  void draw_tri(Point origin, float radius, const baphomet::RGB &color);
 
   void draw_rect(float x, float y, float w, float h, const baphomet::RGB &color, float cx, float cy, float angle);
   void draw_rect(float x, float y, float w, float h, const baphomet::RGB &color, float angle);
   void draw_rect(float x, float y, float w, float h, const baphomet::RGB &color);
+  void draw_rect(Rect r, const baphomet::RGB &color, float cx, float cy, float angle);
+  void draw_rect(Rect r, const baphomet::RGB &color, float angle);
+  void draw_rect(Rect r, const baphomet::RGB &color);
 
   void draw_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color, float cx, float cy, float angle);
   void draw_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color, float angle);
   void draw_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color);
+  void draw_oval(Oval o, const baphomet::RGB &color, float cx, float cy, float angle);
+  void draw_oval(Oval o, const baphomet::RGB &color, float angle);
+  void draw_oval(Oval o, const baphomet::RGB &color);
+
+  void draw_circle(float x, float y, float radius, const baphomet::RGB &color, float cx, float cy, float angle);
+  void draw_circle(float x, float y, float radius, const baphomet::RGB &color, float angle);
+  void draw_circle(float x, float y, float radius, const baphomet::RGB &color);
+  void draw_circle(Circle c, const baphomet::RGB &color, float cx, float cy, float angle);
+  void draw_circle(Circle c, const baphomet::RGB &color, float angle);
+  void draw_circle(Circle c, const baphomet::RGB &color);
 
   /***********
    * TEXTURES
@@ -115,11 +136,23 @@ public:
 
   std::unique_ptr<CP437> load_cp437(const std::string &path, int char_w, int char_h, bool retro = false);
 
+  /*****************
+   * RENDER TARGETS
+   */
+
+  std::shared_ptr<RenderTarget> make_render_target(float x, float y, float w, float h, std::uint64_t weight);
+  std::shared_ptr<RenderTarget> make_render_target(float x, float y, float w, float h);
+
+  void push_render_target(std::shared_ptr<RenderTarget> &render_target);
+  void pop_render_target(std::size_t count = 1);
+
 private:
   std::unique_ptr<ResourceLoader> resource_loader{nullptr};
 
-  std::unordered_map<std::string, std::unique_ptr<BatchSet>> batch_sets_{};
-  std::string active_batch_{"default"};
+  std::vector<std::shared_ptr<RenderTarget>> render_targets_{};
+  std::uint64_t next_render_target_weight_{1};
+
+  std::stack<std::shared_ptr<RenderTarget>> render_stack_{};
 
   /*****************
    * OPENGL CONTROL
@@ -139,26 +172,17 @@ private:
 
   void flush_();
 
-  /***********
-   * BATCHING
+  /*****************
+   * RENDER TARGETS
    */
 
-  void new_batch_set_(const std::string &name, bool switch_to = false);
-  void switch_to_batch_set_(const std::string &name);
+  void clear_render_targets_();
+  void reset_to_base_render_target_();
 
-  void clear_batches_();
-  void draw_batches_(glm::mat4 projection);
-
-  /********
-   * DEBUG
-   */
-
-  std::size_t pixel_count_();
-  std::size_t line_count_();
-  std::size_t tri_count_();
-  std::size_t rect_count_();
-  std::size_t oval_count_();
-  std::size_t texture_count_();
+  void draw_render_targets_(
+      GLsizei window_width, GLsizei window_height,
+      glm::mat4 projection
+  );
 };
 
 } // namespace baphomet

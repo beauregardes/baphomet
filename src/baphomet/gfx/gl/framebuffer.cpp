@@ -81,6 +81,11 @@ void Framebuffer::copy_to_default_framebuffer(GLint window_width, GLint window_h
   glBindFramebuffer(unwrap(FboTarget::draw), 0);
 }
 
+void Framebuffer::use_texture(const std::string &tex_name) {
+  // TODO: error check
+  glBindTexture(GL_TEXTURE_2D, tex_attachments_[tex_name]);
+}
+
 void Framebuffer::del_id_() {
   if (id != 0) {
     spdlog::trace("Deleting framebuffer ({})", id);

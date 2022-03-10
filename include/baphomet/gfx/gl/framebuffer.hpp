@@ -177,6 +177,8 @@ public:
   void copy_to_default_framebuffer(bool retro = false);
   void copy_to_default_framebuffer(GLint window_width, GLint window_height, bool retro = false);
 
+  void use_texture(const std::string &tex_name);
+
 private:
   std::unordered_map<std::string, GLuint> tex_attachments_{};
   std::unordered_map<std::string, GLuint> rbo_attachments_{};
