@@ -22,6 +22,7 @@ set(srcs ${srcs}
     src/baphomet/gfx/gl/vertex_array.cpp
     src/baphomet/gfx/internal/batch_set.cpp
     src/baphomet/gfx/color.cpp
+    src/baphomet/gfx/particle_system.cpp
     src/baphomet/gfx/render_target.cpp
     src/baphomet/gfx/spritesheet.cpp
     src/baphomet/gfx/texture.cpp

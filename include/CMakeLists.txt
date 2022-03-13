@@ -25,6 +25,7 @@ set(headers ${headers}
     include/baphomet/gfx/gl/vertex_array.hpp
     include/baphomet/gfx/internal/batch_set.hpp
     include/baphomet/gfx/color.hpp
+    include/baphomet/gfx/particle_system.hpp
     include/baphomet/gfx/render_target.hpp
     include/baphomet/gfx/spritesheet.hpp
     include/baphomet/gfx/texture.hpp

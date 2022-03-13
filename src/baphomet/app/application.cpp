@@ -73,6 +73,8 @@ void Application::update_nonuser_(Duration dt) {
   send_msg<MsgCategory::Update>(MsgEndpoint::Audio, dt);
   send_msg<MsgCategory::Update>(MsgEndpoint::Timer, dt);
   send_msg<MsgCategory::Update>(MsgEndpoint::Tween, dt);
+
+  gfx->update_(dt);
 }
 
 void Application::poll_events_() {

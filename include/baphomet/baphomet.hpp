@@ -1,10 +1,12 @@
-#ifndef BAPHOMET_BAPHOMET_HPP
-#define BAPHOMET_BAPHOMET_HPP
+#pragma once
 
 #include "baphomet/app/application.hpp"
 #include "baphomet/app/runner.hpp"
 
 #include "baphomet/gfx/color.hpp"
+#include "baphomet/gfx/particle_system.hpp"
+#include "baphomet/gfx/spritesheet.hpp"
+#include "baphomet/gfx/texture.hpp"
 
 #include "baphomet/mgr/timermgr.hpp"
 
@@ -13,7 +15,9 @@
 
 #include "baphomet/util/time/ticker.hpp"
 #include "baphomet/util/dear.hpp"
+#include "baphomet/util/platform.hpp"
 #include "baphomet/util/random.hpp"
+#include "baphomet/util/shapes.hpp"
 
 #ifndef BAPHOMET_NO_CHRONO_LITERALS
 using namespace std::chrono_literals;
@@ -44,5 +48,3 @@ namespace fs = std::filesystem;
         .start();                          \
   }
 #endif
-
-#endif //BAPHOMET_BAPHOMET_HPP

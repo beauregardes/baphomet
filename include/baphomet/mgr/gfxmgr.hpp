@@ -5,9 +5,11 @@
 #include "baphomet/gfx/gl/context_enums.hpp"
 #include "baphomet/gfx/internal/batch_set.hpp"
 #include "baphomet/gfx/color.hpp"
+#include "baphomet/gfx/particle_system.hpp"
 #include "baphomet/gfx/render_target.hpp"
 #include "baphomet/gfx/spritesheet.hpp"
 #include "baphomet/gfx/texture.hpp"
+#include "baphomet/util/time/time.hpp"
 #include "baphomet/util/shapes.hpp"
 
 #include "glad/gl.h"
@@ -136,6 +138,8 @@ public:
 
   std::unique_ptr<CP437> load_cp437(const std::string &path, int char_w, int char_h, bool retro = false);
 
+  std::shared_ptr<ParticleSystem> make_particle_system(std::unique_ptr<Texture> &tex);
+
   /*****************
    * RENDER TARGETS
    */
@@ -153,6 +157,10 @@ private:
   std::uint64_t next_render_target_weight_{1};
 
   std::stack<std::shared_ptr<RenderTarget>> render_stack_{};
+
+  std::vector<std::shared_ptr<ParticleSystem>> particle_systems_{};
+
+  void update_(Duration dt);
 
   /*****************
    * OPENGL CONTROL
@@ -172,6 +180,19 @@ private:
 
   void flush_();
 
+  /***********
+   * TEXTURES
+   */
+
+  void render_texture_(
+      const std::string &name,
+      const std::shared_ptr<gl::TextureUnit> &tex_unit,
+      float x, float y, float w, float h,
+      float tx, float ty, float tw, float th,
+      float cx, float cy, float angle,
+      const baphomet::RGB &color
+  );
+
   /*****************
    * RENDER TARGETS
    */
@@ -185,15 +206,6 @@ private:
   );
 
   void resize_builtin_render_targets_(int width, int height);
-
-  void render_texture_(
-      const std::string &name,
-      const std::shared_ptr<gl::TextureUnit> &tex_unit,
-      float x, float y, float w, float h,
-      float tx, float ty, float tw, float th,
-      float cx, float cy, float angle,
-      const baphomet::RGB &color
-  );
 };
 
 } // namespace baphomet

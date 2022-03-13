@@ -458,6 +458,12 @@ std::unique_ptr<CP437> GfxMgr::load_cp437(const std::string &path, int char_w, i
   );
 }
 
+std::shared_ptr<ParticleSystem> GfxMgr::make_particle_system(std::unique_ptr<Texture> &tex) {
+  particle_systems_.emplace_back(std::make_unique<ParticleSystem>(tex));
+
+  return particle_systems_.back();
+}
+
 /*****************
  * RENDER TARGETS
  */
@@ -494,6 +500,11 @@ void GfxMgr::pop_render_target(std::size_t count) {
   for (int i = 0; i < count; i++)
     render_stack_.pop();
   render_stack_.top()->fbo_->bind();
+}
+
+void GfxMgr::update_(Duration dt) {
+  for (auto &&ps : particle_systems_)
+    ps->update_(dt);
 }
 
 /*****************
@@ -551,6 +562,11 @@ void GfxMgr::draw_render_targets_(
     GLsizei window_width, GLsizei window_height,
     glm::mat4 projection
 ) {
+  // Clear the window itself of all drawing
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glViewport(0, 0, window_width, window_height);
+  clear(baphomet::rgb(0x000000));
+
   for (auto &rt : render_targets_) {
     rt->fbo_->bind();
 
