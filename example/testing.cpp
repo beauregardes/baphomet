@@ -36,7 +36,7 @@ class Testing : public baphomet::Application {
   }
 
   void draw() override {
-    gfx->clear(baphomet::rgba(0x00000000));
+    gfx->clear();
 
     ps->draw();
 

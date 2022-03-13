@@ -562,7 +562,7 @@ void GfxMgr::draw_render_targets_(
     GLsizei window_width, GLsizei window_height,
     glm::mat4 projection
 ) {
-  // Clear the window itself of all drawing
+  // Clear the window itself of all drawing with a *real* black (non-transparent)
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glViewport(0, 0, window_width, window_height);
   clear(baphomet::rgb(0x000000));
@@ -572,6 +572,9 @@ void GfxMgr::draw_render_targets_(
 
     rt->batches_->draw_opaque(rt->projection_);
 
+    // There is no way this actually single-handedly fixed the alpha blending issue,
+    // but I cannot currently find a case that it *didn't* work on, so whatever I guess?
+    glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_ONE);
     enable_(gl::Capability::blend);
     depth_mask_(false);
 

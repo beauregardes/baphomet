@@ -50,7 +50,7 @@ out vec4 FragColor;
 uniform sampler2D tex;
 
 void main() {
-  FragColor = out_color * texture(tex, out_tex_coords);
+  FragColor = vec4(out_color.xyz * out_color.a, out_color.a) * texture(tex, out_tex_coords);
 }
     )glsl")
             .link();
