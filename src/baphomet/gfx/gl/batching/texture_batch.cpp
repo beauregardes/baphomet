@@ -2,7 +2,7 @@
 
 namespace baphomet::gl {
 
-TextureBatch::TextureBatch(const std::unique_ptr<gl::TextureUnit> &texture_unit)
+TextureBatch::TextureBatch(const std::shared_ptr<gl::TextureUnit> &texture_unit)
     : Batch(12, BatchType::texture), texture_unit_(texture_unit) {
 
   shader_ = ShaderBuilder("TextureBatch")

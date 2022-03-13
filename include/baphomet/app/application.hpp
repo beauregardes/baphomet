@@ -74,6 +74,8 @@ private:
   } overlay_{};
 
   struct {
+    std::shared_ptr<RenderTarget> render_target{nullptr};
+
     ImGuiContext *ctx{nullptr};
     ImGuiIO *io{nullptr};
 

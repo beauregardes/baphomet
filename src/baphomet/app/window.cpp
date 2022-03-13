@@ -133,22 +133,9 @@ glm::mat4 Window::projection() const {
   );
 }
 
-void Window::create_fbo_(int width, int height) {
-  fbo_ = gl::FramebufferBuilder(width, height)
-      .renderbuffer(gl::RBufFormat::rgba8)
-      .renderbuffer(gl::RBufFormat::d32f)
-      .check_complete();
-}
-
 void Window::received_msg(const MsgCategory &category, const std::any &payload) {
   switch (category) {
     using enum MsgCategory;
-
-    case WindowSize: {
-      auto p = extract_msg_payload<WindowSize>(payload);
-      create_fbo_(p.width, p.height);
-    }
-      break;
 
     case WindowFocus: {
 #if defined(BAPHOMET_PLATFORM_WINDOWS)

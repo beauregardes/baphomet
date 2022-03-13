@@ -37,7 +37,7 @@ public:
    * OPENGL CONTROL
    */
 
-  void clear_color(const baphomet::RGB &color);
+  void clear(const baphomet::RGB &color, gl::ClearMask mask = gl::ClearMask::color | gl::ClearMask::depth);
   void clear(gl::ClearMask mask = gl::ClearMask::color | gl::ClearMask::depth);
 
   /*************
@@ -182,6 +182,17 @@ private:
   void draw_render_targets_(
       GLsizei window_width, GLsizei window_height,
       glm::mat4 projection
+  );
+
+  void resize_builtin_render_targets_(int width, int height);
+
+  void render_texture_(
+      const std::string &name,
+      const std::shared_ptr<gl::TextureUnit> &tex_unit,
+      float x, float y, float w, float h,
+      float tx, float ty, float tw, float th,
+      float cx, float cy, float angle,
+      const baphomet::RGB &color
   );
 };
 

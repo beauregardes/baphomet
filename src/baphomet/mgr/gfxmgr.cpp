@@ -31,17 +31,18 @@ GfxMgr &GfxMgr::operator=(GfxMgr &&other) noexcept {
  * OPENGL CONTROL
  */
 
-void GfxMgr::clear_color(const baphomet::RGB &color) {
+void GfxMgr::clear(const baphomet::RGB &color, gl::ClearMask mask) {
   glClearColor(
       static_cast<float>(color.r) / 255.0f,
       static_cast<float>(color.g) / 255.0f,
       static_cast<float>(color.b) / 255.0f,
       static_cast<float>(color.a) / 255.0f
   );
+  glClear(unwrap(mask));
 }
 
 void GfxMgr::clear(gl::ClearMask mask) {
-  glClear(unwrap(mask));
+  clear(baphomet::rgba(0x00000000), mask);
 }
 
 /*************
@@ -405,10 +406,15 @@ std::unique_ptr<Texture> GfxMgr::load_texture(const std::string &path, bool retr
   resource_loader->load_texture_unit(name, path, retro);
 
   auto &tex = resource_loader->get_texture_unit(name);
-  render_stack_.top()->batches_->create_texture_batch(name, tex);
 
   return std::make_unique<Texture>(
-      render_stack_.top()->batches_,
+      [=, this](
+          float x, float y, float w, float h,
+          float tx, float ty, float tw, float th,
+          float cx, float cy, float angle,
+          const baphomet::RGB &color) {
+        render_texture_(name, tex, x, y, w, h, tx, ty, tw, th, cx, cy, angle, color);
+      },
       name,
       tex->width(), tex->height()
   );
@@ -419,9 +425,17 @@ SpritesheetBuilder GfxMgr::load_spritesheet(const std::string &path, bool retro)
   resource_loader->load_texture_unit(name, path, retro);
 
   auto &tex = resource_loader->get_texture_unit(name);
-  render_stack_.top()->batches_->create_texture_batch(name, tex);
 
-  return SpritesheetBuilder(render_stack_.top()->batches_, name);
+  return SpritesheetBuilder(
+      [=, this](
+          float x, float y, float w, float h,
+          float tx, float ty, float tw, float th,
+          float cx, float cy, float angle,
+          const baphomet::RGB &color) {
+        render_texture_(name, tex, x, y, w, h, tx, ty, tw, th, cx, cy, angle, color);
+      },
+      name
+  );
 }
 
 std::unique_ptr<CP437> GfxMgr::load_cp437(const std::string &path, int char_w, int char_h, bool retro) {
@@ -429,10 +443,15 @@ std::unique_ptr<CP437> GfxMgr::load_cp437(const std::string &path, int char_w, i
   resource_loader->load_texture_unit(name, path, retro);
 
   auto &tex = resource_loader->get_texture_unit(name);
-  render_stack_.top()->batches_->create_texture_batch(name, tex);
 
   return std::make_unique<CP437>(
-      render_stack_.top()->batches_,
+      [=, this](
+          float x, float y, float w, float h,
+          float tx, float ty, float tw, float th,
+          float cx, float cy, float angle,
+          const baphomet::RGB &color) {
+        render_texture_(name, tex, x, y, w, h, tx, ty, tw, th, cx, cy, angle, color);
+      },
       name,
       tex->width(), tex->height(),
       char_w, char_h
@@ -518,7 +537,6 @@ void GfxMgr::flush_() {
  */
 
 void GfxMgr::clear_render_targets_() {
-//  window_batch_->clear();
   for (auto &rt : render_targets_)
     rt->batches_->clear();
 }
@@ -554,6 +572,8 @@ void GfxMgr::draw_render_targets_(
     // This needs to be done between each call
     clear(gl::ClearMask::depth);
 
+    // Blend in case we did a transparent
+    // clear on this layer
     enable_(gl::Capability::blend);
     depth_mask_(false);
 
@@ -562,6 +582,26 @@ void GfxMgr::draw_render_targets_(
     depth_mask_(true);
     disable_(gl::Capability::blend);
   }
+}
+
+void GfxMgr::resize_builtin_render_targets_(int width, int height) {
+  spdlog::info("Resize! {} {}", width, height);
+  // The first, and last two render targets are special, and resize with the window
+  render_targets_[0]->resize(width, height);
+  render_targets_[render_targets_.size() - 2]->resize(width, height);
+  render_targets_[render_targets_.size() - 1]->resize(width, height);
+}
+
+void GfxMgr::render_texture_(
+    const std::string &name,
+    const std::shared_ptr<gl::TextureUnit> &tex_unit,
+    float x, float y, float w, float h,
+    float tx, float ty, float tw, float th,
+    float cx, float cy, float angle,
+    const baphomet::RGB &color
+) {
+//  spdlog::info("Texture render call: {} {} {} {} {} {} {} {} {} {} {} {} {}", name, x, y, w, h, tx, ty, tw, th, cx, cy, angle, color);
+  render_stack_.top()->batches_->add_texture(name, tex_unit, x, y, w, h, tx, ty, tw, th, cx, cy, angle, color);
 }
 
 } // namespace baphomet

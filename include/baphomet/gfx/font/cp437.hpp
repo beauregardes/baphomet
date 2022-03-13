@@ -8,7 +8,7 @@ namespace baphomet {
 class CP437 : public Texture {
 public:
   CP437(
-      const std::unique_ptr<BatchSet> &bs,
+      TexRenderFunc render_func,
       const std::string &name,
       GLuint width, GLuint height,
       GLuint char_w, GLuint char_h

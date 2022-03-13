@@ -77,9 +77,6 @@ private:
 
   GLFWwindow *glfw_window_{nullptr};
 
-  std::unique_ptr<gl::Framebuffer> fbo_{nullptr};
-  void create_fbo_(int width, int height);
-
   struct {
     bool borderless{false};
     bool vsync{false};

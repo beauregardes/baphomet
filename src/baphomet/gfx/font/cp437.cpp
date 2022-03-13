@@ -3,11 +3,11 @@
 namespace baphomet {
 
 CP437::CP437(
-    const std::unique_ptr<BatchSet> &bs,
+    TexRenderFunc render_func,
     const std::string &name,
     GLuint width, GLuint height,
     GLuint char_w, GLuint char_h
-) : Texture(bs, name, width, height), char_w_(char_w), char_h_(char_h) {}
+) : Texture(render_func, name, width, height), char_w_(char_w), char_h_(char_h) {}
 
 GLuint CP437::char_w() const {
   return char_w_;

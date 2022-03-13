@@ -7,14 +7,14 @@ std::string ResourceLoader::resolve_resource_path(const std::string &path) {
 }
 
 void ResourceLoader::load_texture_unit(const std::string &name, const std::string &path, bool retro) {
-  texture_units_[name] = std::make_unique<gl::TextureUnit>(path, retro);
+  texture_units_[name] = std::make_shared<gl::TextureUnit>(path, retro);
 }
 
 void ResourceLoader::load_texture_unit(const std::string &name, const std::filesystem::path &path, bool retro) {
-  texture_units_[name] = std::make_unique<gl::TextureUnit>(path, retro);
+  texture_units_[name] = std::make_shared<gl::TextureUnit>(path, retro);
 }
 
-const std::unique_ptr<gl::TextureUnit> &ResourceLoader::get_texture_unit(const std::string &name) {
+const std::shared_ptr<gl::TextureUnit> &ResourceLoader::get_texture_unit(const std::string &name) {
   return texture_units_[name];
 }
 

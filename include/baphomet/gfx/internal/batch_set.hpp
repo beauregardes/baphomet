@@ -36,14 +36,14 @@ public:
   std::size_t oval_vertex_count_alpha() const;
   std::size_t texture_vertex_count_alpha() const;
 
-  void create_texture_batch(const std::string &name, const std::unique_ptr<gl::TextureUnit> &tex_unit);
+//  void create_texture_batch(const std::string &name, const std::unique_ptr<gl::TextureUnit> &tex_unit);
 
   void add_pixel(float x, float y, const baphomet::RGB &color);
   void add_line(float x0, float y0, float x1, float y1, const baphomet::RGB &color, float cx, float cy, float angle);
   void add_tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color, float cx, float cy, float angle);
   void add_rect(float x, float y, float w, float h, const baphomet::RGB &color, float cx, float cy, float angle);
   void add_oval(float x, float y, float x_radius, float y_radius, const baphomet::RGB &color, float cx, float cy, float angle);
-  void add_texture(const std::string &name, float x, float y, float w, float h, float tx, float ty, float tw, float th, float cx, float cy, float angle, const baphomet::RGB &color);
+  void add_texture(const std::string &name, const std::shared_ptr<gl::TextureUnit> &tex_unit, float x, float y, float w, float h, float tx, float ty, float tw, float th, float cx, float cy, float angle, const baphomet::RGB &color);
 
   void add_lined_tri(float x0, float y0, float x1, float y1, float x2, float y2, const baphomet::RGB &color, float cx, float cy, float angle);
   void add_lined_rect(float x, float y, float w, float h, const baphomet::RGB &color, float cx, float cy, float angle);

@@ -113,7 +113,7 @@ void Runner::glfw_scroll_callback_(GLFWwindow *window, double xoffset, double yo
 
 void Runner::glfw_window_size_callback_(GLFWwindow *window, int width, int height) {
   auto runner = reinterpret_cast<Runner *>(glfwGetWindowUserPointer(window));
-  runner->send_msg<MsgCategory::WindowSize>(MsgEndpoint::Window, width, height);
+  runner->send_msg<MsgCategory::WindowSize>(MsgEndpoint::Application, width, height);
 }
 
 void Runner::glfw_window_pos_callback_(GLFWwindow *window, int xpos, int ypos) { /* noop */ }

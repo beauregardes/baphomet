@@ -7,7 +7,7 @@ namespace baphomet::gl {
 
 class TextureBatch : public Batch {
 public:
-  TextureBatch(const std::unique_ptr<gl::TextureUnit> &texture_unit);
+  TextureBatch(const std::shared_ptr<gl::TextureUnit> &texture_unit);
   ~TextureBatch() = default;
 
   bool fully_opaque();
@@ -26,7 +26,7 @@ public:
   void draw_alpha(float z_max, glm::mat4 projection, GLint first, GLsizei count) override;
 
 private:
-  const std::unique_ptr<gl::TextureUnit> &texture_unit_;
+  const std::shared_ptr<gl::TextureUnit> &texture_unit_;
   float x_px_unit_{0.0f}, y_px_unit_{0.0f};
 
   void add_opaque_(

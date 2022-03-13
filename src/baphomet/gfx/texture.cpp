@@ -3,10 +3,10 @@
 namespace baphomet {
 
 Texture::Texture(
-    const std::unique_ptr<BatchSet> &bs,
+    TexRenderFunc render_func,
     const std::string &name,
     GLuint width, GLuint height
-) : bs_(bs), name_(name), width_(width), height_(height) {}
+) : name_(name), width_(width), height_(height), render_func_(render_func) {}
 
 GLuint Texture::w() const {
   return width_;
@@ -22,8 +22,7 @@ void Texture::draw(
     float cx, float cy, float angle,
     const baphomet::RGB &color
 ) {
-  bs_->add_texture(
-      name_,
+  render_func_(
       x, y, w, h,
       tx, ty, tw, th,
       cx, cy, angle,

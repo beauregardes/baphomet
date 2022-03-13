@@ -26,7 +26,7 @@ public:
         WIN_PADW + CELL_COLS * CELL_SIZE + CELL_COLS + 1 + WIN_PADW,
         WIN_PADH + CELL_ROWS * CELL_SIZE + CELL_ROWS + 1 + WIN_PADH
     );
-    window->center(1);
+    window->center(0);
     window->set_visible(true);
 
     cells = std::vector<std::vector<CellState>>(
@@ -65,8 +65,7 @@ public:
   }
 
   void draw() override {
-    gfx->clear_color(BG_COLOR);
-    gfx->clear();
+    gfx->clear(BG_COLOR);
 
     draw_grid();
     draw_cells();

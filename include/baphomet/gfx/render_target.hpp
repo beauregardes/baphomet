@@ -32,6 +32,9 @@ public:
   float w() const;
   float h() const;
 
+  void resize(float x, float y, float w, float h);
+  void resize(float w, float h);
+
 private:
   std::string tag_;
   std::uint64_t weight_{0};

@@ -74,7 +74,6 @@ void main() {
       x + w, y + h, 1.0f,  1.0f, 1.0f, 1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f, 0.0f,
       x,     y + h, 1.0f,  1.0f, 1.0f, 1.0f, 1.0f,  0.0f, 0.0f,  0.0f, 0.0f, 0.0f
   });
-  vbo_->sync();
 
   vao_ = std::make_unique<gl::VertexArray>();
   vao_->attrib_pointer(vbo_.get(), {
@@ -101,7 +100,36 @@ float RenderTarget::h() const {
   return h_;
 }
 
+void RenderTarget::resize(float x, float y, float w, float h) {
+  x_ = x;
+  y_ = y;
+  w_ = w;
+  h_ = h;
+
+  fbo_ = gl::FramebufferBuilder(w, h)
+      .texture("color", gl::TexFormat::rgba8)
+      .renderbuffer(gl::RBufFormat::d32f)
+      .check_complete();
+  projection_ = glm::ortho(0.0f, w, h, 0.0f, 0.0f, 1.0f);
+
+  vbo_->clear();
+  vbo_->add({
+      x,     y,     1.0f,  1.0f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f,  0.0f, 0.0f, 0.0f,
+      x + w, y,     1.0f,  1.0f, 1.0f, 1.0f, 1.0f,  1.0f, 1.0f,  0.0f, 0.0f, 0.0f,
+      x + w, y + h, 1.0f,  1.0f, 1.0f, 1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f, 0.0f,
+      x,     y,     1.0f,  1.0f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f,  0.0f, 0.0f, 0.0f,
+      x + w, y + h, 1.0f,  1.0f, 1.0f, 1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f, 0.0f,
+      x,     y + h, 1.0f,  1.0f, 1.0f, 1.0f, 1.0f,  0.0f, 0.0f,  0.0f, 0.0f, 0.0f
+  });
+}
+
+void RenderTarget::resize(float w, float h) {
+  resize(x_, y_, w, h);
+}
+
 void RenderTarget::draw_(glm::mat4 window_projection) {
+  vbo_->sync();
+
   shader_->use();
   shader_->uniform_1f("z_max", 2.0f);
   shader_->uniform_mat4f("projection", window_projection);

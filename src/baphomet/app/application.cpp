@@ -37,6 +37,12 @@ void Application::received_msg(const MsgCategory &category, const std::any &payl
   switch (category) {
     using enum MsgCategory;
 
+    case WindowSize: {
+      auto p = extract_msg_payload<WindowSize>(payload);
+      gfx->resize_builtin_render_targets_(p.width, p.height);
+    }
+      break;
+
     default:
       Endpoint::received_msg(category, payload);
   }
@@ -51,8 +57,13 @@ void Application::imgui_startframe_() {
 }
 
 void Application::imgui_endframe_() {
+  gfx->push_render_target(imgui_state_.render_target);
+  gfx->clear(baphomet::rgba(0x00000000));
+
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+  gfx->pop_render_target();
 
   imgui_state_.newframe_called = false;
 }
@@ -76,14 +87,14 @@ void Application::start_frame_() {
   gfx->clear_render_targets_();
   gfx->reset_to_base_render_target_();
 
-//  imgui_startframe_();
+  imgui_startframe_();
 }
 
 void Application::end_frame_() {
   if (overlay_.enabled)
     draw_overlay_();
 
-  //  imgui_endframe_();
+  imgui_endframe_();
 
   gfx->draw_render_targets_(window->w(), window->h(), window->projection());
 
@@ -92,8 +103,7 @@ void Application::end_frame_() {
 
 void Application::draw_overlay_() {
   gfx->push_render_target(overlay_.render_target);
-  gfx->clear_color(baphomet::rgba(0x00000000));
-  gfx->clear();
+  gfx->clear(baphomet::rgba(0x00000000));
 
   glm::vec2 base_pos{1.0f, 1.0f};
 
@@ -229,16 +239,14 @@ void Application::init_gl_(glm::ivec2 glversion) {
 
   glEnable(GL_TEXTURE_2D);
 
-  window->create_fbo_(window->w(), window->h());
+  imgui_state_.render_target = gfx->make_render_target(0, 0, window->w(), window->h(), std::numeric_limits<std::uint64_t>::max());
 
   overlay_.render_target = gfx->make_render_target(0, 0, window->w(), window->h(), std::numeric_limits<std::uint64_t>::max());
-  gfx->push_render_target(overlay_.render_target);
   overlay_.font = gfx->load_cp437(
       ResourceLoader::resolve_resource_path("fonts/1px_7x9.png"),
       7, 9,
       true
   );
-  gfx->pop_render_target();
 }
 
 void Application::init_imgui_(glm::ivec2 glversion) {

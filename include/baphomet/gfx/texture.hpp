@@ -3,12 +3,21 @@
 #include "baphomet/gfx/internal/batch_set.hpp"
 #include "baphomet/gfx/color.hpp"
 
+#include <functional>
+
 namespace baphomet {
+
+using TexRenderFunc = std::function<void(
+    float, float, float, float,
+    float, float, float, float,
+    float, float, float,
+    const baphomet::RGB &
+)>;
 
 class Texture {
 public:
   Texture(
-      const std::unique_ptr<BatchSet> &bs,
+      TexRenderFunc render_func,
       const std::string &name,
       GLuint width, GLuint height
   );
@@ -52,10 +61,10 @@ public:
   );
 
 protected:
-  const std::unique_ptr<BatchSet> &bs_{nullptr};
   std::string name_{};
-
   GLuint width_{0}, height_{0};
+
+  TexRenderFunc render_func_;
 };
 
 } // namespace baphomet

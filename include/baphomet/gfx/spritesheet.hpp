@@ -12,7 +12,7 @@ namespace baphomet {
 class Spritesheet {
 public:
   Spritesheet(
-      const std::unique_ptr<BatchSet> &bs,
+      TexRenderFunc render_func,
       const std::string &name,
       std::unordered_map<std::string, glm::vec4> mappings,
       float tile_w, float tile_h
@@ -48,7 +48,7 @@ public:
   );
 
 private:
-  const std::unique_ptr<BatchSet> &bs_;
+  TexRenderFunc render_func_;
   std::string name_{};
 
   std::unordered_map<std::string, glm::vec4> mappings_{};
@@ -58,7 +58,7 @@ private:
 
 class SpritesheetBuilder {
 public:
-  SpritesheetBuilder(const std::unique_ptr<BatchSet> &bs, const std::string &name);
+  SpritesheetBuilder(TexRenderFunc render_func, const std::string &name);
 
   SpritesheetBuilder &load_ini(const std::string &path);
 
@@ -84,7 +84,7 @@ public:
   std::unique_ptr<Spritesheet> build();
 
 private:
-  const std::unique_ptr<BatchSet> &bs_;
+  TexRenderFunc render_func_;
   std::string name_{};
 
   std::unordered_map<std::string, glm::vec4> mappings_{};

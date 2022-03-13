@@ -78,11 +78,6 @@ std::size_t BatchSet::texture_vertex_count_alpha() const {
   return vertex_count;
 }
 
-void BatchSet::create_texture_batch(const std::string &name, const std::unique_ptr<gl::TextureUnit> &tex_unit) {
-  tex_batches_[name] = std::make_unique<gl::TextureBatch>(tex_unit);
-  tex_batch_starts_[name] = 0;
-}
-
 void BatchSet::add_pixel(float x, float y, const baphomet::RGB &color) {
   if (!pixels)
     pixels = std::make_unique<gl::PixelBatch>();
@@ -163,7 +158,12 @@ void BatchSet::add_oval(float x, float y, float x_radius, float y_radius, const 
   z_level++;
 }
 
-void BatchSet::add_texture(const std::string &name, float x, float y, float w, float h, float tx, float ty, float tw, float th, float cx, float cy, float angle, const baphomet::RGB &color) {
+void BatchSet::add_texture(const std::string &name, const std::shared_ptr<gl::TextureUnit> &tex_unit, float x, float y, float w, float h, float tx, float ty, float tw, float th, float cx, float cy, float angle, const baphomet::RGB &color) {
+  if (!tex_batches_.contains(name)) {
+    tex_batches_[name] = std::make_unique<gl::TextureBatch>(tex_unit);
+    tex_batch_starts_[name] = 0;
+  }
+
   if (color.a < 255 || !tex_batches_[name]->fully_opaque())
     check_store_alpha_batch_(gl::BatchType::texture, name);
 
