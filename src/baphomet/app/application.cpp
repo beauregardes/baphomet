@@ -29,6 +29,14 @@ void Application::set_overlay_enabled(bool enabled) {
   overlay_.enabled = enabled;
 }
 
+void Application::unsticky(const std::string &label) {
+  std::erase_if(stickies_, [&](const auto &s) { return s->label == label; });
+}
+
+void Application::unsticky_all() {
+  stickies_.clear();
+}
+
 void Application::shutdown() {
   window->close_();
 }
@@ -119,6 +127,10 @@ void Application::draw_overlay_() {
 #endif
   stat_str += fmt::format(" | {:.2f} MB", get_memusage_mb());
   draw_overlay_text_with_bg_(base_pos, stat_str);
+
+  draw_overlay_skip_line_(base_pos);
+  for (auto &s : stickies_)
+    draw_overlay_text_with_bg_(base_pos, s->str());
 
   draw_debug_log_();
 

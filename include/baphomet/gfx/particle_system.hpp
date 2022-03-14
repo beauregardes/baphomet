@@ -8,6 +8,7 @@
 #include <vector>
 #include <tuple>
 #include <numbers>
+#include <stack>
 
 namespace baphomet {
 
@@ -84,6 +85,7 @@ private:
 
   std::vector<Particle> particles_{};
   std::size_t live_count_{0};
+  std::stack<std::size_t> dead_positions_{};
 
   struct {
     Point emitter_pos{0, 0};
@@ -107,7 +109,7 @@ private:
 
   void update_(Duration dt);
 
-  std::size_t find_insert_particle_(std::size_t search_start, float x, float y);
+  void find_insert_particle_(float x, float y);
 };
 
 } // namespace baphomet

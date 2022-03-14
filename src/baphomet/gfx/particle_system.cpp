@@ -66,9 +66,8 @@ void ParticleSystem::emit_count(std::size_t count, float x, float y) {
   if (live_count_ >= params_.particle_limit)
     return;
 
-  std::size_t search_start = 0;
   for (std::size_t i = 0; i < count && live_count_ < params_.particle_limit; ++i)
-    search_start = find_insert_particle_(search_start, x, y);
+    find_insert_particle_(x, y);
 }
 
 void ParticleSystem::emit_count(std::size_t count) {
@@ -79,15 +78,16 @@ void ParticleSystem::emit(Duration dt, float x, float y) {
   if (live_count_ >= params_.particle_limit)
     return;
 
-  std::size_t search_start = 0;
   auto acc_step = baphomet::sec(1 / params_.emitter_rate);
 
   params_.emitter_acc += dt;
   while (params_.emitter_acc >= acc_step && live_count_ < params_.particle_limit) {
-    search_start = find_insert_particle_(search_start, x, y);
+    find_insert_particle_(x, y);
     params_.emitter_acc -= acc_step;
   }
 
+  // If this is true, we hit the particle limit, but still reduce
+  // our acc until we wouldn't be emitting any more particles
   while (params_.emitter_acc >= acc_step) {
     params_.emitter_acc -= acc_step;
   }
@@ -116,31 +116,32 @@ float lerp(float a, float b, float t) {
 }
 
 void ParticleSystem::update_(Duration dt) {
-  for (auto &p : particles_) {
-    if (!p.alive)
+  for (std::size_t i = 0; i < particles_.size(); ++i) {
+    if (!particles_[i].alive)
       continue;
 
-    p.acc += dt;
-    if (p.acc >= p.ttl) {
-      p.alive = false;
+    particles_[i].acc += dt;
+    if (particles_[i].acc >= particles_[i].ttl) {
+      particles_[i].alive = false;
+      dead_positions_.push(i);
       live_count_--;
       continue;
     }
 
-    p.radial_vel += p.radial_accel * (dt / 1s);
-    p.x += std::cos(p.angle) * p.radial_vel * (dt / 1s);
-    p.y += -std::sin(p.angle) * p.radial_vel * (dt / 1s);
+    particles_[i].radial_vel += particles_[i].radial_accel * (dt / 1s);
+    particles_[i].x += std::cos(particles_[i].angle) * particles_[i].radial_vel * (dt / 1s);
+    particles_[i].y += -std::sin(particles_[i].angle) * particles_[i].radial_vel * (dt / 1s);
 
-    p.tex_angle += p.spin * (dt / 1s);
+    particles_[i].tex_angle += particles_[i].spin * (dt / 1s);
 
-    auto progress = p.acc / p.ttl;
-    for (std::size_t i = 0; i < params_.colors.size() - 1; ++i) {
-      auto [prog1, color1] = params_.colors[i];
-      auto [prog2, color2] = params_.colors[i + 1];
+    auto progress = particles_[i].acc / particles_[i].ttl;
+    for (std::size_t j = 0; j < params_.colors.size() - 1; ++j) {
+      auto [prog1, color1] = params_.colors[j];
+      auto [prog2, color2] = params_.colors[j + 1];
       if (progress >= prog1 && progress <= prog2) {
         float numer = progress - prog1;
         float denom = prog2 - prog1;
-        p.color = baphomet::rgba(
+        particles_[i].color = baphomet::rgba(
             lerp(color1.r, color2.r, numer / denom),
             lerp(color1.g, color2.g, numer / denom),
             lerp(color1.b, color2.b, numer / denom),
@@ -152,47 +153,45 @@ void ParticleSystem::update_(Duration dt) {
   }
 }
 
-std::size_t ParticleSystem::find_insert_particle_(std::size_t search_start, float x, float y) {
+void ParticleSystem::find_insert_particle_(float x, float y) {
   if (live_count_ >= params_.particle_limit)
-    return search_start;
+    return;
 
-  for (std::size_t i = search_start; i < particles_.size(); ++i) {
-    if (!particles_[i].alive) {
-      particles_[i].ttl = baphomet::sec(rnd::get<float>(params_.ttl_min / 1s, params_.ttl_max / 1s));
-      particles_[i].angle = rnd::get<float>(params_.angle_min, params_.angle_max);
-      particles_[i].radial_vel = rnd::get<float>(params_.delta_min, params_.delta_max);
-      particles_[i].radial_accel = rnd::get<float>(params_.accel_min, params_.accel_max);
-      particles_[i].spin = rnd::get<float>(params_.spin_min, params_.spin_max),
-      particles_[i].x = x;
-      particles_[i].y = y;
-      particles_[i].w = static_cast<float>(tex_->w());
-      particles_[i].h = static_cast<float>(tex_->h());
-      particles_[i].tex_angle = 0.0f;
-      particles_[i].color = std::get<1>(params_.colors[0]);
-      particles_[i].acc = baphomet::sec(0);
-      particles_[i].alive = true;
-      live_count_++;
+  if (!dead_positions_.empty()) {
+    std::size_t i = dead_positions_.top();
+    dead_positions_.pop();
 
-      return i + 1;
-    }
+    particles_[i].ttl = baphomet::sec(rnd::get<float>(params_.ttl_min / 1s, params_.ttl_max / 1s));
+    particles_[i].angle = rnd::get<float>(params_.angle_min, params_.angle_max);
+    particles_[i].radial_vel = rnd::get<float>(params_.delta_min, params_.delta_max);
+    particles_[i].radial_accel = rnd::get<float>(params_.accel_min, params_.accel_max);
+    particles_[i].spin = rnd::get<float>(params_.spin_min, params_.spin_max);
+    particles_[i].x = x;
+    particles_[i].y = y;
+    particles_[i].w = static_cast<float>(tex_->w());
+    particles_[i].h = static_cast<float>(tex_->h());
+    particles_[i].tex_angle = 0.0f;
+    particles_[i].color = std::get<1>(params_.colors[0]);
+    particles_[i].acc = baphomet::sec(0);
+    particles_[i].alive = true;
+
+  } else {
+    particles_.emplace_back(
+        baphomet::sec(rnd::get<float>(params_.ttl_min / 1s, params_.ttl_max / 1s)),
+        rnd::get<float>(params_.angle_min, params_.angle_max),
+        rnd::get<float>(params_.delta_min, params_.delta_max),
+        rnd::get<float>(params_.accel_min, params_.accel_max),
+        rnd::get<float>(params_.spin_min, params_.spin_max),
+        x,
+        y,
+        static_cast<float>(tex_->w()),
+        static_cast<float>(tex_->h()),
+        0.0f,
+        std::get<1>(params_.colors[0])
+    );
   }
 
-  particles_.emplace_back(
-      baphomet::sec(rnd::get<float>(params_.ttl_min / 1s, params_.ttl_max / 1s)),
-      rnd::get<float>(params_.angle_min, params_.angle_max),
-      rnd::get<float>(params_.delta_min, params_.delta_max),
-      rnd::get<float>(params_.accel_min, params_.accel_max),
-      rnd::get<float>(params_.spin_min, params_.spin_max),
-      x,
-      y,
-      static_cast<float>(tex_->w()),
-      static_cast<float>(tex_->h()),
-      0.0f,
-      std::get<1>(params_.colors[0])
-  );
   live_count_++;
-
-  return particles_.size();
 }
 
 } // namespace baphomet

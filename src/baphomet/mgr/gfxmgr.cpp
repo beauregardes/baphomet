@@ -604,7 +604,6 @@ void GfxMgr::draw_render_targets_(
 }
 
 void GfxMgr::resize_builtin_render_targets_(int width, int height) {
-  spdlog::info("Resize! {} {}", width, height);
   // The first, and last two render targets are special, and resize with the window
   render_targets_[0]->resize(width, height);
   render_targets_[render_targets_.size() - 2]->resize(width, height);
@@ -619,8 +618,13 @@ void GfxMgr::render_texture_(
     float cx, float cy, float angle,
     const baphomet::RGB &color
 ) {
-//  spdlog::info("Texture render call: {} {} {} {} {} {} {} {} {} {} {} {} {}", name, x, y, w, h, tx, ty, tw, th, cx, cy, angle, color);
-  render_stack_.top()->batches_->add_texture(name, tex_unit, x, y, w, h, tx, ty, tw, th, cx, cy, angle, color);
+  render_stack_.top()->batches_->add_texture(
+      name, tex_unit,
+      x, y, w, h,
+      tx, ty, tw, th,
+      cx, cy, angle,
+      color
+  );
 }
 
 } // namespace baphomet

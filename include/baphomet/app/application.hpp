@@ -14,7 +14,9 @@
 #include "imgui.h"
 #include "implot.h"
 
+#include <concepts>
 #include <deque>
+#include <map>
 
 namespace baphomet {
 
@@ -52,6 +54,15 @@ protected:
 
   template <typename S, typename... Args>
   void debug_log(const S &format, Args &&... args);
+
+  template <typename F> requires std::invocable<F>
+  void sticky(const std::string &label, const std::string &format, F f);
+
+  template <typename F> requires std::invocable<F>
+  void sticky(const std::string &label, F f);
+
+  void unsticky(const std::string &label);
+  void unsticky_all();
 
   void shutdown();
 
@@ -111,11 +122,53 @@ private:
   void open_for_gl_(std::shared_ptr<Messenger> &messenger, const WCfg &cfg, glm::ivec2 glversion);
   void init_gl_(glm::ivec2 glversion);
   void init_imgui_(glm::ivec2 glversion);
+
+  /************
+   * STICKIES *
+   ************/
+
+  class StickyI {
+  public:
+    std::string label;
+
+    explicit StickyI(const std::string &label)
+        : label(label) {}
+
+    virtual std::string str() = 0;
+  };
+
+  template <typename F>
+  class Sticky : public StickyI {
+  public:
+    Sticky(const std::string &label, const std::string &format, F f)
+        : StickyI(label), format_(format), f_(f) {}
+
+    std::string str() override {
+      auto args = fmt::make_args_checked<std::invoke_result_t<F>>(format_, f_());
+      return fmt::format("{}: {}", label, fmt::vformat(format_, args));
+    }
+
+  private:
+    std::string format_;
+    F f_;
+  };
+
+  std::vector<std::unique_ptr<StickyI>> stickies_{};
 };
 
 template <typename S, typename... Args>
 void Application::debug_log(const S &format, Args &&... args) {
   debug_log_(format, fmt::make_args_checked<Args...>(format, args...));
+}
+
+template <typename F> requires std::invocable<F>
+void Application::sticky(const std::string &label, const std::string &format, F f) {
+  stickies_.emplace_back(std::unique_ptr<StickyI>(new Sticky(label, format, f)));
+}
+
+template <typename F> requires std::invocable<F>
+void Application::sticky(const std::string &label, F f) {
+  sticky(label, "{}", f);
 }
 
 } // namespace baphomet
