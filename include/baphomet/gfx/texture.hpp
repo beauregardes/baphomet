@@ -15,6 +15,8 @@ using TexRenderFunc = std::function<void(
 )>;
 
 class Texture {
+  friend class ParticleSystem;
+
 public:
   Texture(
       TexRenderFunc render_func,
