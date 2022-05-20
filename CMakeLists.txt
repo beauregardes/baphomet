@@ -1,120 +1,61 @@
-cmake_minimum_required(VERSION 3.21)
-project(baphomet)
+cmake_minimum_required(VERSION 3.12...3.23)
 
-###########
-# OPTIONS #
-###########
+project(Baphomet VERSION 1.0
+        DESCRIPTION "TBD"
+        LANGUAGES CXX)
 
-option(BAPHOMET_BUILD_EXAMPLES "Build the baphomet example programs" ON)
+add_library(goatlib STATIC
+            src/goat/engine.cpp
+            include/goat/engine.hpp
+            include/goat/goat.hpp)
 
-################
-# DEPENDENCIES #
-################
+find_package(Git QUIET)
+if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+    # Update submodules as needed
+    option(GIT_SUBMODULE "Check submodules during build" ON)
+    if(GIT_SUBMODULE)
+        message(STATUS "Submodule update")
+        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        RESULT_VARIABLE GIT_SUBMOD_RESULT)
+        if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+            message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+        endif()
+    endif()
+endif()
 
-include(cmake/CPM.cmake)
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/fmt/CMakeLists.txt")
+    message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
+endif()
 
-CPMAddPackage(
-    NAME fmt
-    GITHUB_REPOSITORY fmtlib/fmt
-    GIT_TAG 8.1.1)
+add_subdirectory(extern/fmt)
 
-CPMAddPackage(
-    NAME GLFW
-    GITHUB_REPOSITORY glfw/glfw
-    GIT_TAG 3.3.6
-    OPTIONS
-      "GLFW_BUILD_TESTS OFF"
-      "GLFW_BUILD_EXAMPLES OFF"
-      "GLFW_BUILD_DOCS OFF")
+set(OPTION_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(OPTION_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(OPTION_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(extern/glbinding)
 
-CPMAddPackage(
-    NAME GLM
-    GITHUB_REPOSITORY g-truc/glm
-    GIT_TAG 0.9.9.8)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(extern/glfw)
 
-CPMAddPackage(
-    NAME libnyquist
-    GITHUB_REPOSITORY ddiakopoulos/libnyquist
-    GIT_TAG 59a51e4
-    OPTIONS
-      "BUILD_EXAMPLE OFF")
+add_subdirectory(extern/glm)
 
-CPMAddPackage(
-    NAME OpenAL
-    GITHUB_REPOSITORY kcat/openal-soft
-    GIT_TAG 6192493
-    OPTIONS
-      "ALSOFT_UTILS OFF"
-      "ALSOFT_NO_CONFIG_UTIL ON"
-      "ALSOFT_EXAMPLES OFF"
-      "ALSOFT_INSTALL OFF"
-      "ALSOFT_INSTALL_CONFIG OFF"
-      "ALSOFT_INSTALL_HRTF_DATA OFF"
-      "ALSOFT_INSTALL_AMBDEC_PRESETS OFF"
-      "ALSOFT_INSTALL_EXAMPLES OFF"
-      "ALSOFT_INSTALL_UTILS OFF")
+set(SPDLOG_BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
+set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(SPDLOG_FMT_EXTERNAL ON CACHE BOOL "" FORCE)
+add_subdirectory(extern/spdlog)
 
-CPMAddPackage(
-    NAME pcg
-    GITHUB_REPOSITORY imneme/pcg-cpp
-    GIT_TAG ffd522e
-    DOWNLOAD_ONLY YES)
+target_include_directories(goatlib PUBLIC include)
 
-CPMAddPackage(
-    NAME spdlog
-    GITHUB_REPOSITORY gabime/spdlog
-    VERSION 1.9.2
-    OPTIONS
-      "SPDLOG_FMT_EXTERNAL ON")
+target_compile_features(goatlib PUBLIC cxx_std_20)
 
-#################
-# LIBRARY FILES #
-#################
+target_link_libraries(goatlib PUBLIC
+                      fmt::fmt
+                      glbinding::glbinding
+                      glfw
+                      glm::glm
+                      spdlog::spdlog)
 
-include(include/CMakeLists.txt)
-include(src/CMakeLists.txt)
-include(thirdparty/CMakeLists.txt)
-add_library(baphomet STATIC ${headers} ${srcs})
-
-#################
-# CONFIGURATION #
-#################
-
-if (MSVC)
-    target_compile_features(baphomet PUBLIC cxx_std_23)
-else ()
-    target_compile_features(baphomet PUBLIC cxx_std_20)
-endif (MSVC)
-
-target_compile_definitions(baphomet PUBLIC "$<$<CONFIG:DEBUG>:DEBUG>")
-
-target_link_libraries(baphomet PUBLIC
-    fmt
-    glfw
-    glm
-    libnyquist
-    OpenAL
-    spdlog)
-
-target_include_directories(baphomet PUBLIC
-    include
-    ${pcg_SOURCE_DIR}/include
-    thirdparty/glad/include
-    thirdparty/imgui/include
-    thirdparty/imgui/include/backends
-    thirdparty/implot/include
-    thirdparty/stb
-)
-
-if (BAPHOMET_BUILD_EXAMPLES)
-    add_subdirectory("example")
-
-    if (WIN32)
-        # Copy the OpenAL dll over to the example directory
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${OpenAL_BINARY_DIR}/OpenAL32.dll"
-                "${CMAKE_BINARY_DIR}/example"
-        )
-    endif ()
-endif ()
+add_subdirectory(example)
