@@ -21,6 +21,8 @@ int main(int, char *[]) {
   goat::Engine().open<Indev>({
       .title = "Indev",
       .size = {800, 600},
-      .flags = goat::WFlags::centered
+      .monitor = 1,
+      .flags = goat::WFlags::centered,
+      .log_level = spdlog::level::debug
   });
 }

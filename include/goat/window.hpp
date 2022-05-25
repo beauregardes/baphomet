@@ -4,6 +4,7 @@
 #include "goat/util/enum_bitops.hpp"
 #include "glm/glm.hpp"
 #include "GLFW/glfw3.h"
+#include "spdlog/spdlog.h"
 #include <mutex>
 #include <string>
 
@@ -31,6 +32,8 @@ struct WCfg {
 
   WBackend gfx_backend{WBackend::gl};
   glm::ivec2 gfx_version{3, 3};
+
+  spdlog::level::level_enum log_level{spdlog::level::info};
 };
 
 class Window {
