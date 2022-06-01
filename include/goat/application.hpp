@@ -1,5 +1,6 @@
 #pragma once
 
+#include "goat/configs.hpp"
 #include "goat/inputmgr.hpp"
 #include "goat/window.hpp"
 #include <memory>
@@ -22,7 +23,12 @@ protected:
   virtual void draw();
 
 private:
-  void open_(const WCfg &cfg);
+  void initialize_();
+  void update_(double dt);
+  void draw_();
+  void update_event_mgrs_(double dt);
+
+  void open_(const ECfg &engine_create_cfg, const WCfg &cfg);
 };
 
 } // namespace goat

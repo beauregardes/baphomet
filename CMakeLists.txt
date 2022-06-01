@@ -5,14 +5,21 @@ project(Baphomet VERSION 1.0
         LANGUAGES CXX)
 
 add_library(goatlib STATIC
+        src/goat/util/time.cpp
+        src/goat/util/ticker.cpp
         src/goat/application.cpp
         src/goat/engine.cpp
+        src/goat/inputmgr.cpp
         src/goat/window.cpp
         include/goat/util/enum_bitops.hpp
         include/goat/util/platform.hpp
+        include/goat/util/ticker.hpp
+        include/goat/util/time.hpp
         include/goat/application.hpp
+        include/goat/configs.hpp
         include/goat/engine.hpp
         include/goat/goat.hpp
+        include/goat/inputmgr.hpp
         include/goat/window.hpp)
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)

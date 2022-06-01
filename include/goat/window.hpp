@@ -2,6 +2,7 @@
 
 #define GLFW_INCLUDE_NONE
 #include "goat/util/enum_bitops.hpp"
+#include "goat/configs.hpp"
 #include "glm/glm.hpp"
 #include "GLFW/glfw3.h"
 #include "spdlog/spdlog.h"
@@ -10,35 +11,9 @@
 
 namespace goat {
 
-enum class WBackend {gl, vulkan};
-
-enum class WFlags {
-  none       = 1 << 0,
-  resizable  = 1 << 1,
-  hidden     = 1 << 2,
-  centered   = 1 << 3,
-  fullscreen = 1 << 4,
-  borderless = 1 << 5
-};
-
-struct WCfg {
-  std::string title{"Baphomet Window"};
-  glm::ivec2 size{1, 1};
-  glm::ivec2 position{0, 0};
-
-  int monitor{0};
-
-  WFlags flags{WFlags::none};
-
-  WBackend gfx_backend{WBackend::gl};
-  glm::ivec2 gfx_version{3, 3};
-
-  spdlog::level::level_enum log_level{spdlog::level::info};
-};
-
 class Window {
 public:
-  Window(const WCfg &cfg);
+  Window(const ECfg &engine_create_cfg, const WCfg &cfg);
   ~Window();
 
   void set_should_close(bool should_close);
@@ -74,7 +49,8 @@ private:
     bool vsync{false};
   } wm_{};
 
-  void open_for_gl_(const WCfg &cfg);
+  void open_(const ECfg &engine_create_cfg, const WCfg &cfg);
+  void open_for_gl_(const ECfg &engine_create_cfg, const WCfg &cfg);
 
   GLFWmonitor *get_monitor_(int monitor_num);
   void open_fullscreen_(const WCfg &cfg);

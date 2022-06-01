@@ -1,15 +1,18 @@
+#include "goat/util/ticker.hpp"
 #include "goat/engine.hpp"
 #include "glbinding/glbinding.h"
 #include "spdlog/spdlog.h"
 
 namespace goat {
 
-Engine::Engine() = default;
+Engine::Engine(const ECfg &cfg) : create_cfg(cfg) {
+  spdlog::set_level(cfg.log_level);
+}
 
-void Engine::init_gfx_backend_(const WCfg &cfg) {
-  switch (cfg.gfx_backend) {
-  case WBackend::gl:
-    init_gl_(cfg);
+void Engine::init_backend_() {
+  switch (create_cfg.backend) {
+  case Backend::gl:
+    init_gl_();
     break;
 
   default:
@@ -18,9 +21,14 @@ void Engine::init_gfx_backend_(const WCfg &cfg) {
   }
 }
 
-void Engine::init_gl_(const WCfg &cfg) {
+void Engine::init_gl_() {
   application_->window->make_context_current();
   glbinding::initialize(glfwGetProcAddress);
+}
+
+void Engine::set_glfw_user_pointer_() {
+  auto window = application_->window->glfw_handle();
+  glfwSetWindowUserPointer(window, this);
 }
 
 void Engine::register_glfw_callbacks_() {
@@ -48,15 +56,17 @@ void Engine::register_glfw_callbacks_() {
 }
 
 void Engine::run_() {
-  application_->initialize();
+  application_->initialize_();
 
+  auto ticker = Ticker();
   do {
-    application_->update(0.0);
-    application_->draw();
+    application_->update_(ticker.dt_sec());
+    application_->draw_();
 
-    application_->window->swap_buffers();
-
+    application_->update_event_mgrs_(ticker.dt_sec());
     glfwPollEvents();
+
+    ticker.tick();
   } while (!application_->window->should_close());
 }
 
@@ -65,18 +75,31 @@ void Engine::run_() {
  ******************/
 
 void Engine::key_callback_(GLFWwindow *window, int key, int scancode, int action, int mods) {
-  spdlog::debug("Key callback {} {} {} {}", key, scancode, action, mods);
+  auto engine = reinterpret_cast<Engine *>(glfwGetWindowUserPointer(window));
+  engine->application_->input->key_callback_(key, scancode, action, mods);
 }
 
-void Engine::cursor_position_callback_(GLFWwindow *window, double xpos, double ypos) {}
+void Engine::cursor_position_callback_(GLFWwindow *window, double xpos, double ypos) {
+  auto engine = reinterpret_cast<Engine *>(glfwGetWindowUserPointer(window));
+  engine->application_->input->cursor_position_callback_(xpos, ypos);
+}
 
-void Engine::cursor_enter_callback_(GLFWwindow *window, int entered) {}
+void Engine::cursor_enter_callback_(GLFWwindow *window, int entered) {
+  auto engine = reinterpret_cast<Engine *>(glfwGetWindowUserPointer(window));
+  engine->application_->input->cursor_enter_callback_(entered);
+}
 
-void Engine::mouse_button_callback_(GLFWwindow *window, int button, int action, int mods) {}
+void Engine::mouse_button_callback_(GLFWwindow *window, int button, int action, int mods) {
+  auto engine = reinterpret_cast<Engine *>(glfwGetWindowUserPointer(window));
+  engine->application_->input->mouse_button_callback_(button, action, mods);
+}
 
-void Engine::scroll_callback_(GLFWwindow *window, double xoffset, double yoffset) {}
+void Engine::scroll_callback_(GLFWwindow *window, double xoffset, double yoffset) {
+  auto engine = reinterpret_cast<Engine *>(glfwGetWindowUserPointer(window));
+  engine->application_->input->scroll_callback_(xoffset, yoffset);
+}
 
-void Engine::joystick_callback_(int jid, int event) {}
+void Engine::joystick_callback_(int jid, int event) { /* TODO: Attach this to the InputMgr somehow */ }
 
 void Engine::drop_callback_(GLFWwindow *window, int count, const char **paths) {}
 

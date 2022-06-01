@@ -1,6 +1,7 @@
 #pragma once
 
 #include "goat/application.hpp"
+#include "goat/configs.hpp"
 #include <concepts>
 
 namespace goat {
@@ -10,17 +11,20 @@ concept DerivesGoatApplication = std::is_base_of_v<Application, T>;
 
 class Engine {
 public:
-  Engine();
+  explicit Engine(const ECfg &cfg);
 
   template <DerivesGoatApplication T>
   void open(const WCfg &cfg);
 
 private:
+  const ECfg create_cfg{};
+
   std::unique_ptr<Application> application_{nullptr};
 
-  void init_gfx_backend_(const WCfg &cfg);
-  void init_gl_(const WCfg &cfg);
+  void init_backend_();
+  void init_gl_();
 
+  void set_glfw_user_pointer_();
   void register_glfw_callbacks_();
 
   void run_();
@@ -51,14 +55,13 @@ private:
 
 template <DerivesGoatApplication T>
 void Engine::open(const WCfg &cfg) {
-  spdlog::set_level(cfg.log_level);
-
   application_ = std::unique_ptr<Application>(new T());
 
-  application_->open_(cfg);
+  application_->open_(create_cfg, cfg);
+  set_glfw_user_pointer_();
   register_glfw_callbacks_();
 
-  init_gfx_backend_(cfg);
+  init_backend_();
   run_();
 }
 

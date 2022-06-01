@@ -6,7 +6,7 @@ namespace goat {
 
 std::once_flag Window::initialized_glfw_;
 
-Window::Window(const WCfg &cfg) {
+Window::Window(const ECfg &engine_create_cfg, const WCfg &cfg) {
   std::call_once(initialized_glfw_, [&]{
     if (!glfwInit()) {
       const char *description;
@@ -17,15 +17,7 @@ Window::Window(const WCfg &cfg) {
     spdlog::debug("Initialized GLFW");
   });
 
-  switch (cfg.gfx_backend) {
-    case WBackend::gl:
-      open_for_gl_(cfg);
-      break;
-
-    default:
-      spdlog::critical("Backend NYI");
-      std::exit(EXIT_FAILURE);
-  }
+  open_(engine_create_cfg, cfg);
 }
 
 Window::~Window() {
@@ -141,9 +133,21 @@ void Window::swap_buffers() const {
   glfwSwapBuffers(wm_.handle);
 }
 
-void Window::open_for_gl_(const WCfg &cfg) {
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, cfg.gfx_version.x);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, cfg.gfx_version.y);
+void Window::open_(const ECfg &engine_create_cfg, const WCfg &cfg) {
+  switch (engine_create_cfg.backend) {
+    case Backend::gl:
+      open_for_gl_(engine_create_cfg, cfg);
+      break;
+
+    default:
+      spdlog::critical("Backend NYI");
+      std::exit(EXIT_FAILURE);
+  }
+}
+
+void Window::open_for_gl_(const ECfg &engine_create_cfg, const WCfg &cfg) {
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, engine_create_cfg.backend_version.x);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, engine_create_cfg.backend_version.y);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
