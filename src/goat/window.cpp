@@ -134,15 +134,12 @@ void Window::swap_buffers() const {
 }
 
 void Window::open_(const ECfg &engine_create_cfg, const WCfg &cfg) {
-  switch (engine_create_cfg.backend) {
-    case Backend::gl:
-      open_for_gl_(engine_create_cfg, cfg);
-      break;
-
-    default:
-      spdlog::critical("Backend NYI");
-      std::exit(EXIT_FAILURE);
-  }
+#if defined(GOAT_BACKEND_GL)
+  open_for_gl_(engine_create_cfg, cfg);
+#else
+  spdlog::critical("Backend NYI");
+  std::exit(EXIT_FAILURE);
+#endif
 }
 
 void Window::open_for_gl_(const ECfg &engine_create_cfg, const WCfg &cfg) {

@@ -3,10 +3,7 @@
 namespace goat {
 
 Application::Application() = default;
-
-Application::~Application() {
-
-}
+Application::~Application() = default;
 
 void Application::initialize() {}
 void Application::update(double dt) {}
@@ -14,6 +11,7 @@ void Application::draw() {}
 
 void Application::initialize_() {
   input = std::make_unique<InputMgr>();
+  imgui = std::make_unique<Dear>(window->glfw_handle());
 
   initialize();
 }
@@ -23,7 +21,11 @@ void Application::update_(double dt) {
 }
 
 void Application::draw_() {
+  imgui->new_frame();
+
   draw();
+
+  imgui->render();
 
   window->swap_buffers();
 }

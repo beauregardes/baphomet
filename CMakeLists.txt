@@ -5,9 +5,29 @@ project(Baphomet VERSION 1.0
         LANGUAGES CXX)
 
 add_library(goatlib STATIC
+        extern/imgui/src/backends/imgui_impl_glfw.cpp
+        extern/imgui/src/backends/imgui_impl_opengl3.cpp
+#        extern/imgui/src/backends/imgui_impl_vulkan.cpp
+        extern/imgui/src/imgui.cpp
+        extern/imgui/src/imgui_demo.cpp
+        extern/imgui/src/imgui_draw.cpp
+        extern/imgui/src/imgui_tables.cpp
+        extern/imgui/src/imgui_widgets.cpp
+        extern/imgui/include/backends/imgui_impl_glfw.h
+        extern/imgui/include/backends/imgui_impl_opengl3.h
+        extern/imgui/include/backends/imgui_impl_opengl3_loader.h
+#        extern/imgui/include/backends/imgui_impl_vulkan.h
+        extern/imgui/include/imconfig.h
+        extern/imgui/include/imgui.h
+        extern/imgui/include/imgui_internal.h
+        extern/imgui/include/imstb_rectpack.h
+        extern/imgui/include/imstb_textedit.h
+        extern/imgui/include/imstb_truetype.h
+
         src/goat/util/time.cpp
         src/goat/util/ticker.cpp
         src/goat/application.cpp
+        src/goat/dear.cpp
         src/goat/engine.cpp
         src/goat/inputmgr.cpp
         src/goat/window.cpp
@@ -17,6 +37,7 @@ add_library(goatlib STATIC
         include/goat/util/time.hpp
         include/goat/application.hpp
         include/goat/configs.hpp
+        include/goat/dear.hpp
         include/goat/engine.hpp
         include/goat/goat.hpp
         include/goat/inputmgr.hpp
@@ -43,7 +64,10 @@ set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(SPDLOG_FMT_EXTERNAL ON CACHE BOOL "" FORCE)
 add_subdirectory(extern/spdlog)
 
-target_include_directories(goatlib PUBLIC include)
+target_include_directories(goatlib PUBLIC
+        extern/imgui/include/backends
+        extern/imgui/include
+        include)
 
 target_compile_features(goatlib PUBLIC cxx_std_20)
 

@@ -18,8 +18,30 @@ bool InputMgr::down(const std::string &action, double interval, double delay) {
     return state_[action].down;
 
   else {
+    if (state_[action].check_repeat)
+      return state_[action].repeat_pressed;
 
+    else if (pressed(action)) {
+      if (delay > 0.0) {
+        state_[action].check_repeat = true;
+        state_[action].acc = interval;
+        state_[action].interval = interval;
+        state_[action].delay = delay;
+        state_[action].delay_stage = true;
+
+        return false;
+
+      } else {
+        state_[action].check_repeat = true;
+        state_[action].acc = interval;
+        state_[action].interval = interval;
+
+        return true;
+      }
+    }
   }
+
+  return false;
 }
 
 void InputMgr::update_(double dt) {
@@ -28,6 +50,24 @@ void InputMgr::update_(double dt) {
       pair.second.down = true;
     pair.second.pressed = false;
     pair.second.released = false;
+
+    if (pair.second.check_repeat) {
+      pair.second.repeat_pressed = false;
+
+      if (pair.second.delay_stage) {
+        pair.second.delay -= dt;
+        if (pair.second.delay <= 0.0) {
+          pair.second.repeat_pressed = true;
+          pair.second.delay_stage = false;
+        }
+      } else {
+        pair.second.acc -= dt;
+        if (pair.second.acc <= 0.0) {
+          pair.second.repeat_pressed = true;
+          pair.second.acc += pair.second.interval;
+        }
+      }
+    }
   }
 
   mouse.px = mouse.x;
@@ -51,6 +91,10 @@ void InputMgr::key_callback_(int key, int scancode, int action, int mods) {
     case GLFW_RELEASE:
       state_[key_string].down = false;
       state_[key_string].released = true;
+      state_[key_string].check_repeat = false;
+      state_[key_string].interval = 0.0;
+      state_[key_string].delay = 0.0;
+      state_[key_string].delay_stage = false;
       break;
 
     default:

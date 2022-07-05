@@ -1,6 +1,7 @@
 #pragma once
 
 #include "goat/configs.hpp"
+#include "goat/dear.hpp"
 #include "goat/inputmgr.hpp"
 #include "goat/window.hpp"
 #include <memory>
@@ -17,6 +18,7 @@ public:
 protected:
   std::unique_ptr<Window> window{nullptr};
   std::unique_ptr<InputMgr> input{nullptr};
+  std::unique_ptr<Dear> imgui{nullptr};
 
   virtual void initialize();
   virtual void update(double dt);

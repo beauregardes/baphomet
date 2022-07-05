@@ -10,15 +10,12 @@ Engine::Engine(const ECfg &cfg) : create_cfg(cfg) {
 }
 
 void Engine::init_backend_() {
-  switch (create_cfg.backend) {
-  case Backend::gl:
-    init_gl_();
-    break;
-
-  default:
-    spdlog::critical("Backend NYI");
-    std::exit(EXIT_FAILURE);
-  }
+#if defined(GOAT_BACKEND_GL)
+  init_gl_();
+#else
+  spdlog::critical("Backend NYI");
+  std::exit(EXIT_FAILURE);
+#endif
 }
 
 void Engine::init_gl_() {

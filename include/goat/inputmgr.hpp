@@ -37,7 +37,12 @@ private:
     bool down{false};
     bool released{false};
 
-    bool repeat
+    bool check_repeat{false};
+    bool repeat_pressed{false};
+    double acc{0.0};
+    double interval{0.0};
+    double delay{0.0};
+    bool delay_stage{false};
 
     ActionInfo() = default;
   };
