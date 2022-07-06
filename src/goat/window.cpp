@@ -134,11 +134,12 @@ void Window::swap_buffers() const {
 }
 
 void Window::open_(const ECfg &engine_create_cfg, const WCfg &cfg) {
-#if defined(GOAT_BACKEND_GL)
+#if defined GOAT_BACKEND_GL
   open_for_gl_(engine_create_cfg, cfg);
+#elif defined GOAT_BACKEND_VK
+#error "Backend NYI"
 #else
-  spdlog::critical("Backend NYI");
-  std::exit(EXIT_FAILURE);
+#error "Must define either GOAT_BACKEND_GL or GL_BACKEND_VK"
 #endif
 }
 

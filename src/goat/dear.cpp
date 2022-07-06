@@ -13,11 +13,12 @@ Dear::Dear(GLFWwindow *window) {
 
   init_for_glfw_(window);
 
-#if defined(GOAT_BACKEND_GL)
+#if defined GOAT_BACKEND_GL
   init_for_gl_();
+#elif defined GOAT_BACKEND_VK
+#error "Backend NYI"
 #else
-  spdlog::critical("Backend NYI");
-  std::exit(EXIT_FAILURE);
+#error "Must define either GOAT_BACKEND_GL or GL_BACKEND_VK"
 #endif
 }
 

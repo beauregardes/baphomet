@@ -3,7 +3,14 @@
 #include "goat/configs.hpp"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
+
+#if defined GOAT_BACKEND_GL
 #include "imgui_impl_opengl3.h"
+#elif defined GOAT_BACKEND_VK
+#include "imgui_impl_vulkan.h"
+#else
+#error "Must define either GOAT_BACKEND_GL or GL_BACKEND_VK"
+#endif
 
 namespace goat {
 

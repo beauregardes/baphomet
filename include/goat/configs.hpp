@@ -4,16 +4,13 @@
 #include "spdlog/spdlog.h"
 #include <string>
 
-#ifndef GOAT_BACKEND_GL
+#if !defined GOAT_BACKEND_VK && !defined GOAT_BACKEND_GL
 #define GOAT_BACKEND_GL
 #endif
 
 namespace goat {
 
-//enum class Backend {gl, vulkan};
-
 struct ECfg {
-//  Backend backend{Backend::gl};
   glm::ivec2 backend_version{3, 3};
   spdlog::level::level_enum log_level{spdlog::level::info};
 };

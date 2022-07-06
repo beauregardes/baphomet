@@ -13,3 +13,6 @@
 [submodule "extern/glbinding"]
 	path = extern/glbinding
 	url = ../../cginternals/glbinding.git
+[submodule "extern/msdf-atlas-gen"]
+	path = extern/msdf-atlas-gen
+	url = ../../Chlumsky/msdf-atlas-gen.git

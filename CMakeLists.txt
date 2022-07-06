@@ -7,7 +7,6 @@ project(Baphomet VERSION 1.0
 add_library(goatlib STATIC
         extern/imgui/src/backends/imgui_impl_glfw.cpp
         extern/imgui/src/backends/imgui_impl_opengl3.cpp
-#        extern/imgui/src/backends/imgui_impl_vulkan.cpp
         extern/imgui/src/imgui.cpp
         extern/imgui/src/imgui_demo.cpp
         extern/imgui/src/imgui_draw.cpp
@@ -16,7 +15,6 @@ add_library(goatlib STATIC
         extern/imgui/include/backends/imgui_impl_glfw.h
         extern/imgui/include/backends/imgui_impl_opengl3.h
         extern/imgui/include/backends/imgui_impl_opengl3_loader.h
-#        extern/imgui/include/backends/imgui_impl_vulkan.h
         extern/imgui/include/imconfig.h
         extern/imgui/include/imgui.h
         extern/imgui/include/imgui_internal.h
@@ -43,6 +41,16 @@ add_library(goatlib STATIC
         include/goat/inputmgr.hpp
         include/goat/window.hpp)
 
+find_package(Vulkan)
+if(Vulkan)
+    add_library(goatlib STATIC
+        extern/imgui/src/backends/imgui_impl_vulkan.cpp
+        extern/imgui/include/backends/imgui_impl_vulkan.h)
+endif()
+
+set(FREETYPE_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/extern/freetype/win/lib/freetype.lib)
+set(FREETYPE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/extern/freetype/win/include)
+
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 add_subdirectory(extern/fmt)
 
@@ -59,12 +67,16 @@ add_subdirectory(extern/glfw)
 
 add_subdirectory(extern/glm)
 
+set(MSDF_ATLAS_GEN_BUILD_STANDALONE OFF CACHE BOOL "" FORCE)
+add_subdirectory(extern/msdf-atlas-gen)
+
 set(SPDLOG_BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
 set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(SPDLOG_FMT_EXTERNAL ON CACHE BOOL "" FORCE)
 add_subdirectory(extern/spdlog)
 
 target_include_directories(goatlib PUBLIC
+        ${FREETYPE_INCLUDE_DIRS}
         extern/imgui/include/backends
         extern/imgui/include
         include)
@@ -73,9 +85,16 @@ target_compile_features(goatlib PUBLIC cxx_std_20)
 
 target_link_libraries(goatlib PUBLIC
         fmt::fmt
+        ${FREETYPE_LIBRARY}
         glbinding::glbinding
         glfw
         glm::glm
+        msdf-atlas-gen::msdf-atlas-gen
         spdlog::spdlog)
+
+if(Vulkan)
+    target_include_directories(goatlib PUBLIC ${Vulkan_INCLUDE_DIRS})
+    target_link_libraries(goatlib PUBLIC ${Vulkan_LIBRARIES})
+endif()
 
 add_subdirectory(example)
