@@ -4,6 +4,13 @@ project(Baphomet VERSION 1.0
         DESCRIPTION "TBD"
         LANGUAGES CXX)
 
+if(MSVC)
+    set(CMAKE_CXX_STANDARD 23)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+else()
+    set(CMAKE_CXX_STANDARD 20)
+endif()
+
 add_library(goatlib STATIC
         extern/imgui/src/backends/imgui_impl_glfw.cpp
         extern/imgui/src/backends/imgui_impl_opengl3.cpp
@@ -21,6 +28,8 @@ add_library(goatlib STATIC
         extern/imgui/include/imstb_rectpack.h
         extern/imgui/include/imstb_textedit.h
         extern/imgui/include/imstb_truetype.h
+        extern/stb/stb_image.h
+        extern/stb/stb_image_write.h
 
         src/goat/util/time.cpp
         src/goat/util/ticker.cpp
@@ -48,8 +57,8 @@ if(Vulkan)
         extern/imgui/include/backends/imgui_impl_vulkan.h)
 endif()
 
-set(FREETYPE_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/extern/freetype/win/lib/freetype.lib)
-set(FREETYPE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/extern/freetype/win/include)
+set(FREETYPE_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/extern/msdf-atlas-gen/msdfgen/freetype/win64/freetype.lib)
+set(FREETYPE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/extern/msdf-atlas-gen/msdfgen/freetype/include)
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 add_subdirectory(extern/fmt)
@@ -79,13 +88,14 @@ target_include_directories(goatlib PUBLIC
         ${FREETYPE_INCLUDE_DIRS}
         extern/imgui/include/backends
         extern/imgui/include
+        extern/stb
         include)
 
 target_compile_features(goatlib PUBLIC cxx_std_20)
 
 target_link_libraries(goatlib PUBLIC
         fmt::fmt
-        ${FREETYPE_LIBRARY}
+        ${FREETYPE_LIBS}
         glbinding::glbinding
         glfw
         glm::glm

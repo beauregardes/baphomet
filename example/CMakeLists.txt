@@ -1,2 +1,2 @@
 add_executable(indev indev.cpp)
-target_link_libraries(indev PRIVATE goatlib)
+target_link_libraries(indev PUBLIC goatlib)
