@@ -72,24 +72,23 @@ struct MSDFFont {
   std::unordered_map<msdf_atlas::unicode_t, msdf_atlas::GlyphGeometry> glyphs{};
   std::unique_ptr<horns::Texture> tex{nullptr};
 };
-MSDFFont load_font(const std::filesystem::path &filename);
 
 const std::string vsh_src = R"glsl(
 #version 330 core
 
-layout(location = 0) in vec3 vertexPosition_modelspace;
-layout(location = 1) in vec2 textureCoordinates;
-layout(location = 2) in vec4 vertexColor;
+layout(location = 0) in vec3 vertPos;
+layout(location = 1) in vec2 inTexCoord;
+layout(location = 2) in vec4 inFgColor;
 
-out vec2 texCoords;
-out vec4 fragColor;
+out vec2 texCoord;
+out vec4 fgColor;
 
 uniform mat4 MVP;
 
 void main() {
-    gl_Position = MVP * vec4(vertexPosition_modelspace, 1);
-    texCoords = textureCoordinates;
-    fragColor = vertexColor;
+    gl_Position = MVP * vec4(vertPos, 1);
+    texCoord = inTexCoord;
+    fgColor = inFgColor;
 }
 )glsl";
 
@@ -122,27 +121,30 @@ void main() {
 const std::string fsh_src = R"glsl(
 #version 330 core
 
-in vec2 texCoords;
-in vec4 fragColor;
+in vec2 texCoord;
+in vec4 fgColor;
 
 out vec4 color;
 
 uniform sampler2D msdf;
+uniform float pxRange;
 
 float median(float r, float g, float b) {
     return max(min(r, g), min(max(r, g), b));
 }
 
+float screenPxRange() {
+    vec2 unitRange = vec2(pxRange)/vec2(textureSize(msdf, 0));
+    vec2 screenTexSize = vec2(1.0)/fwidth(texCoord);
+    return max(0.5*dot(unitRange, screenTexSize), 1.0);
+}
+
 void main() {
-    vec3 sample = texture(msdf, texCoords).rgb;
-    ivec2 sz = textureSize(msdf, 0).xy;
-    float dx = dFdx(texCoords.x) * sz.x;
-    float dy = dFdy(texCoords.y) * sz.y;
-    float toPixels = 8.0 * inversesqrt(dx * dx + dy * dy);
-    float sigDist = median(sample.r, sample.g, sample.b);
-    float w = fwidth(sigDist);
-    float opacity = smoothstep(0.5 - w, 0.5 + w, sigDist);
-    color = mix(vec4(0.0, 0.0, 0.0, 0.0), fragColor.rgba, opacity);
+    vec3 msd = texture(msdf, texCoord).rgb;
+    float sd = median(msd.r, msd.g, msd.b);
+    float screenPxDistance = screenPxRange()*(sd - 0.5);
+    float opacity = clamp(screenPxDistance + 0.5, 0.0, 1.0);
+    color = mix(vec4(0), fgColor, opacity);
 }
 )glsl";
 
@@ -206,8 +208,12 @@ public:
   FT_Face face;
 
   GLuint shprogram{0};
+
   GLint projection_loc{0};
   glm::mat4 projection{};
+
+  GLint pxRangeLoc{0};
+  float pxRange{8.0f};
 
   GLuint vao{0};
   GLuint vbo{0};
@@ -250,6 +256,8 @@ public:
     projection_loc = glGetUniformLocation(shprogram, "MVP");
     projection = glm::ortho(0.0f, (float)window->w(), (float)window->h(), 0.0f, 0.0f, 1.0f);
 
+    pxRangeLoc = glGetUniformLocation(shprogram, "pxRange");
+
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
@@ -277,10 +285,23 @@ public:
 
     std::vector<msdf_atlas::unicode_t> codepoints;
     msdf_atlas::utf8Decode(codepoints, "Hello, world!");
-    float x = input->mouse.x;
-    float y = input->mouse.y - 10;
+
+    float total_width = 0;
     for (const auto &cp : codepoints) {
-      FT_Load_Char(face, cp, FT_LOAD_COMPUTE_METRICS);
+      FT_Load_Char(face, cp, FT_LOAD_RENDER);
+      total_width += face->glyph->advance.x / 64.0f;
+    }
+
+    float x = (window->w() / 2.0) - (total_width / 2.0);
+    float y = window->h() / 2.0 + 50;
+
+    for (const auto &cp : codepoints) {
+      auto error = FT_Load_Char(face, cp, FT_LOAD_RENDER);
+      if (error) {
+        fmt::print("asondgoadngiosadg\n");
+        continue;
+      }
+
       auto metrics = face->glyph->metrics;
 
       if (cp != ' ') {
@@ -290,20 +311,21 @@ public:
         float tw = rect.w / (float) font.tex->width;
         float th = rect.h / (float) font.tex->height;
 
+        float xoff = x + face->glyph->bitmap_left;
+        float yoff = y - (face->glyph->bitmap.rows - face->glyph->bitmap_top);
+
         vertices.insert(vertices.end(), {
-            x, y - (metrics.horiBearingY >> 6), 0.0f, tx, ty + th, 1.0f, 1.0f, 1.0f, 1.0f,
-            x + (metrics.width >> 6), y - (metrics.horiBearingY >> 6), 0.0f, tx + tw, ty + th, 1.0f, 1.0f, 1.0f, 1.0f,
-            x + (metrics.width >> 6), y - (metrics.horiBearingY >> 6) + (metrics.height >> 6), 0.0f, tx + tw, ty, 1.0f,
-            1.0f, 1.0f, 1.0f,
-            x, y - (metrics.horiBearingY >> 6), 0.0f, tx, ty + th, 1.0f, 1.0f, 1.0f, 1.0f,
-            x + (metrics.width >> 6), y - (metrics.horiBearingY >> 6) + (metrics.height >> 6), 0.0f, tx + tw, ty, 1.0f,
-            1.0f, 1.0f, 1.0f,
-            x, y - (metrics.horiBearingY >> 6) + (metrics.height >> 6), 0.0f, tx, ty, 1.0f, 1.0f, 1.0f, 1.0f,
+            xoff,                             yoff - face->glyph->bitmap_top, 0.0,   tx,      ty,        1.0f, 1.0f, 1.0f, 1.0f,
+            xoff,                             yoff,                              0.0,   tx,      ty + th,   1.0f, 1.0f, 1.0f, 1.0f,
+            xoff + face->glyph->bitmap.width, yoff,                              0.0,   tx + tw, ty + th,   1.0f, 1.0f, 1.0f, 1.0f,
+            xoff,                             yoff - face->glyph->bitmap_top, 0.0,   tx,      ty,        1.0f, 1.0f, 1.0f, 1.0f,
+            xoff + face->glyph->bitmap.width, yoff,                              0.0,   tx + tw, ty + th,   1.0f, 1.0f, 1.0f, 1.0f,
+            xoff + face->glyph->bitmap.width, yoff - face->glyph->bitmap_top, 0.0,   tx + tw, ty,        1.0f, 1.0f, 1.0f, 1.0f,
         });
         vertex_count += 6;
       }
 
-      x += metrics.horiAdvance >> 6;
+      x += face->glyph->advance.x / 64.0f;
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -323,62 +345,63 @@ public:
 
     glUseProgram(shprogram);
     glUniformMatrix4fv(projection_loc, 1, false, glm::value_ptr(projection));
+    glUniform1f(pxRangeLoc, pxRange);
     font.tex->bind();
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0, vertex_count);
   }
-};
 
-MSDFFont load_font(const std::filesystem::path &filename) {
-  MSDFFont ret{};
+  MSDFFont load_font(const std::filesystem::path &filename) {
+    MSDFFont ret{};
 
-  if (msdfgen::FreetypeHandle *ft = msdfgen::initializeFreetype()) {
-    ret.fh = msdfgen::loadFont(ft, filename.string().c_str());
+    if (msdfgen::FreetypeHandle *ft = msdfgen::initializeFreetype()) {
+      ret.fh = msdfgen::loadFont(ft, filename.string().c_str());
 
-    std::vector<msdf_atlas::GlyphGeometry> glyphs;
-    msdf_atlas::FontGeometry fontGeometry(&glyphs);
-    fontGeometry.loadCharset(ret.fh, 2.0, msdf_atlas::Charset::ASCII);
+      std::vector<msdf_atlas::GlyphGeometry> glyphs;
+      msdf_atlas::FontGeometry fontGeometry(&glyphs);
+      fontGeometry.loadCharset(ret.fh, 2.0, msdf_atlas::Charset::ASCII);
 
-    const double maxCornerAngle = 3.0;
-    for (auto &glyph : glyphs)
-      glyph.edgeColoring(&msdfgen::edgeColoringInkTrap, maxCornerAngle, 0);
+      const double maxCornerAngle = 3.0;
+      for (auto &glyph : glyphs)
+        glyph.edgeColoring(&msdfgen::edgeColoringInkTrap, maxCornerAngle, 0);
 
-    msdf_atlas::TightAtlasPacker packer;
-    packer.setDimensionsConstraint(msdf_atlas::TightAtlasPacker::DimensionsConstraint::POWER_OF_TWO_RECTANGLE);
-    packer.setMinimumScale(96.0);
-    packer.setPixelRange(12.0);
-    packer.setMiterLimit(1.0);
-    packer.pack(glyphs.data(), glyphs.size());
+      msdf_atlas::TightAtlasPacker packer;
+      packer.setDimensionsConstraint(msdf_atlas::TightAtlasPacker::DimensionsConstraint::POWER_OF_TWO_RECTANGLE);
+      packer.setMinimumScale(96.0);
+      packer.setPixelRange(pxRange);
+      packer.setMiterLimit(1.0);
+      packer.pack(glyphs.data(), glyphs.size());
 
-    int width = 0, height = 0;
-    packer.getDimensions(width, height);
+      int width = 0, height = 0;
+      packer.getDimensions(width, height);
 
-    msdf_atlas::ImmediateAtlasGenerator<
-        float,
-        3,
-        msdf_atlas::msdfGenerator,
-        msdf_atlas::BitmapAtlasStorage<msdf_atlas::byte, 3>
-    > generator(width, height);
+      msdf_atlas::ImmediateAtlasGenerator<
+          float,
+          3,
+          msdf_atlas::msdfGenerator,
+          msdf_atlas::BitmapAtlasStorage<msdf_atlas::byte, 3>
+          > generator(width, height);
 
-    msdf_atlas::GeneratorAttributes attributes;
-    attributes.config.errorCorrection.mode = msdfgen::ErrorCorrectionConfig::EDGE_PRIORITY;
-    attributes.config.errorCorrection.distanceCheckMode = msdfgen::ErrorCorrectionConfig::ALWAYS_CHECK_DISTANCE;
-    attributes.scanlinePass = true;
-    generator.setAttributes(attributes);
-    generator.setThreadCount(4);
-    generator.generate(glyphs.data(), glyphs.size());
+      msdf_atlas::GeneratorAttributes attributes;
+      attributes.config.errorCorrection.mode = msdfgen::ErrorCorrectionConfig::EDGE_PRIORITY;
+      attributes.config.errorCorrection.distanceCheckMode = msdfgen::ErrorCorrectionConfig::ALWAYS_CHECK_DISTANCE;
+      attributes.scanlinePass = true;
+      generator.setAttributes(attributes);
+      generator.setThreadCount(4);
+      generator.generate(glyphs.data(), glyphs.size());
 
-    for (const auto &glyph : glyphs)
-      ret.glyphs[glyph.getCodepoint()] = glyph;
+      for (const auto &glyph : glyphs)
+        ret.glyphs[glyph.getCodepoint()] = glyph;
 
-    auto bitmap = static_cast<msdfgen::BitmapConstRef<msdf_atlas::byte, 3>>(generator.atlasStorage());
-    ret.tex = horns::Texture::from_bytes(bitmap.pixels, bitmap.width, bitmap.height);
+      auto bitmap = static_cast<msdfgen::BitmapConstRef<msdf_atlas::byte, 3>>(generator.atlasStorage());
+      ret.tex = horns::Texture::from_bytes(bitmap.pixels, bitmap.width, bitmap.height);
 
-    msdfgen::deinitializeFreetype(ft);
+      msdfgen::deinitializeFreetype(ft);
+    }
+
+    return ret;
   }
-
-  return ret;
-}
+};
 
 int main(int, char *[]) {
   goat::Engine({
@@ -387,7 +410,7 @@ int main(int, char *[]) {
   }).open<Indev>({
       .title = "Indev",
       .size = {800, 600},
-      .monitor = 0,
+      .monitor = 1,
       .flags = goat::WFlags::centered
   });
 }
