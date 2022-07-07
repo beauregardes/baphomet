@@ -36,8 +36,9 @@ add_library(goatlib STATIC
         extern/stb/stb_image.h
         extern/stb/stb_image_write.h
 
-        src/goat/util/time.cpp
+        src/goat/util/rnd.cpp
         src/goat/util/ticker.cpp
+        src/goat/util/time.cpp
         src/goat/application.cpp
         src/goat/dear.cpp
         src/goat/engine.cpp
@@ -45,6 +46,7 @@ add_library(goatlib STATIC
         src/goat/window.cpp
         include/goat/util/enum_bitops.hpp
         include/goat/util/platform.hpp
+        include/goat/util/rnd.hpp
         include/goat/util/ticker.hpp
         include/goat/util/time.hpp
         include/goat/application.hpp
@@ -53,7 +55,10 @@ add_library(goatlib STATIC
         include/goat/engine.hpp
         include/goat/goat.hpp
         include/goat/inputmgr.hpp
-        include/goat/window.hpp)
+        include/goat/window.hpp
+
+        src/horns/shader.cpp
+        include/horns/shader.hpp)
 
 find_package(Vulkan)
 if(Vulkan)
@@ -93,6 +98,7 @@ target_include_directories(goatlib PUBLIC
         ${FREETYPE_INCLUDE_DIRS}
         extern/imgui/include/backends
         extern/imgui/include
+        extern/pcg-cpp/include
         extern/stb
         include)
 
