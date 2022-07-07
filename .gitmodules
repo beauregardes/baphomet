@@ -16,3 +16,6 @@
 [submodule "extern/msdf-atlas-gen"]
 	path = extern/msdf-atlas-gen
 	url = ../../Chlumsky/msdf-atlas-gen.git
+[submodule "extern/pcg-cpp"]
+	path = extern/pcg-cpp
+	url = ../../imneme/pcg-cpp

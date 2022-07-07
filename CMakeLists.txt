@@ -28,6 +28,11 @@ add_library(goatlib STATIC
         extern/imgui/include/imstb_rectpack.h
         extern/imgui/include/imstb_textedit.h
         extern/imgui/include/imstb_truetype.h
+
+        extern/pcg-cpp/include/pcg_extras.hpp
+        extern/pcg-cpp/include/pcg_random.hpp
+        extern/pcg-cpp/include/pcg_uint128.hpp
+
         extern/stb/stb_image.h
         extern/stb/stb_image_write.h
 
