@@ -14,6 +14,60 @@
 #include "ft2build.h"
 #include FT_FREETYPE_H
 
+//// GLSL 1.2 to correspond with OpenGL 2.0
+//#version 120
+//
+//// predefined variables
+//uniform sampler2D tex0;
+//
+//float contour(in float d, in float w) {
+//  // smoothstep(lower edge0, upper edge1, x)
+//  return smoothstep(0.5 - w, 0.5 + w, d);
+//}
+//
+//float samp(in vec2 uv, float w) {
+//  return contour(texture2D(tex0, uv).a, w);
+//}
+//
+//void main(void) {
+//  // retrieve distance from texture
+//  vec2 uv = gl_TexCoord[0].xy;
+//  float dist = texture2D(tex0, uv).a;
+//
+//  // fwidth helps keep outlines a constant width irrespective of scaling
+//  // GLSL's fwidth = abs(dFdx(uv)) + abs(dFdy(uv))
+//  float width = fwidth(dist);
+//  // Stefan Gustavson's fwidth
+//  //float width = 0.7 * length(vec2(dFdx(dist), dFdy(dist)));
+//
+//  // basic version
+//  //float alpha = smoothstep(0.5 - width, 0.5 + width, dist);
+//
+//  // supersampled version
+//
+//  float alpha = contour( dist, width );
+//  //float alpha = aastep( 0.5, dist );
+//
+//  // ------- (comment this block out to get your original behavior)
+//  // Supersample, 4 extra points
+//  float dscale = 0.354; // half of 1/sqrt2; you can play with this
+//  vec2 duv = dscale * (dFdx(uv) + dFdy(uv));
+//  vec4 box = vec4(uv-duv, uv+duv);
+//
+//  float asum = samp(box.xy, width)
+//             + samp(box.zw, width)
+//             + samp(box.xw, width)
+//             + samp(box.zy, width);
+//
+//  // weighted average, with 4 extra points having 0.5 weight each,
+//  // so 1 + 0.5*4 = 3 is the divisor
+//  alpha = (alpha + 0.5 * asum) / 3.0;
+//
+//  // -------
+//
+//  gl_FragColor = vec4(gl_Color.rgb, alpha);
+//}
+
 namespace horns {
 
 class Texture {
@@ -97,15 +151,14 @@ public:
 
   glm::mat4 mvp{};
 
-  float loadFontScale{1.0f};
+  float loadFontScale{4.0f};
   float maxCornerAngle{3.0f};
   float minimumScale{32.0f};
   float miterLimit{1.0f};
-  float pxRangeUni{2.0f};
-  float pxRange{2.0f};
+  float pxRangeUni{8.0f};
+  float pxRange{8.0f};
   float fudge{1.0f};
-  float med_adj1{0.5f};
-  float med_adj2{0.5f};
+  float gamma{1.0f};
   bool retroScaling{false};
 
   GLuint vao{0};
@@ -226,25 +279,23 @@ public:
   }
 
   void draw() override {
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (ImGui::Begin("Controls")) {
       ImGui::SliderInt("Text size", &font_size, 1, 96);
-      ImGui::InputFloat("loadFontScale", &loadFontScale);
       ImGui::InputFloat("maxCornerAngle", &maxCornerAngle);
-      ImGui::InputFloat("minimumScale", &minimumScale);
       ImGui::InputFloat("miterLimit", &miterLimit);
+      ImGui::InputFloat("loadFontScale", &loadFontScale);
+      ImGui::InputFloat("minimumScale", &minimumScale);
       ImGui::InputFloat("pxRange", &pxRange);
-      ImGui::InputFloat("fudge", &fudge);
-      ImGui::InputFloat("med_adj1", &med_adj1);
-      ImGui::InputFloat("med_adj2", &med_adj2);
       ImGui::Checkbox("Retro", &retroScaling);
-
       if (ImGui::Button("Regenerate")) {
         load_font(FONT_PATH);
         pxRangeUni = pxRange;
       }
+      ImGui::InputFloat("fudge", &fudge);
+      ImGui::InputFloat("gamma", &gamma);
     }
     ImGui::End();
 
@@ -253,8 +304,7 @@ public:
     shader->use();
     shader->uniform_mat4f("MVP", mvp);
     shader->uniform_1f("fudge", fudge);
-    shader->uniform_1f("med_adj1", med_adj1);
-    shader->uniform_1f("med_adj2", med_adj2);
+    shader->uniform_1f("gamma", gamma);
     font.tex->bind();
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0, vertex_count);
@@ -314,7 +364,7 @@ int main(int, char *[]) {
       .log_level = spdlog::level::debug
   }).open<Indev>({
       .title = "Indev",
-      .size = {800, 600},
+      .size = {1280, 960},
       .monitor = 1,
       .flags = goat::WFlags::centered
   });
